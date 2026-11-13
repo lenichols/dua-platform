@@ -5,7 +5,7 @@ request looks like, and the agreement you'll be asked to sign.
 
 ## Getting set up
 
-Follow the [quick start](README.md#quick-start). You need Node.js 22.9+ and
+Follow [Run it locally](README.md#run-it-locally). You need Node.js 22.9+ and
 Docker (or OrbStack) for the local database. Never point a development copy
 at a database that holds a real event's data.
 
