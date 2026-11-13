@@ -78,10 +78,10 @@ export default async function JudgeDashboard() {
           subtitle={
             isMentor
               ? phase === "results"
-                ? "Voting is closed. The results page has the top 6, the leaderboard and the judges' notes."
+                ? `Voting is closed. The results page has the top ${event.settings.topN}, the leaderboard and the judges' notes.`
                 : "You have read-only access to every submission. You can't vote — that's by design."
               : phase === "judging"
-                ? "Score each submission 1–5 on the rubric's five criteria, with one sentence of evidence for each score."
+                ? "Score each submission 1–5 on every criterion of the rubric, with one sentence of evidence for each score."
                 : phase === "results"
                   ? "Voting is closed. Head to the results page."
                   : "Submissions are still open. Come back when judging opens."
@@ -121,7 +121,7 @@ export default async function JudgeDashboard() {
         {isMentor && phase === "results" && (
           <div className="card mb-4 flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm text-dust">
-              Results are in: the top 6, the full leaderboard, and every
+              Results are in: the top {event.settings.topN}, the full leaderboard, and every
               judge&apos;s anonymized notes.
             </p>
             <Link href="/results" className="btn-crimson">

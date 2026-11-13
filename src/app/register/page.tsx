@@ -7,11 +7,12 @@ import {
 } from "@/components/shell";
 import { getPhase, getRegistrationOpen } from "@/lib/phase";
 import { RegisterForm } from "./register-form";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
+  const EVENT = await getSettings();
   const phase = await getPhase();
   const open = phase === "submissions" && (await getRegistrationOpen());
 

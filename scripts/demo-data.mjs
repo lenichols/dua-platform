@@ -203,21 +203,18 @@ const SAMPLES = [
 // submission page shows Update Score. Totals 70 out of 100.
 const SAMPLE_SCORE = {
   project_name: "ShiftBoard (Sample)",
-  impact: 4,
-  impact_evidence:
-    "Impact (4): tested with six volunteers at one food bank; unfilled shifts fell from nine a week to two.",
-  innovation: 3,
-  innovation_evidence:
-    "Innovation (3): shift boards exist; confirming by text with no account is the new part.",
-  sustainability: 4,
-  sustainability_evidence:
-    "Sustainability (4): text messages are the only running cost and the organizer can maintain it alone.",
-  feasibility: 3,
-  feasibility_evidence:
-    "Feasibility (3): the demo ran end to end, but the reminder texts were sent by hand.",
-  scalability: 3,
-  scalability_evidence:
-    "Scalability (3): could serve other food banks, but each one needs manual setup.",
+  marks: { impact: 4, innovation: 3, sustainability: 4, feasibility: 3, scalability: 3 },
+  evidence: {
+    impact:
+      "Impact (4): tested with six volunteers at one food bank; unfilled shifts fell from nine a week to two.",
+    innovation:
+      "Innovation (3): shift boards exist; confirming by text with no account is the new part.",
+    sustainability:
+      "Sustainability (4): text messages are the only running cost and the organizer can maintain it alone.",
+    feasibility:
+      "Feasibility (3): the demo ran end to end, but the reminder texts were sent by hand.",
+    scalability: "Scalability (3): could serve other food banks, but each one needs manual setup.",
+  },
 };
 
 const args = parseArgs(process.argv.slice(2));
@@ -299,14 +296,21 @@ console.log(`✓ Seeded ${inserted.length} sample submissions`);
 // ── one pre-filled score ─────────────────────────────────────────
 const judge = created.find((c) => c.key === "judge");
 const target = inserted.find((s) => s.project_name === SAMPLE_SCORE.project_name);
-const { project_name: _name, ...scoreValues } = SAMPLE_SCORE;
-await insertRow(pool, "scores", {
-  event_id: eventId,
-  judge_id: judge.judgeId,
-  submission_id: target.id,
-  ...scoreValues,
-});
-console.log(`✓ Scored "${SAMPLE_SCORE.project_name}" as ${judge.name}`);
+// The sample score fits the default rubric. If this event's rubric has been
+// changed, skip it rather than store marks that don't match.
+const { rows: eventRows } = await pool.query("select settings from events where id = $1", [eventId]);
+if (eventRows[0]?.settings?.rubric) {
+  console.log("· Skipped the sample score: this event has its own rubric");
+} else {
+  await insertRow(pool, "scores", {
+    event_id: eventId,
+    judge_id: judge.judgeId,
+    submission_id: target.id,
+    marks: JSON.stringify(SAMPLE_SCORE.marks),
+    evidence: JSON.stringify(SAMPLE_SCORE.evidence),
+  });
+  console.log(`✓ Scored "${SAMPLE_SCORE.project_name}" as ${judge.name}`);
+}
 
 if (args["keep-phase"] !== true) {
   await pool.query("update events set phase = 'judging', updated_at = now() where id = $1", [eventId]);

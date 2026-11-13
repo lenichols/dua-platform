@@ -1,18 +1,11 @@
-import {
-  RUBRIC,
-  SCALE_MAX,
-  TIE_BREAKERS,
-  totalScore,
-  type RubricCategory,
-} from "./rubric";
+import { SCALE_MAX, totalScore, type Marks, type Rubric } from "./rubric";
 
 /**
- * Top-6 algorithm — seeded, reproducible.
+ * Final ranking — seeded, reproducible. The rubric comes from the event.
  *
- *  1) Per-judge z-score normalization on each of the five rubric criteria
- *     (scored 1–5), combined with the rubric weights (Impact 25%,
- *     Innovation 25%, Sustainability 25%, Feasibility 15%, Scalability 10%).
- *     Neutralizes harsh vs. generous graders.
+ *  1) Per-judge z-score normalization on each of the rubric's criteria
+ *     (scored 1–5), combined with the rubric's weights. Neutralizes harsh
+ *     vs. generous graders.
  *
  *  2) Bayesian shrinkage toward the global mean with credibility n/(n+k).
  *     Submissions with few judges get pulled to the mean — a "3 judges at 9/10"
@@ -20,22 +13,23 @@ import {
  *
  *  3) Monte Carlo: 1000 trials. Each trial adds gaussian jitter scaled by each
  *     judge's stdev to every score, re-normalizes, re-aggregates, re-ranks.
- *     Each submission's top-6 probability = fraction of trials it landed there.
+ *     Each submission's chance of placing = fraction of trials it landed there.
  *
- *  4) Tie-breakers: Impact, then Innovation. Rankings
- *     that come out equal are ordered by Impact mean, then Innovation mean;
- *     pairs within ε on the normalized score whose Impact and Innovation
- *     means are also level are surfaced for the panel's vote.
+ *  4) Tie-breakers: the rubric names the criteria that settle a tie, in
+ *     order. Rankings that come out equal are ordered by the mean of each in
+ *     turn; pairs within ε on the normalized score whose tie-breaker means
+ *     are also level are surfaced for the panel's vote.
  *
- *  5) Selection: submissions with P(top6) > 0.70 auto-lock.
+ *  5) Selection: submissions that place in at least 70% of trials auto-lock.
  *     Remaining slots filled by weighted random draw from the bubble,
- *     weights = P(top6). Reproducible via seed.
+ *     weights = their chance of placing. Reproducible via seed.
  */
 
 export type ScoreRow = {
   judge_id: string;
   submission_id: string;
-} & Record<RubricCategory, number>;
+  marks: Marks;
+};
 
 export type SubmissionMeta = {
   id: string;
@@ -66,16 +60,27 @@ export type SubmissionRanking = {
   n_judges: number;
   raw_total: number;       // mean weighted total (out of 100)
   normalized_score: number; // shrunk, z-normalized weighted composite
-  tiebreak_means: number[]; // mean Impact, then mean Innovation
+  tiebreak_means: number[]; // mean of each tie-breaker criterion, in order
   p_top_n: number;         // probability of landing in top N across trials
   mean_rank: number;       // average rank across trials
 };
 
-const CORE_CATS = RUBRIC.map((c) => c.key);
-const WEIGHT = Object.fromEntries(RUBRIC.map((c) => [c.key, c.weight / 100])) as Record<
-  CoreCat,
-  number
->;
+/** The parts of the rubric the maths needs, worked out once per run. */
+type Ctx = {
+  cats: string[];
+  weight: Record<string, number>;
+  ties: string[];
+  total: (marks: Marks) => number;
+};
+
+function context(rubric: Rubric): Ctx {
+  return {
+    cats: rubric.criteria.map((c) => c.key),
+    weight: Object.fromEntries(rubric.criteria.map((c) => [c.key, c.weight / 100])),
+    ties: rubric.tieBreakers,
+    total: (marks) => totalScore(rubric, marks),
+  };
+}
 
 // ─── Mulberry32: fast, seeded PRNG ─────────────────────────────────────
 function mulberry32(seed: number): () => number {
@@ -96,8 +101,8 @@ function gaussian(rng: () => number): number {
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
 
-// Higher Impact first, then higher Innovation. Sort comparator: b before a
-// when b's tie-breaker means are higher.
+// Higher tie-breaker means first, in the rubric's order. Sort comparator: b
+// before a when b's are higher.
 function byTiebreakers(a: number[], b: number[]): number {
   for (let i = 0; i < a.length; i++) {
     if (b[i] !== a[i]) return b[i] - a[i];
@@ -114,14 +119,14 @@ function stdev(xs: number[]) {
   return Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1));
 }
 
-type CoreCat = RubricCategory;
+type CoreCat = string;
 
 type JudgeStats = {
   meansByCat: Record<CoreCat, number>;
   stdevsByCat: Record<CoreCat, number>;
 };
 
-function computeJudgeStats(scores: ScoreRow[]): Map<string, JudgeStats> {
+function computeJudgeStats(scores: ScoreRow[], ctx: Ctx): Map<string, JudgeStats> {
   const byJudge = new Map<string, ScoreRow[]>();
   for (const s of scores) {
     const arr = byJudge.get(s.judge_id) ?? [];
@@ -132,8 +137,8 @@ function computeJudgeStats(scores: ScoreRow[]): Map<string, JudgeStats> {
   for (const [jid, arr] of byJudge) {
     const meansByCat = {} as Record<CoreCat, number>;
     const stdevsByCat = {} as Record<CoreCat, number>;
-    for (const c of CORE_CATS) {
-      const xs = arr.map((r) => r[c]);
+    for (const c of ctx.cats) {
+      const xs = arr.map((r) => r.marks[c] ?? 0);
       meansByCat[c] = mean(xs);
       // Floor at a quarter point so a judge who always gives 5s doesn't break
       // normalization.
@@ -149,6 +154,7 @@ function aggregate(
   scores: ScoreRow[],
   judgeStats: Map<string, JudgeStats>,
   shrinkageK: number,
+  ctx: Ctx,
 ): Map<
   string,
   {
@@ -158,9 +164,6 @@ function aggregate(
     tiebreakMeans: number[];
   }
 > {
-  // Global means for shrinkage target
-  const globalRaw = mean(scores.map((s) => totalScore(s)));
-
   const bySub = new Map<string, ScoreRow[]>();
   for (const s of scores) {
     const arr = bySub.get(s.submission_id) ?? [];
@@ -175,23 +178,23 @@ function aggregate(
   for (const [sid, arr] of bySub) {
     let normTotal = 0;
     let rawTotal = 0;
-    const tiebreakTotals = TIE_BREAKERS.map(() => 0);
+    const tiebreakTotals = ctx.ties.map(() => 0);
     for (const r of arr) {
       const js = judgeStats.get(r.judge_id);
       if (!js) continue;
       let zSum = 0;
-      for (const c of CORE_CATS) {
-        zSum += (WEIGHT[c] * (r[c] - js.meansByCat[c])) / js.stdevsByCat[c];
+      for (const c of ctx.cats) {
+        zSum += (ctx.weight[c] * ((r.marks[c] ?? 0) - js.meansByCat[c])) / js.stdevsByCat[c];
       }
       normTotal += zSum;
-      rawTotal += totalScore(r);
-      TIE_BREAKERS.forEach((c, i) => (tiebreakTotals[i] += r[c]));
+      rawTotal += ctx.total(r.marks);
+      ctx.ties.forEach((c, i) => (tiebreakTotals[i] += r.marks[c] ?? 0));
     }
     const n = arr.length;
     const rawMean = rawTotal / n;
     const normMean = normTotal / n;
-    // Bayesian shrinkage toward global raw mean. Maps the normalized composite
-    // through credibility: low-n submissions get pulled toward 0 (neutral).
+    // Shrinkage: the normalized composite is scaled by credibility, so
+    // submissions with few judges are pulled toward 0 (neutral).
     const credibility = n / (n + shrinkageK);
     const shrunk = normMean * credibility;
     out.set(sid, {
@@ -200,7 +203,6 @@ function aggregate(
       normScore: shrunk,
       tiebreakMeans: tiebreakTotals.map((t) => t / n),
     });
-    void globalRaw; // reserved for future use
   }
   return out;
 }
@@ -208,6 +210,7 @@ function aggregate(
 export function monteCarloTop(
   scores: ScoreRow[],
   subs: SubmissionMeta[],
+  rubric: Rubric,
   opts: MonteCarloOptions = {},
 ): MonteCarloResult {
   const trials = opts.trials ?? 1000;
@@ -217,11 +220,12 @@ export function monteCarloTop(
   const tieEpsilon = opts.tieEpsilon ?? 0.25;
   const topN = opts.topN ?? 6;
 
+  const ctx = context(rubric);
   const rng = mulberry32(seed);
-  const judgeStats = computeJudgeStats(scores);
+  const judgeStats = computeJudgeStats(scores, ctx);
 
   // Base aggregation (no jitter) — the "truth" we're studying
-  const base = aggregate(scores, judgeStats, shrinkageK);
+  const base = aggregate(scores, judgeStats, shrinkageK, ctx);
 
   // Counts for MC
   const topCount = new Map<string, number>();
@@ -237,15 +241,15 @@ export function monteCarloTop(
     const jittered: ScoreRow[] = scores.map((r) => {
       const js = judgeStats.get(r.judge_id);
       if (!js) return r;
-      const j = { ...r };
-      for (const c of CORE_CATS) {
+      const marks: Marks = {};
+      for (const c of ctx.cats) {
         const noise = gaussian(rng) * js.stdevsByCat[c];
-        j[c] = Math.max(1, Math.min(SCALE_MAX, j[c] + noise));
+        marks[c] = Math.max(1, Math.min(SCALE_MAX, (r.marks[c] ?? 0) + noise));
       }
-      return j;
+      return { ...r, marks };
     });
-    const trialStats = computeJudgeStats(jittered);
-    const agg = aggregate(jittered, trialStats, shrinkageK);
+    const trialStats = computeJudgeStats(jittered, ctx);
+    const agg = aggregate(jittered, trialStats, shrinkageK, ctx);
 
     const sorted = [...agg.entries()].sort(
       (a, b) =>
@@ -267,7 +271,7 @@ export function monteCarloTop(
         n_judges: b?.n ?? 0,
         raw_total: b?.rawTotal ?? 0,
         normalized_score: b?.normScore ?? 0,
-        tiebreak_means: b?.tiebreakMeans ?? TIE_BREAKERS.map(() => 0),
+        tiebreak_means: b?.tiebreakMeans ?? ctx.ties.map(() => 0),
         p_top_n: (topCount.get(s.id) ?? 0) / trials,
         mean_rank: (rankSum.get(s.id) ?? 0) / trials,
       };
@@ -302,8 +306,8 @@ export function monteCarloTop(
     }
   }
 
-  // Near-ties: within tieEpsilon on the normalized score. Scale of Impact
-  // breaks them; flag the ones it can't.
+  // Near-ties: within tieEpsilon on the normalized score. The tie-breaker
+  // criteria settle them; flag the ones they can't.
   const ties: [string, string][] = [];
   for (let i = 0; i < rankings.length - 1; i++) {
     const a = rankings[i];

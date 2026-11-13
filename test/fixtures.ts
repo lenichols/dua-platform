@@ -3,7 +3,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { events, judges, submissions } from "@/db/schema";
-import { RUBRIC, evidenceKey } from "@/lib/rubric";
+import { DEFAULT_RUBRIC, resolveSettings, type EventSettings } from "@/lib/event-settings";
 import type { EventRow, Phase } from "@/server/event";
 import type { Viewer } from "@/server/policy";
 
@@ -18,13 +18,16 @@ let counter = 0;
 const next = () => ++counter;
 
 export async function makeEvent(
-  over: Partial<Pick<EventRow, "phase" | "submissions_open" | "registration_open">> = {},
+  over: Partial<Pick<EventRow, "phase" | "submissions_open" | "registration_open">> & {
+    settings?: Partial<EventSettings>;
+  } = {},
 ): Promise<EventRow> {
+  const { settings, ...columns } = over;
   const [row] = await db()
     .insert(events)
-    .values({ slug: `event-${next()}`, ...over })
+    .values({ slug: `event-${next()}`, ...columns, settings: settings ?? {} })
     .returning();
-  return { ...row, phase: row.phase as Phase };
+  return { ...row, phase: row.phase as Phase, settings: resolveSettings(row.settings) };
 }
 
 /** The same event as the database has it now, e.g. after changing its phase. */
@@ -75,12 +78,13 @@ export async function makeJudge(
 export const ADMIN: Viewer = { kind: "admin", role: "admin" };
 export const VIEWER_ADMIN: Viewer = { kind: "admin", role: "viewer" };
 
-/** A complete, valid score: the same mark on every criterion. */
-export function scoreOf(mark: number): Record<string, string | number> {
-  const out: Record<string, string | number> = {};
-  for (const c of RUBRIC) {
-    out[c.key] = mark;
-    out[evidenceKey(c.key)] = `Evidence for ${c.label}: the demo showed this working.`;
+/** A complete, valid score on the default rubric: the same mark on every criterion. */
+export function scoreOf(mark: number, rubric = DEFAULT_RUBRIC) {
+  const marks: Record<string, number> = {};
+  const evidence: Record<string, string> = {};
+  for (const c of rubric.criteria) {
+    marks[c.key] = mark;
+    evidence[c.key] = `Evidence for ${c.label}: the demo showed this working.`;
   }
-  return out;
+  return { marks, evidence };
 }

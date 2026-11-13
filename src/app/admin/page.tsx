@@ -12,6 +12,7 @@ import {
 } from "@/server/admin-data";
 import { listJudges } from "@/server/judges";
 import { listRegistrations } from "@/server/registrations";
+import { hasScores } from "@/server/settings";
 import { listSubmissionsForAdmin } from "@/server/submissions";
 import { canManageTeam } from "@/lib/admin-roles";
 import { listCampaigns } from "@/lib/campaigns";
@@ -160,6 +161,7 @@ async function AdminContent({ session }: { session: AdminSession }) {
       submissionsOpen={event.submissions_open}
       registrationOpen={event.registration_open}
       session={session}
+      rubricLocked={await hasScores(event.id)}
       campaigns={campaignResult.ok ? campaignResult.campaigns : []}
       campaignsError={campaignResult.ok ? null : campaignResult.error}
       team={teamResult?.ok ? teamResult.users : []}

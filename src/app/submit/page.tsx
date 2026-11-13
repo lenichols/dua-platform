@@ -2,11 +2,12 @@ import Link from "next/link";
 import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { getPhase, getSubmissionsOpen } from "@/lib/phase";
 import { SubmitForm } from "./submit-form";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubmitPage() {
+  const EVENT = await getSettings();
   const phase = await getPhase();
   const submissionsOpen = await getSubmissionsOpen();
   const open = phase === "submissions" && submissionsOpen;

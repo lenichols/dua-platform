@@ -6,7 +6,7 @@ import { verifyEditToken } from "@/lib/submission-edit";
 import { getCurrentEvent } from "@/server/event";
 import { getSubmissionForEdit } from "@/server/submissions";
 import { SubmitForm } from "../submit-form";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export default async function EditSubmissionPage({
 }: {
   searchParams: Promise<{ id?: string; t?: string }>;
 }) {
+  const EVENT = await getSettings();
   const { id = "", t = "" } = await searchParams;
   const valid = /^[0-9a-f-]{36}$/i.test(id) && verifyEditToken(id, t);
 

@@ -3,81 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { submitProject, updateSubmission, type SubmitResult } from "./actions";
 import { COUNTRIES } from "@/lib/countries";
-import { PROBLEM_BRIEFS, TRACKS } from "@/lib/hackathon";
-import { EVENT } from "@/lib/site";
+import { useEvent } from "@/components/event-context";
 
-// What the project is about. Sample options: replace with your event's own.
-const FOCUS_AREAS = [
-  "Education",
-  "Health & Wellbeing",
-  "Climate & Environment",
-  "Money & Work",
-  "Accessibility",
-  "Civic & Community",
-  "Productivity",
-  "Games & Entertainment",
-  "Developer Experience",
-];
-
-// What the project improves for the people who use it.
-const IMPACT_FOCUS = [
-  "Saves time",
-  "Saves money",
-  "Improves access",
-  "Improves safety",
-  "Builds community",
-];
-
-// Continents.
-const REGIONS = [
-  "Africa",
-  "North America",
-  "South America",
-  "Asia",
-  "Europe",
-  "Australia",
-];
-
-// The strongest side of the project.
-const AREAS_OF_SPECIFICATION = [
-  "Technology",
-  "Design & Usability",
-  "Business Model",
-  "Policy & Community",
-];
-
-const SOLUTION_STAGES = [
-  "Idea / Concept",
-  "Prototype",
-  "MVP / Pilot",
-  "Deployed / In Market",
-];
-
-// Keep only phone-legal characters; allow a single leading "+".
 function formatPhone(v: string) {
   let s = v.replace(/[^\d+()\-\s]/g, "");
   s = s.replace(/(?!^)\+/g, "");
   return s.slice(0, 25);
 }
-
-const ORGS = [
-  "Startup",
-  "Corporate",
-  "Nonprofit / NGO",
-  "University / Student Org",
-  "Independent",
-];
-
-const ROLES = [
-  "Software Engineer",
-  "Designer",
-  "Product / Founder",
-  "Data Scientist",
-  "Hardware Engineer",
-  "Policy Analyst",
-  "Engineer",
-  "Student",
-];
 
 const OTHER = "Other";
 
@@ -111,6 +43,18 @@ export function SubmitForm({
   initial?: Record<string, string>;
   edit?: { id: string; token: string };
 } = {}) {
+  const EVENT = useEvent();
+  const {
+    tracks: TRACKS,
+    problemBriefs: PROBLEM_BRIEFS,
+    focusAreas: FOCUS_AREAS,
+    impactFocus: IMPACT_FOCUS,
+    regions: REGIONS,
+    areasOfSpecification: AREAS_OF_SPECIFICATION,
+    solutionStages: SOLUTION_STAGES,
+    affiliations: ORGS,
+    roles: ROLES,
+  } = EVENT;
   const [state, setState] = useState<SubmitResult | null>(null);
   const [pending, startTransition] = useTransition();
 

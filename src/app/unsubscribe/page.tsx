@@ -2,7 +2,7 @@ import Link from "next/link";
 import { HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { unsubscribeRegistration } from "@/server/registrations";
 import { verifyUnsubscribeToken } from "@/lib/unsubscribe";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +15,10 @@ async function unsubscribe(id: string, token: string): Promise<Outcome> {
   return unsubscribeRegistration(id);
 }
 
-const COPY: Record<Outcome, { title: string; body: string }> = {
+const copyFor = (eventName: string): Record<Outcome, { title: string; body: string }> => ({
   done: {
     title: "You're unsubscribed",
-    body: `You won't receive any more email updates about ${EVENT.name}. Your registration itself is unchanged — you're still signed up for the event.`,
+    body: `You won't receive any more email updates about ${eventName}. Your registration itself is unchanged — you're still signed up for the event.`,
   },
   already: {
     title: "Already unsubscribed",
@@ -32,7 +32,7 @@ const COPY: Record<Outcome, { title: string; body: string }> = {
     title: "Nothing to unsubscribe",
     body: "This page needs the unsubscribe link from one of our emails. Open that link directly and it'll work.",
   },
-};
+});
 
 export default async function UnsubscribePage({
   searchParams,
@@ -41,7 +41,7 @@ export default async function UnsubscribePage({
 }) {
   const { id = "", t = "" } = await searchParams;
   const outcome = await unsubscribe(id, t);
-  const { title, body } = COPY[outcome];
+  const { title, body } = copyFor((await getSettings()).name)[outcome];
 
   return (
     <>

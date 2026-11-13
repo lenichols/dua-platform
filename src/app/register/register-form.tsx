@@ -3,15 +3,16 @@
 import { useActionState, useState } from "react";
 import { registerParticipant } from "./actions";
 import { COUNTRIES } from "@/lib/countries";
-import {
-  EXPERIENCE_LEVELS,
-  HEARD_ABOUT,
-  PARTNER_ORGS,
-  TRACKS,
-} from "@/lib/hackathon";
-import { EVENT } from "@/lib/site";
+import { useEvent } from "@/components/event-context";
 
 export function RegisterForm() {
+  const EVENT = useEvent();
+  const {
+    experienceLevels: EXPERIENCE_LEVELS,
+    heardAbout: HEARD_ABOUT,
+    partnerOrgs: PARTNER_ORGS,
+    tracks: TRACKS,
+  } = EVENT;
   const [state, action, pending] = useActionState(registerParticipant, null);
   const [mode, setMode] = useState<"Solo" | "Team">("Solo");
   const [partnerSel, setPartnerSel] = useState<string[]>([]);

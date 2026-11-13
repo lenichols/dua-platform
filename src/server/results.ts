@@ -5,37 +5,33 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { events, results_locks, scores, submissions, tie_breaks, type LockedPlace } from "@/db/schema";
 import { drawBubble, monteCarloTop, type ScoreRow } from "@/lib/monte-carlo";
-
-export const TOP_N = 6;
+import type { EventRow } from "./event";
 
 /**
  * Run the ranking for an event, lock the top places, and move the event to
- * the results phase. The same seed over the same scores always gives the
- * same ranking.
+ * the results phase. How many places, and the rubric, come from the event's
+ * settings. The same seed over the same scores always gives the same ranking.
  */
 export async function computeAndLockResults(
-  eventId: string,
+  event: EventRow,
   seed: number,
 ): Promise<{ top6: LockedPlace[]; seed: number }> {
+  const { rubric, topN } = event.settings;
   const [scoreRows, subs] = await Promise.all([
     db()
       .select({
         judge_id: scores.judge_id,
         submission_id: scores.submission_id,
-        impact: scores.impact,
-        innovation: scores.innovation,
-        sustainability: scores.sustainability,
-        feasibility: scores.feasibility,
-        scalability: scores.scalability,
+        marks: scores.marks,
       })
       .from(scores)
-      .where(eq(scores.event_id, eventId)),
+      .where(eq(scores.event_id, event.id)),
     db()
       .select({ id: submissions.id, project_name: submissions.project_name })
       .from(submissions)
       .where(
         and(
-          eq(submissions.event_id, eventId),
+          eq(submissions.event_id, event.id),
           eq(submissions.hidden_from_judges, false),
           eq(submissions.is_submission_complete, true),
         ),
@@ -44,11 +40,11 @@ export async function computeAndLockResults(
 
   // Scores for a submission that has since been hidden don't count.
   const eligible = new Set(subs.map((s) => s.id));
-  const counted = (scoreRows as ScoreRow[]).filter((s) => eligible.has(s.submission_id));
+  const counted: ScoreRow[] = scoreRows.filter((s) => eligible.has(s.submission_id));
 
-  const mc = monteCarloTop(counted, subs, { seed, trials: 1000, topN: TOP_N });
-  const drawn = drawBubble(mc.bubble, mc.rankings, TOP_N - mc.autoLocked.length, seed);
-  const top6: LockedPlace[] = [...mc.autoLocked, ...drawn].slice(0, TOP_N).map((sid, i) => ({
+  const mc = monteCarloTop(counted, subs, rubric, { seed, trials: 1000, topN });
+  const drawn = drawBubble(mc.bubble, mc.rankings, topN - mc.autoLocked.length, seed);
+  const top6: LockedPlace[] = [...mc.autoLocked, ...drawn].slice(0, topN).map((sid, i) => ({
     submission_id: sid,
     rank: i + 1,
     probability: mc.rankings.find((r) => r.submission_id === sid)?.p_top_n ?? 0,
@@ -57,7 +53,7 @@ export async function computeAndLockResults(
   await db().transaction(async (tx) => {
     await tx
       .insert(results_locks)
-      .values({ event_id: eventId, seed, top6 })
+      .values({ event_id: event.id, seed, top6 })
       .onConflictDoUpdate({
         target: results_locks.event_id,
         set: { seed, top6, locked_at: new Date() },
@@ -65,7 +61,7 @@ export async function computeAndLockResults(
     await tx
       .update(events)
       .set({ phase: "results", closed_at: new Date() })
-      .where(eq(events.id, eventId));
+      .where(eq(events.id, event.id));
   });
   return { top6, seed };
 }

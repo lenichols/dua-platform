@@ -11,7 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Breadcrumbs } from "@/components/shell";
+import { Breadcrumbs } from "@/components/page-parts";
 import { safeHref } from "@/lib/url";
 import { EmailPanel, type CampaignRow } from "./email-panel";
 import {
@@ -44,6 +44,8 @@ import {
   signOutAdmin,
   toggleHideSubmission,
 } from "./actions";
+import { EventPanel } from "./event-panel";
+import { useEvent } from "@/components/event-context";
 
 type Phase = "submissions" | "judging" | "results";
 
@@ -158,6 +160,7 @@ type Registration = {
 
 type Tab =
   | "home"
+  | "event"
   | "registrations"
   | "judges"
   | "submissions"
@@ -178,6 +181,7 @@ export function AdminHome({
   submissionsOpen,
   registrationOpen,
   session,
+  rubricLocked,
   team,
   teamError,
   campaigns,
@@ -194,6 +198,7 @@ export function AdminHome({
   submissionsOpen: boolean;
   registrationOpen: boolean;
   session: Session;
+  rubricLocked: boolean;
   team: TeamMember[];
   teamError: string | null;
   campaigns: CampaignRow[];
@@ -204,6 +209,7 @@ export function AdminHome({
 
   const tabs: Tab[] = [
     "home",
+    "event",
     "registrations",
     "judges",
     "submissions",
@@ -298,6 +304,7 @@ export function AdminHome({
       {tab === "registrations" && (
         <RegistrationsPanel registrations={registrations} readOnly={readOnly} />
       )}
+      {tab === "event" && <EventPanel readOnly={readOnly} rubricLocked={rubricLocked} />}
       {tab === "judges" && <JudgesPanel judges={judges} readOnly={readOnly} />}
       {tab === "submissions" && (
         <SubmissionsPanel
@@ -735,7 +742,7 @@ function HomePanel({
                 Changing to <span className="text-crimson">judging</span> locks
                 submissions. Changing to{" "}
                 <span className="text-crimson">results</span> reveals aggregated
-                scores; if you haven&apos;t computed the top-6 yet, do that from
+                scores; if you haven&apos;t computed the final ranking yet, do that from
                 the Results tab first.
               </>
             )}
@@ -1392,7 +1399,7 @@ function AddPersonForm() {
 
       <p className="text-[0.7rem] text-dust">
         <span className="font-semibold text-bone">Judges</span> score
-        submissions and shape the top-6.{" "}
+        submissions and decide the final ranking.{" "}
         <span className="font-semibold text-bone">Mentors</span> can view every
         submission but cannot vote — use them for advisors, partners and
         observers. Nobody gets an email from this; give them a password with{" "}
@@ -2735,6 +2742,7 @@ function ResultsPanel({
 }) {
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const { topN } = useEvent();
   const byId = new Map(submissions.map((s) => [s.id, s]));
 
   async function compute(fd: FormData) {
@@ -2749,10 +2757,10 @@ function ResultsPanel({
     <div className="space-y-4">
       {!readOnly && (
       <form action={compute} className="card space-y-3">
-        <div className="pill-crimson">Compute Top 6</div>
+        <div className="pill-crimson">Compute Top {topN}</div>
         <p className="text-sm text-dust">
           Runs the Monte Carlo algorithm (1000 trials) on all current scores,
-          selects auto-locks (&gt;70% top-6 probability) and fills the rest via
+          locks in projects that place in at least 70% of trials, and fills the rest via
           weighted random draw from the bubble. Saves the result and flips the
           app to <span className="text-crimson">results</span> phase.
         </p>
@@ -2782,7 +2790,7 @@ function ResultsPanel({
 
       {readOnly && !lock && (
         <div className="card text-center text-dust">
-          The top 6 hasn&apos;t been locked yet.
+          The top {topN} hasn&apos;t been locked yet.
         </div>
       )}
 
@@ -2790,7 +2798,7 @@ function ResultsPanel({
         <div className="card">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="pill-crimson">Locked Top 6</div>
+              <div className="pill-crimson">Locked Top {topN}</div>
               <div className="mt-1 text-[0.7rem] text-dust">
                 Seed: <span className="font-mono text-bone">{lock.seed}</span> ·
                 Locked: {new Date(lock.locked_at).toLocaleString()}

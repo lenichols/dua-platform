@@ -6,7 +6,6 @@ import {
   renderCampaignEmail,
   sendOne,
 } from "./email";
-import { EVENT } from "@/lib/site";
 
 /**
  * Private edit links for submissions. Like unsubscribe links, they're
@@ -51,7 +50,10 @@ export async function sendEditLinkEmail(opts: {
   project: string;
   url: string;
   late?: boolean;
+  /** The event's name and when submissions close, as shown to participants. */
+  event: { name: string; submissionDeadline: string };
 }) {
+  const EVENT = opts.event;
   const first = (opts.name ?? "").trim().split(/\s+/)[0];
   const bodyHtml = `<p>Hi${first ? ` ${escapeHtml(first)}` : ""},</p>
 ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit your submission. Here it is, and sorry for the wait.</p>\n" : ""}<p>Thanks for submitting <strong>${escapeHtml(opts.project)}</strong> to ${escapeHtml(EVENT.name)}. If you need to change anything, use your private edit link:</p>
@@ -63,6 +65,7 @@ ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit you
     to: opts.to,
     subject: `Your edit link for ${opts.project}`,
     html: renderCampaignEmail({
+      eventName: EVENT.name,
       bodyHtml,
       unsubscribeUrl: null,
       footerNote:

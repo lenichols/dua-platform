@@ -131,7 +131,8 @@ then press **Open registration** and **Open submissions**.
    Then sign in as yourself and keep `ADMIN_PASSWORD` for emergencies.
 3. **Judges** tab: add judges and mentors, then set the shared sign-in
    password and send it to them yourself.
-4. **Home** tab: open registration and submissions when you're ready, switch
+4. **Event** tab: put in your event's name, dates, tracks and rubric.
+5. **Home** tab: open registration and submissions when you're ready, switch
    to **judging** to start scoring, then **results**.
 
 Before real submissions open, remove the samples with
@@ -341,24 +342,30 @@ password again from the admin panel afterwards.
 
 ## Make it yours
 
-| To change | Edit |
-| --- | --- |
-| Event name, dates, host, contact email, deadlines | [`src/lib/site.ts`](src/lib/site.ts) |
-| Tracks, problem briefs, partner groups, dropdown options | [`src/lib/hackathon.ts`](src/lib/hackathon.ts) |
-| Judging criteria, weights and guidance | [`src/lib/rubric.ts`](src/lib/rubric.ts) |
-| Homepage copy | [`src/app/page.tsx`](src/app/page.tsx) |
-| Submission form options | [`src/app/submit/submit-form.tsx`](src/app/submit/submit-form.tsx) |
-| Colours and fonts | [`tailwind.config.ts`](tailwind.config.ts), [`src/app/globals.css`](src/app/globals.css) |
-| Logo | [`src/components/dua-mark.tsx`](src/components/dua-mark.tsx), `public/email-logo.png`, `src/app/icon.svg` |
+Sign in to `/admin` and open the **Event** tab. Everything about your event is
+edited there and takes effect when you press Save:
 
-Editing code to configure an event is a stopgap. The roadmap moves all of this
-into settings an organizer edits in the admin panel.
+| Section | What you can change |
+| --- | --- |
+| Basics | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size. |
+| Judging | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. |
+| Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on. |
+| Homepage | The introduction, highlight cards, an example problem per track, and the questions and answers. |
+
+Once the first judge has scored a project, the rubric's criteria and weights
+are fixed, because changing them would change what existing scores mean.
+Names and guidance can still be edited.
+
+A new event starts with the sample content in
+[`src/lib/event-settings.ts`](src/lib/event-settings.ts). Colours, fonts and
+the logo are still set in code: [`tailwind.config.ts`](tailwind.config.ts),
+[`src/app/globals.css`](src/app/globals.css) and
+[`src/components/dua-mark.tsx`](src/components/dua-mark.tsx).
 
 ## How judging works
 
-The ranking logic is in [`src/lib/monte-carlo.ts`](src/lib/monte-carlo.ts) and
-the rubric in [`src/lib/rubric.ts`](src/lib/rubric.ts). Both are covered by
-tests.
+The ranking logic is in [`src/lib/monte-carlo.ts`](src/lib/monte-carlo.ts). It
+uses your event's rubric, set in the admin panel, and is covered by tests.
 
 1. **Per-judge normalization.** Each judge's scores on each criterion are
    rescaled to mean 0 and standard deviation 1 before the weights are applied.
@@ -408,9 +415,8 @@ to `npm run db:migrate && npm run build`.
 
 ## Roadmap
 
-1. **Events as data.** Event details, tracks, rubric, form fields and theme
-   editable in the admin panel instead of in code. More than one event per
-   deployment (the database is already built for it).
+1. **More in the admin panel.** Custom form fields, colours and logo, and
+   more than one event per deployment (the database is already built for it).
 2. **One-command setup.** A container image for the app, alongside the
    database one.
 
@@ -434,7 +440,7 @@ src/
 ├── app/         # pages and server actions, one folder per area
 ├── components/  # shared layout: header, footer, logo, theme toggle
 ├── db/          # the database schema and connection
-├── lib/         # event config, rubric, ranking, email, validation
+├── lib/         # event settings and defaults, ranking, email, validation
 └── server/      # all database reads and writes, and who may make them
     └── providers/  # email, file storage and sign-in: one file each
 drizzle/         # SQL migrations, generated from src/db/schema.ts

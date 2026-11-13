@@ -1,86 +1,9 @@
 import Link from "next/link";
 import { Footer, HeaderBar, PageShell, Wordmark } from "@/components/shell";
 import { getPhase } from "@/lib/phase";
-import { TRACKS } from "@/lib/hackathon";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
-
-// Sample homepage copy for the made-up event in src/lib/site.ts.
-// Replace it with your own.
-const PILLARS = [
-  {
-    k: "Useful",
-    d: "Solve a real problem for real people, and say who they are.",
-    example:
-      "A food bank coordinates 40 volunteers by group chat and loses track of who is coming. Build something that tells the organizer, each morning, which shifts are still empty.",
-  },
-  {
-    k: "Original",
-    d: "Bring a new angle, not a copy of something that already exists.",
-    example:
-      "Plenty of apps show bus times. Build one for a rider who can't look at a screen: it speaks the next departure and nothing else.",
-  },
-  {
-    k: "Working",
-    d: "Show it running. A rough demo beats a polished slide.",
-    example:
-      "Record three minutes of someone outside your team using it from start to finish, with no one helping them.",
-  },
-];
-
-// Example problem statements per challenge track, keyed by the shared TRACKS
-// strings in src/lib/hackathon.ts (which the forms also use — don't rename).
-const TRACK_EXAMPLES: Record<string, string> = {
-  "Web & Mobile Apps":
-    "Build an app a neighbourhood group could start using on Monday without any training.",
-  "AI & Data":
-    "Take a public dataset nobody reads and turn it into an answer to one question people keep asking.",
-  "Hardware & Devices":
-    "Build a device under $30 in parts that tells you something useful about the room it's in.",
-  "Developer Tools":
-    "Remove one step that every developer on your team repeats by hand each day.",
-  "Social Good":
-    "Pick one local organization, ask what slows them down most, and build for that.",
-};
-
-const STATS = [
-  { v: EVENT.prizes.split(" ")[0], l: "In prizes" },
-  { v: "3 Days", l: EVENT.dates },
-  { v: "100%", l: "Virtual & global" },
-  { v: "Free", l: "To enter" },
-];
-
-const STEPS = [
-  { t: "Register", d: "Sign up free and tell us how you'll compete — solo or as a team." },
-  { t: "Build", d: `Pick your mentor, then build over the event: ${EVENT.dates}.` },
-  { t: "Submit", d: "Send your project, demo video, and details before the deadline." },
-  { t: "Judging", d: "Judges score every entry against the same published rubric." },
-  { t: "Win", d: `Top teams share ${EVENT.prizes}.` },
-];
-
-const FAQ = [
-  {
-    q: "Who can participate?",
-    a: "Anyone, anywhere — students, professionals, founders, and first-time hackers. It's virtual and free to join.",
-  },
-  {
-    q: "Do I need a team?",
-    a: `No. Compete solo or form a team of up to ${EVENT.maxTeamSize} people. You can register now and finalize your team later.`,
-  },
-  {
-    q: "What should I build?",
-    a: "Anything that fits one of the challenge tracks. Pick one of the problem briefs or bring a problem of your own.",
-  },
-  {
-    q: "How much does it cost?",
-    a: "Nothing. Registration and participation are free.",
-  },
-  {
-    q: "How is judging kept fair?",
-    a: "Every judge scores against the same rubric and writes one sentence of evidence per score. Scores are normalized per judge, so a harsh judge and a generous one carry the same weight, and judges recuse themselves from projects where they have a conflict.",
-  },
-];
 
 function SectionHead({
   eyebrow,
@@ -105,6 +28,30 @@ function SectionHead({
 
 export default async function Home() {
   const phase = await getPhase();
+
+  // All of the copy below comes from the event's settings, edited in the
+  // admin panel's Event tab.
+  const EVENT = await getSettings();
+  const TRACKS = EVENT.tracks;
+  const PILLARS = EVENT.home.pillars;
+  const TRACK_EXAMPLES: Record<string, string> = Object.fromEntries(
+    EVENT.home.trackExamples.map((t) => [t.track, t.example]),
+  );
+  const FAQ = EVENT.home.faq;
+  const INTRO = EVENT.home.intro.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const STATS = [
+    { v: EVENT.prizes, l: "Prizes" },
+    { v: EVENT.dates, l: "When" },
+    { v: EVENT.format, l: "Where" },
+    { v: `Up to ${EVENT.maxTeamSize}`, l: EVENT.maxTeamSize === 1 ? "Solo entries" : "People per team" },
+  ].filter((x) => x.v);
+  const STEPS = [
+    { t: "Register", d: "Sign up and tell us how you'll compete — solo or as a team." },
+    { t: "Build", d: EVENT.dates ? `Build your project during the event: ${EVENT.dates}.` : "Build your project during the event." },
+    { t: "Submit", d: "Send your project, demo video, and details before the deadline." },
+    { t: "Judging", d: "Judges score every entry against the same published rubric." },
+    { t: "Results", d: EVENT.prizes ? `Top teams share ${EVENT.prizes}.` : "The top teams are announced." },
+  ];
 
   const hero = {
     submissions: {
@@ -179,42 +126,43 @@ export default async function Home() {
 
       <PageShell maxWidth="max-w-5xl">
         {/* ---------- ABOUT THE EVENT ---------- */}
-        <section className="py-12">
-          <SectionHead eyebrow="The Challenge" title="What Is This Hackathon?" />
-          <div className="mx-auto max-w-3xl space-y-4">
-            <p className="text-lg leading-relaxed text-bone/90">
-              {EVENT.name} is a time-bound competition where teams of
-              students, engineers, founders and community innovators design
-              and prototype practical solutions to real problems. You build
-              and defend a working concept under deadline pressure, not just
-              discuss ideas.
-            </p>
-            <p className="text-sm leading-relaxed text-dust">
-              This is a sample event. Everything on this page, from the name
-              and dates to the tracks below, is placeholder copy that ships
-              with the platform so you can see how an event looks before you
-              set up your own.
-            </p>
-          </div>
-        </section>
+        {INTRO.length > 0 && (
+          <section className="py-12">
+            <SectionHead eyebrow="The Challenge" title={EVENT.home.introTitle || EVENT.name} />
+            <div className="mx-auto max-w-3xl space-y-4">
+              {INTRO.map((para, i) => (
+                <p
+                  key={i}
+                  className={
+                    i === 0
+                      ? "text-lg leading-relaxed text-bone/90"
+                      : "text-sm leading-relaxed text-dust"
+                  }
+                >
+                  {para}
+                </p>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ---------- PILLARS ---------- */}
         <section className="py-12">
           <SectionHead
-            eyebrow="What Counts"
-            title="Useful, Original, Working"
-            sub="The three things judges look for in every entry."
+            eyebrow={EVENT.home.pillarsEyebrow}
+            title={EVENT.home.pillarsTitle}
+            sub={EVENT.home.pillarsSubtitle || undefined}
           />
           <div className="grid items-start gap-4 md:grid-cols-3">
             {PILLARS.map((p) => (
               <details
-                key={p.k}
+                key={p.title}
                 className="card group overflow-hidden p-0 transition hover:border-crimson/60 [&_summary::-webkit-details-marker]:hidden"
               >
                 <summary className="cursor-pointer list-none">
                   <div className="p-5">
-                    <h3 className="font-serif text-2xl text-bone">{p.k}</h3>
-                    <p className="mt-2 text-sm text-dust">{p.d}</p>
+                    <h3 className="font-serif text-2xl text-bone">{p.title}</h3>
+                    <p className="mt-2 text-sm text-dust">{p.text}</p>
                     <div className="mt-3 font-cond text-[0.7rem] font-semibold uppercase tracking-wider text-crimson">
                       <span className="group-open:hidden">
                         Example +
@@ -277,7 +225,7 @@ export default async function Home() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {STATS.map((s) => (
               <div key={s.l} className="card text-center">
-                <div className="font-display text-4xl text-crimson md:text-5xl">
+                <div className="font-display text-2xl leading-tight text-crimson md:text-3xl">
                   {s.v}
                 </div>
                 <div className="mt-1 text-xs uppercase tracking-wider text-dust">

@@ -35,6 +35,7 @@ import {
 } from "@/server/rate-limit";
 import { deleteRegistration as removeRegistration } from "@/server/registrations";
 import { computeAndLockResults, recordTieBreak as saveTieBreak } from "@/server/results";
+import { saveEventSettings } from "@/server/settings";
 import { setSubmissionHidden } from "@/server/submissions";
 import { EMAIL_NOT_CONFIGURED } from "@/server/providers/email";
 import { fileStore } from "@/server/providers/storage";
@@ -161,6 +162,36 @@ async function attempt(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     await work();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: errorMessage(e) };
+  }
+}
+
+// ── event settings ───────────────────────────────────────────────
+
+/** Trim text and drop blank lines from lists, so a stray newline isn't an error. */
+function tidy(value: unknown): unknown {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) {
+    const items = value.map(tidy);
+    return items.every((v) => typeof v === "string") ? items.filter((v) => v !== "") : items;
+  }
+  if (value && typeof value === "object")
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, tidy(v)]));
+  return value;
+}
+
+export async function saveSettings(
+  input: unknown,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guard = await requireWriteAccess();
+  if (!guard.ok) return { ok: false, error: guard.error };
+  try {
+    const result = await saveEventSettings(await getCurrentEvent(), tidy(input));
+    if (!result.ok) return { ok: false, error: result.error };
+    // The event's name and lists appear on every page.
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: errorMessage(e) };
@@ -355,7 +386,7 @@ export async function computeAndLockTop6(
 
   const event = await getCurrentEvent();
   const res = await attempt(async () => {
-    await computeAndLockResults(event.id, seed);
+    await computeAndLockResults(event, seed);
   });
   if (!res.ok) return res;
 
@@ -682,7 +713,11 @@ export async function sendCampaignTest(
   if (invalid) return { ok: false, error: invalid };
   if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
 
-  const html = renderCampaignEmail({ bodyHtml, unsubscribeUrl: null });
+  const html = renderCampaignEmail({
+    eventName: (await getCurrentEvent()).settings.name,
+    bodyHtml,
+    unsubscribeUrl: null,
+  });
   const res = await sendOne({
     to,
     subject: `[TEST] ${subject}`,
@@ -747,6 +782,7 @@ export async function sendCampaign(
       to: r.email,
       subject,
       html: renderCampaignEmail({
+        eventName: event.settings.name,
         bodyHtml,
         unsubscribeUrl: unsub,
         recipientName: r.full_name,

@@ -16,8 +16,7 @@ import { connect } from "./_db.mjs";
 import { die, generatePassword, hashPassword, parseArgs } from "./_password.mjs";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
-// Where the admin panel lives, who the mail is from, and what the event is
-// called. Pass --event-name, or set EVENT_NAME, to match src/lib/site.ts.
+// Where the admin panel lives and who the mail is from.
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
 const DEFAULT_FROM = process.env.EMAIL_FROM;
 
@@ -25,7 +24,6 @@ const args = parseArgs(process.argv.slice(2));
 const dryRun = args["dry-run"] === true || args["dry-run"] === "true";
 const rotate = args.rotate === true || args.rotate === "true";
 const from = typeof args.from === "string" ? args.from : DEFAULT_FROM;
-const EVENT_NAME = String(args["event-name"] ?? process.env.EVENT_NAME ?? "Hackathon");
 if (!SITE) die("NEXT_PUBLIC_SITE_URL missing — set it to your deployment's public address");
 if (!from) die("EMAIL_FROM missing — set it, or pass --from 'Name <address>'");
 const only = typeof args.only === "string" ? args.only.toLowerCase() : null;
@@ -34,6 +32,11 @@ const apiKey = process.env.RESEND_API_KEY;
 if (!apiKey && !dryRun) die("RESEND_API_KEY missing — pass --env-file=.env.local");
 
 const pool = connect();
+// The event's name as set in the admin panel, unless --event-name overrides it.
+const { rows: eventRows } = await pool.query("select settings->>'name' as name from events where slug = $1", [
+  process.env.DUA_EVENT_SLUG?.trim() || "default",
+]);
+const EVENT_NAME = String(args["event-name"] ?? eventRows[0]?.name ?? "Hackathon");
 const { rows: admins } = await pool.query(
   "select id, name, email, role from admin_users where is_active order by name",
 );

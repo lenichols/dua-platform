@@ -3,14 +3,15 @@
 import { useActionState } from "react";
 import { registerMentor } from "./actions";
 import { COUNTRIES } from "@/lib/countries";
-import {
-  HEARD_ABOUT,
-  MENTOR_EXPERIENCE_LEVELS,
-  TRACKS,
-} from "@/lib/hackathon";
-import { EVENT } from "@/lib/site";
+import { useEvent } from "@/components/event-context";
 
 export function MentorForm() {
+  const EVENT = useEvent();
+  const {
+    heardAbout: HEARD_ABOUT,
+    mentorExperienceLevels: MENTOR_EXPERIENCE_LEVELS,
+    tracks: TRACKS,
+  } = EVENT;
   const [state, action, pending] = useActionState(registerMentor, null);
 
   if (state?.ok) {

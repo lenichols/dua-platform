@@ -3,6 +3,7 @@ import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/sh
 import { getViewer } from "@/lib/viewer";
 import { getCurrentEvent } from "@/server/event";
 import { getResultsLock, rubricAggregates, type RubricAggregate } from "@/server/judging";
+import { SCALE_MAX } from "@/lib/rubric";
 import { canSeeResults } from "@/server/policy";
 
 export const dynamic = "force-dynamic";
@@ -78,13 +79,18 @@ export default async function ResultsPage() {
   ]);
 
   const rows = (agg as Agg[]).filter((r) => r.n_judges > 0);
-  // Ties: higher Impact, then higher Innovation.
-  rows.sort(
-    (a, b) =>
-      (b.avg_total ?? 0) - (a.avg_total ?? 0) ||
-      (b.avg_impact ?? 0) - (a.avg_impact ?? 0) ||
-      (b.avg_innovation ?? 0) - (a.avg_innovation ?? 0),
-  );
+  const { rubric, topN } = event.settings;
+  const criteria = rubric.criteria;
+  // Level totals are ordered by the rubric's tie-breakers, in turn.
+  rows.sort((a, b) => {
+    const byTotal = (b.avg_total ?? 0) - (a.avg_total ?? 0);
+    if (byTotal) return byTotal;
+    for (const key of rubric.tieBreakers) {
+      const d = (b.averages[key] ?? 0) - (a.averages[key] ?? 0);
+      if (d) return d;
+    }
+    return 0;
+  });
 
   const top6 = lock?.top6 ?? [];
   const byId = new Map(rows.map((r) => [r.submission_id, r]));
@@ -115,7 +121,7 @@ export default async function ResultsPage() {
 
         <SectionTitle
           eyebrow="Phase 3 · Results"
-          title="The Top 6"
+          title={`The Top ${topN}`}
           subtitle="Aggregated breakdown across all judges: totals out of 100, weighted per the rubric, and each criterion's average out of 5. Individual scores stay private — these are the panel-wide averages. Click any card to review the submission and the judges' notes before picking 1st–3rd."
         />
 
@@ -153,14 +159,12 @@ export default async function ResultsPage() {
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <Stat label="Total" value={r.avg_total} max={100} />
                       <Stat label="Judges" value={r.n_judges} plain />
-                      <Stat label="Impact" value={r.avg_impact} max={5} />
-                      <Stat label="Innovation" value={r.avg_innovation} max={5} />
-                      <Stat label="Sustainability" value={r.avg_sustainability} max={5} />
-                      <Stat label="Feasibility" value={r.avg_feasibility} max={5} />
-                      <Stat label="Scalability" value={r.avg_scalability} max={5} />
+                      {criteria.map((c) => (
+                        <Stat key={c.key} label={c.label} value={r.averages[c.key]} max={SCALE_MAX} />
+                      ))}
                     </div>
                     <div className="mt-3 text-[0.68rem] text-dust">
-                      Top-6 probability: {(t.probability * 100).toFixed(0)}%
+                      Chance of placing: {(t.probability * 100).toFixed(0)}%
                     </div>
                   </Link>
                 );
@@ -176,11 +180,18 @@ export default async function ResultsPage() {
                 <th className="p-3 text-left">#</th>
                 <th className="p-3 text-left">Project</th>
                 <th className="p-3 text-right">Total/100</th>
-                <th className="p-3 text-right" title="Impact · 25% · tie-breaker 1">Impact</th>
-                <th className="p-3 text-right" title="Innovation · 25% · tie-breaker 2">Innov</th>
-                <th className="p-3 text-right" title="Sustainability (incl. affordability) · 25%">Sust</th>
-                <th className="p-3 text-right" title="Feasibility · 15%">Feas</th>
-                <th className="p-3 text-right" title="Scalability · 10%">Scal</th>
+                {criteria.map((c) => {
+                  const tie = rubric.tieBreakers.indexOf(c.key);
+                  return (
+                    <th
+                      key={c.key}
+                      className="p-3 text-right"
+                      title={`${c.label} · ${c.weight}%${tie >= 0 ? ` · tie-breaker ${tie + 1}` : ""}`}
+                    >
+                      {c.label}
+                    </th>
+                  );
+                })}
                 <th className="p-3 text-right">Judges</th>
               </tr>
             </thead>
@@ -204,11 +215,11 @@ export default async function ResultsPage() {
                     </Link>
                   </td>
                   <td className="p-3 text-right font-display text-xl">{num(r.avg_total)}</td>
-                  <td className="p-3 text-right text-crimson">{num(r.avg_impact)}</td>
-                  <td className="p-3 text-right">{num(r.avg_innovation)}</td>
-                  <td className="p-3 text-right">{num(r.avg_sustainability)}</td>
-                  <td className="p-3 text-right">{num(r.avg_feasibility)}</td>
-                  <td className="p-3 text-right">{num(r.avg_scalability)}</td>
+                  {criteria.map((c) => (
+                    <td key={c.key} className="p-3 text-right">
+                      {num(r.averages[c.key])}
+                    </td>
+                  ))}
                   <td className="p-3 text-right text-dust">{r.n_judges}</td>
                 </tr>
               ))}

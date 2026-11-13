@@ -35,7 +35,8 @@ export async function submitProject(
 
   // Both new submissions and edits need the submissions phase AND the form
   // opened by an admin, so closing submissions also cuts off every edit link.
-  const data = await createSubmission(await getCurrentEvent(), input);
+  const event = await getCurrentEvent();
+  const data = await createSubmission(event, input);
   if (!data.ok) {
     return { ok: false, error: data.reason === "duplicate" ? DUPLICATE_ERROR : CLOSED_ERROR };
   }
@@ -48,6 +49,7 @@ export async function submitProject(
     name: input.member1_name,
     project: input.project_name,
     url,
+    event: event.settings,
   }).catch((e) => ({ ok: false as const, error: String(e) }));
   if (!sent.ok) {
     console.error("submitProject: edit-link email failed", data.id, sent.error);

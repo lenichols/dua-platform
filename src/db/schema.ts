@@ -59,6 +59,12 @@ export const events = pgTable(
     /** Participant registration and mentor sign-up. */
     registration_open: boolean("registration_open").notNull().default(false),
     closed_at: timestamp("closed_at", { withTimezone: true }),
+    /**
+     * Name, dates, option lists, homepage copy and rubric: everything an
+     * organizer edits. See src/lib/event-settings.ts. Missing values fall
+     * back to the defaults there.
+     */
+    settings: jsonb("settings").$type<Record<string, unknown>>().notNull().default({}),
     created_at: createdAt(),
     updated_at: updatedAt(),
   },
@@ -241,8 +247,9 @@ export const judges = pgTable(
 ).enableRLS();
 
 // ── scores ───────────────────────────────────────────────────────
-// One row per judge per submission: five criteria scored 1–5, each with a
-// sentence of evidence. The criteria are fixed columns for now.
+// One row per judge per submission. Which criteria there are comes from the
+// event's rubric (in its settings), so marks and evidence are stored by
+// criterion key rather than in fixed columns.
 
 export const scores = pgTable(
   "scores",
@@ -255,16 +262,10 @@ export const scores = pgTable(
     submission_id: uuid("submission_id")
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
-    impact: integer("impact").notNull(),
-    innovation: integer("innovation").notNull(),
-    sustainability: integer("sustainability").notNull(),
-    feasibility: integer("feasibility").notNull(),
-    scalability: integer("scalability").notNull(),
-    impact_evidence: text("impact_evidence"),
-    innovation_evidence: text("innovation_evidence"),
-    sustainability_evidence: text("sustainability_evidence"),
-    feasibility_evidence: text("feasibility_evidence"),
-    scalability_evidence: text("scalability_evidence"),
+    /** The mark for each criterion on the event's rubric, by criterion key. */
+    marks: jsonb("marks").$type<Record<string, number>>().notNull(),
+    /** One sentence of evidence per criterion, by criterion key. */
+    evidence: jsonb("evidence").$type<Record<string, string>>().notNull().default({}),
     created_at: createdAt(),
     updated_at: updatedAt(),
   },
@@ -272,14 +273,6 @@ export const scores = pgTable(
     unique("scores_judge_submission_uniq").on(t.judge_id, t.submission_id),
     index("scores_submission_idx").on(t.submission_id),
     index("scores_event_idx").on(t.event_id),
-    check(
-      "scores_range_check",
-      sql`${t.impact} between 1 and 5
-        and ${t.innovation} between 1 and 5
-        and ${t.sustainability} between 1 and 5
-        and ${t.feasibility} between 1 and 5
-        and ${t.scalability} between 1 and 5`,
-    ),
   ],
 ).enableRLS();
 

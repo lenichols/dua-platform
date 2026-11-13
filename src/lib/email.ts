@@ -1,7 +1,6 @@
 // The HTML shell every email is wrapped in, and the functions that send it.
 // Server-only: never import from a client component.
 
-import { EVENT } from "@/lib/site";
 import {
   EMAIL_NOT_CONFIGURED,
   emailTransport,
@@ -15,8 +14,7 @@ import {
  * provider has verified, e.g. `My Hackathon <noreply@mydomain.org>`.
  * The fallback is a placeholder that no provider will accept.
  */
-export const DEFAULT_FROM =
-  process.env.EMAIL_FROM?.trim() || `${EVENT.name} <noreply@example.org>`;
+export const DEFAULT_FROM = process.env.EMAIL_FROM?.trim() || "Dua <noreply@example.org>";
 
 /**
  * Base URL for anything that has to resolve from inside someone's inbox:
@@ -147,7 +145,7 @@ export const CRIMSON = "#E02D3C";
  * so recipients land on Garamond/Georgia, which is the same fallback most
  * visitors see on the site anyway.
  */
-function renderWordmark(site: string): string {
+function renderWordmark(site: string, eventName: string): string {
   // align="center" is for Outlook, which ignores `margin:0 auto` on tables.
   return `<a href="${escapeAttr(site)}" style="text-decoration:none;color:#1a1d24;">
     <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
@@ -157,13 +155,15 @@ function renderWordmark(site: string): string {
       </td>
       <td style="vertical-align:middle;">
         <span style="font-family:Garamond,Georgia,'Times New Roman',Times,serif;font-size:25px;font-weight:500;letter-spacing:-0.01em;line-height:1;color:#1a1d24;white-space:nowrap;">
-          ${escapeHtml(EVENT.name)}
+          ${escapeHtml(eventName)}
         </span>
       </td>
     </tr></table>
   </a>`;
 }
 export function renderCampaignEmail(opts: {
+  /** The event's name, for the header and the footer. */
+  eventName: string;
   bodyHtml: string;
   unsubscribeUrl: string | null;
   recipientName?: string | null;
@@ -172,7 +172,7 @@ export function renderCampaignEmail(opts: {
   /** Transactional mail about something the recipient did, e.g. submitting. */
   footerNote?: string;
 }): string {
-  const { bodyHtml, unsubscribeUrl, internal, footerNote } = opts;
+  const { eventName, bodyHtml, unsubscribeUrl, internal, footerNote } = opts;
   const site = siteUrl();
 
   const footer = footerNote
@@ -181,12 +181,12 @@ export function renderCampaignEmail(opts: {
        </p>`
     : unsubscribeUrl
     ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
-         You're receiving this because you registered for ${escapeHtml(EVENT.name)}.
+         You're receiving this because you registered for ${escapeHtml(eventName)}.
          <a href="${escapeAttr(unsubscribeUrl)}" style="color:#6b7280;text-decoration:underline;">Unsubscribe</a>.
        </p>`
     : internal
       ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
-           Internal message to the ${escapeHtml(EVENT.name)} admin team.
+           Internal message to the ${escapeHtml(eventName)} admin team.
          </p>`
       : `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
            Preview — the real send includes a working unsubscribe link.
@@ -196,7 +196,7 @@ export function renderCampaignEmail(opts: {
 <html><body style="margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1d24;">
   <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #e3e5ea;border-radius:10px;overflow:hidden;">
     <div style="padding:18px 32px;border-bottom:1px solid #e3e5ea;text-align:center;">
-      ${renderWordmark(site)}
+      ${renderWordmark(site, eventName)}
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.65;">
       ${bodyHtml}

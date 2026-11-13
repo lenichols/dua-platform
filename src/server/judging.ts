@@ -2,11 +2,10 @@
 // their scores. Each function takes the viewer and checks src/server/policy.ts
 // before touching the database.
 
-import { and, asc, eq, sql } from "drizzle-orm";
-import { z } from "zod";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { recusals, results_locks, scores, submissions, type LockedPlace } from "@/db/schema";
-import { RUBRIC, evidenceKey, type EvidenceKey, type RubricCategory } from "@/lib/rubric";
+import { SCALE_MAX, totalScore, type Evidence, type Marks, type Rubric } from "@/lib/rubric";
 import type { EventRow } from "./event";
 import {
   NotAllowed,
@@ -139,14 +138,7 @@ export async function getSubmissionForViewer(
 
 // ── a judge's own scores and conflicts ───────────────────────────
 
-export type ScoreValues = Record<RubricCategory, number> & Record<EvidenceKey, string | null>;
-
-const scoreSelection = Object.fromEntries(
-  RUBRIC.flatMap((c) => [
-    [c.key, scores[c.key]],
-    [evidenceKey(c.key), scores[evidenceKey(c.key)]],
-  ]),
-) as { [K in RubricCategory | EvidenceKey]: (typeof scores)[K] };
+export type ScoreValues = { marks: Marks; evidence: Evidence };
 
 /** A judge's own score for one submission. Never anyone else's. */
 export async function getOwnScore(
@@ -157,7 +149,7 @@ export async function getOwnScore(
   if (viewer.kind !== "judge" || !canSeeScoresOf(viewer, viewer.judgeId)) return null;
   if (!isUuid(submissionId)) return null;
   const [row] = await db()
-    .select(scoreSelection)
+    .select({ marks: scores.marks, evidence: scores.evidence })
     .from(scores)
     .where(
       and(
@@ -167,7 +159,7 @@ export async function getOwnScore(
       ),
     )
     .limit(1);
-  return (row as ScoreValues | undefined) ?? null;
+  return row ?? null;
 }
 
 /** Which submissions this judge has scored and which they've recused from. */
@@ -216,24 +208,39 @@ export async function getOwnRecusal(
 export const MIN_EVIDENCE_LENGTH = 15;
 const MAX_EVIDENCE_LENGTH = 2000;
 
-const scoreShape = Object.fromEntries(
-  RUBRIC.flatMap((c) => [
-    [c.key, z.coerce.number().int().min(1).max(5)],
-    [
-      evidenceKey(c.key),
-      z
-        .string()
-        .trim()
-        .min(MIN_EVIDENCE_LENGTH, `Write one sentence of evidence for ${c.label}.`)
-        .max(MAX_EVIDENCE_LENGTH),
-    ],
-  ]),
-);
-export const scoreInputSchema = z.object(scoreShape);
-
-export type ScoreInput = Record<RubricCategory, number> & Record<EvidenceKey, string>;
-
 export type SaveResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Check a submitted score against the event's rubric: a whole mark from 1 to
+ * the top of the scale and a sentence of evidence for every criterion.
+ * Anything not on the rubric is dropped.
+ */
+export function parseScore(
+  rubric: Rubric,
+  input: unknown,
+): { ok: true; value: ScoreValues } | { ok: false; error: string } {
+  const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const rawMarks = (raw.marks && typeof raw.marks === "object" ? raw.marks : {}) as Record<string, unknown>;
+  const rawEvidence = (
+    raw.evidence && typeof raw.evidence === "object" ? raw.evidence : {}
+  ) as Record<string, unknown>;
+
+  const marks: Marks = {};
+  const evidence: Evidence = {};
+  for (const c of rubric.criteria) {
+    const mark = Number(rawMarks[c.key]);
+    if (!Number.isInteger(mark) || mark < 1 || mark > SCALE_MAX)
+      return { ok: false, error: `Give ${c.label} a score from 1 to ${SCALE_MAX}.` };
+    const text = typeof rawEvidence[c.key] === "string" ? (rawEvidence[c.key] as string).trim() : "";
+    if (text.length < MIN_EVIDENCE_LENGTH)
+      return { ok: false, error: `Write one sentence of evidence for ${c.label}.` };
+    if (text.length > MAX_EVIDENCE_LENGTH)
+      return { ok: false, error: `Keep the evidence for ${c.label} under ${MAX_EVIDENCE_LENGTH} characters.` };
+    marks[c.key] = mark;
+    evidence[c.key] = text;
+  }
+  return { ok: true, value: { marks, evidence } };
+}
 
 /**
  * Save (or replace) the viewer's score for a submission.
@@ -251,14 +258,8 @@ export async function saveScore(
   if (viewer.kind !== "judge" || !canScore(viewer, event.phase)) {
     return { ok: false, error: scoringRefusal(event, viewer) };
   }
-  const parsed = scoreInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      ok: false,
-      error: parsed.error.issues[0]?.message ?? "Score every criterion from 1 to 5.",
-    };
-  }
-  const values = parsed.data as ScoreInput;
+  const parsed = parseScore(event.settings.rubric, input);
+  if (!parsed.ok) return parsed;
 
   if (!(await getSubmissionForViewer(event, viewer, submissionId))) {
     return { ok: false, error: "That submission isn't available for judging." };
@@ -272,10 +273,15 @@ export async function saveScore(
 
   await db()
     .insert(scores)
-    .values({ event_id: event.id, judge_id: viewer.judgeId, submission_id: submissionId, ...values })
+    .values({
+      event_id: event.id,
+      judge_id: viewer.judgeId,
+      submission_id: submissionId,
+      ...parsed.value,
+    })
     .onConflictDoUpdate({
       target: [scores.judge_id, scores.submission_id],
-      set: { ...values, updated_at: new Date() },
+      set: { ...parsed.value, updated_at: new Date() },
     });
   return { ok: true };
 }
@@ -364,20 +370,16 @@ export async function listJudgeNotes(
 ): Promise<JudgeNotes[]> {
   if (!canSeeJudgeNotes(viewer, event.phase)) return [];
   if (!isUuid(submissionId)) return [];
-  const evidenceSelection = Object.fromEntries(
-    RUBRIC.map((c) => [evidenceKey(c.key), scores[evidenceKey(c.key)]]),
-  ) as { [K in EvidenceKey]: (typeof scores)[K] };
   const rows = await db()
-    .select(evidenceSelection)
+    .select({ evidence: scores.evidence })
     .from(scores)
     .where(and(eq(scores.event_id, event.id), eq(scores.submission_id, submissionId)))
     .orderBy(asc(scores.created_at), asc(scores.id));
   return rows.map((n, i) => ({
     label: `Judge ${String.fromCharCode(65 + i)}`,
-    lines: RUBRIC.map((c) => ({
-      criterion: c.label,
-      text: (n[evidenceKey(c.key)] ?? "").trim(),
-    })).filter((l) => l.text.length > 0),
+    lines: event.settings.rubric.criteria
+      .map((c) => ({ criterion: c.label, text: (n.evidence[c.key] ?? "").trim() }))
+      .filter((l) => l.text.length > 0),
   }));
 }
 
@@ -385,19 +387,17 @@ export type RubricAggregate = {
   submission_id: string;
   project_name: string;
   n_judges: number;
-  avg_impact: number | null;
-  avg_innovation: number | null;
-  avg_sustainability: number | null;
-  avg_feasibility: number | null;
-  avg_scalability: number | null;
+  /** The panel's average mark per criterion, by criterion key. */
+  averages: Record<string, number | null>;
+  /** Out of 100. */
   avg_total: number | null;
 };
 
-const num = (v: unknown): number | null => (v == null ? null : Number(v));
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Panel-wide averages per submission: never one judge's numbers.
- * The total is out of 100, weighted by the rubric in src/lib/rubric.ts.
+ * The total is out of 100, weighted by the event's rubric.
  * Throws NotAllowed unless the viewer may see results.
  */
 export async function rubricAggregates(
@@ -407,41 +407,40 @@ export async function rubricAggregates(
   if (!canSeeResults(viewer, event.phase))
     throw new NotAllowed("Results aren't open yet.");
 
-  const avg = (c: RubricCategory) => sql<string | null>`round(avg(${scores[c]}), 2)`;
-  // 20 × the weighted sum of the 1–5 scores, built from the rubric so the
-  // weights can't drift from src/lib/rubric.ts.
-  const weighted = sql.join(
-    RUBRIC.map((c) => sql`${sql.raw(String(c.weight / 100))} * ${scores[c.key]}`),
-    sql` + `,
-  );
-  const rows = await db()
-    .select({
-      submission_id: submissions.id,
-      project_name: submissions.project_name,
-      n_judges: sql<number>`count(${scores.id})::int`,
-      avg_impact: avg("impact"),
-      avg_innovation: avg("innovation"),
-      avg_sustainability: avg("sustainability"),
-      avg_feasibility: avg("feasibility"),
-      avg_scalability: avg("scalability"),
-      avg_total: sql<string | null>`round(avg(20 * (${weighted})), 2)`,
-    })
-    .from(submissions)
-    .leftJoin(scores, eq(scores.submission_id, submissions.id))
-    .where(eq(submissions.event_id, event.id))
-    .groupBy(submissions.id, submissions.project_name);
+  const rubric = event.settings.rubric;
+  const [subs, rows] = await Promise.all([
+    db()
+      .select({ id: submissions.id, project_name: submissions.project_name })
+      .from(submissions)
+      .where(eq(submissions.event_id, event.id)),
+    db()
+      .select({ submission_id: scores.submission_id, marks: scores.marks })
+      .from(scores)
+      .where(eq(scores.event_id, event.id)),
+  ]);
 
-  return rows.map((r) => ({
-    submission_id: r.submission_id,
-    project_name: r.project_name,
-    n_judges: Number(r.n_judges),
-    avg_impact: num(r.avg_impact),
-    avg_innovation: num(r.avg_innovation),
-    avg_sustainability: num(r.avg_sustainability),
-    avg_feasibility: num(r.avg_feasibility),
-    avg_scalability: num(r.avg_scalability),
-    avg_total: num(r.avg_total),
-  }));
+  const bySubmission = new Map<string, Marks[]>();
+  for (const r of rows) {
+    const list = bySubmission.get(r.submission_id) ?? [];
+    list.push(r.marks);
+    bySubmission.set(r.submission_id, list);
+  }
+
+  return subs.map((s) => {
+    const all = bySubmission.get(s.id) ?? [];
+    const n = all.length;
+    const mean = (pick: (m: Marks) => number) =>
+      n === 0 ? null : round2(all.reduce((t, m) => t + pick(m), 0) / n);
+    return {
+      submission_id: s.id,
+      project_name: s.project_name,
+      n_judges: n,
+      averages: Object.fromEntries(
+        rubric.criteria.map((c) => [c.key, mean((m) => m[c.key] ?? 0)]),
+      ),
+      avg_total: mean((m) => totalScore(rubric, m)),
+    };
+  });
 }
 
 /** The locked final ranking. Null until computed, or if the viewer may not see results. */

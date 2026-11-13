@@ -3,21 +3,12 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveScore } from "../actions";
-import {
-  RUBRIC,
-  SCALE_MAX,
-  TIE_BREAKERS,
-  evidenceKey,
-  totalScore,
-  type EvidenceKey,
-  type RubricCategory,
-} from "@/lib/rubric";
+import { useEvent } from "@/components/event-context";
+import { SCALE_MAX, totalScore, type Evidence, type Marks } from "@/lib/rubric";
 
-export type ExistingScore = Partial<Record<RubricCategory, number | null>> &
-  Partial<Record<EvidenceKey, string | null>>;
+export type ExistingScore = { marks: Marks; evidence: Evidence };
 
-type Scores = Record<RubricCategory, number | null>;
-type Evidence = Record<EvidenceKey, string>;
+type Scores = Record<string, number | null>;
 
 // The rubric asks for one sentence per criterion; this just stops a bare "ok".
 const MIN_EVIDENCE_LENGTH = 15;
@@ -36,31 +27,29 @@ export function ScoreForm({
   existing: ExistingScore | null;
 }) {
   const router = useRouter();
+  const rubric = useEvent().rubric;
+  const RUBRIC = rubric.criteria;
   const prior = existing;
-  const [scores, setScores] = useState<Scores>(
-    () =>
-      Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.[c.key] ?? null])) as Scores,
+  const [scores, setScores] = useState<Scores>(() =>
+    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.marks[c.key] ?? null])),
   );
-  const [evidence, setEvidence] = useState<Evidence>(
-    () =>
-      Object.fromEntries(
-        RUBRIC.map((c) => [evidenceKey(c.key), prior?.[evidenceKey(c.key)] ?? ""]),
-      ) as Evidence,
+  const [evidence, setEvidence] = useState<Evidence>(() =>
+    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.evidence[c.key] ?? ""])),
   );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const total = useMemo(() => totalScore(scores), [scores]);
-  const allScored = RUBRIC.every((c) => scores[c.key] !== null);
+  const total = useMemo(() => totalScore(rubric, scores), [rubric, scores]);
+  const allScored = RUBRIC.every((c) => scores[c.key] != null);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!allScored) {
-      setErr("Score all five criteria before submitting.");
+      setErr("Score every criterion before submitting.");
       return;
     }
     const missing = RUBRIC.filter(
-      (c) => evidence[evidenceKey(c.key)].trim().length < MIN_EVIDENCE_LENGTH,
+      (c) => (evidence[c.key] ?? "").trim().length < MIN_EVIDENCE_LENGTH,
     );
     if (missing.length > 0) {
       setErr(
@@ -70,14 +59,9 @@ export function ScoreForm({
     }
     setSaving(true);
     setErr(null);
-    const row: Record<string, string | number> = {};
-    for (const c of RUBRIC) {
-      row[c.key] = scores[c.key]!;
-      row[evidenceKey(c.key)] = evidence[evidenceKey(c.key)].trim();
-    }
     // The server works out who the judge is from the session and re-checks
     // every rule; nothing here is trusted.
-    const result = await saveScore(submissionId, row);
+    const result = await saveScore(submissionId, { marks: scores, evidence });
     setSaving(false);
     if (!result.ok) {
       setErr(result.error);
@@ -104,8 +88,8 @@ export function ScoreForm({
 
       <div className="space-y-5">
         {RUBRIC.map((c) => {
-          const tieRank = TIE_BREAKERS.indexOf(c.key);
-          const ek = evidenceKey(c.key);
+          const tieRank = rubric.tieBreakers.indexOf(c.key);
+          const ek = c.key;
           return (
             <div key={c.key}>
               <div className="flex items-baseline justify-between gap-2">
@@ -122,7 +106,7 @@ export function ScoreForm({
                   {scores[c.key] ?? "–"}
                 </span>
               </div>
-              <div className="mt-1 grid grid-cols-5 gap-1">
+              <div className="mt-1 grid grid-cols-5 gap-1" data-criterion={c.key}>
                 {Array.from({ length: SCALE_MAX }, (_, i) => i + 1).map((n) => {
                   const on = scores[c.key] === n;
                   return (
@@ -166,8 +150,8 @@ export function ScoreForm({
                 required
                 minLength={MIN_EVIDENCE_LENGTH}
                 className="field-input mt-1.5 text-xs"
-                placeholder={`Evidence: ${c.example}`}
-                value={evidence[ek]}
+                placeholder={c.example ? `Evidence: ${c.example}` : "One sentence of evidence"}
+                value={evidence[ek] ?? ""}
                 onChange={(e) =>
                   setEvidence((v) => ({ ...v, [ek]: e.target.value }))
                 }

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { SectionTitle } from "@/components/shell";
-import { EVENT } from "@/lib/site";
+import { getSettings } from "@/lib/current-settings";
 
 // Shown to judges and mentors in place of sign-in, the dashboard and
 // submission pages until an organizer switches the phase to judging.
-export function JudgingNotOpen() {
+export async function JudgingNotOpen() {
+  const EVENT = await getSettings();
   return (
     <div className="mx-auto max-w-xl text-center">
       <SectionTitle

@@ -162,7 +162,7 @@ export default async function JudgeSubmissionPage({
               </li>
               <li>
                 <strong className="text-crimson">
-                  Score all five criteria 1–5 and write one sentence of evidence
+                  Score every criterion 1–5 and write one sentence of evidence
                   for each
                 </strong>{" "}
                 — what the team showed, not what they claimed.
@@ -378,7 +378,7 @@ export default async function JudgeSubmissionPage({
                   {isMentor
                     ? "Mentors get full read access to every submission to advise teams and the program — but they don't vote. The top-6 is decided by judges only."
                     : adminOnly
-                      ? "You're viewing this as the admin. Use this view during the results phase to review a top-6 candidate before assigning 1st–3rd place."
+                      ? "You're viewing this as the admin. Use this view during the results phase to review a top-placed candidate before assigning 1st–3rd place."
                       : phase === "results"
                         ? "Voting is closed. Review the judges' notes below to help decide 1st–3rd."
                         : "Scoring is only available during the judging phase."}

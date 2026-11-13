@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import { events } from "@/db/schema";
+import { resolveSettings, type EventSettings } from "@/lib/event-settings";
 
 export type Phase = "submissions" | "judging" | "results";
 export const PHASES: Phase[] = ["submissions", "judging", "results"];
@@ -14,7 +15,21 @@ export type EventRow = {
   registration_open: boolean;
   closed_at: Date | null;
   updated_at: Date;
+  /** Name, dates, lists, homepage copy and rubric, with defaults filled in. */
+  settings: EventSettings;
 };
+
+type Row = typeof events.$inferSelect;
+const toEvent = (row: Row): EventRow => ({
+  id: row.id,
+  slug: row.slug,
+  phase: row.phase as Phase,
+  submissions_open: row.submissions_open,
+  registration_open: row.registration_open,
+  closed_at: row.closed_at,
+  updated_at: row.updated_at,
+  settings: resolveSettings(row.settings),
+});
 
 /** Which event this deployment serves. One per deployment for now. */
 export function currentEventSlug(): string {
@@ -23,7 +38,7 @@ export function currentEventSlug(): string {
 
 export async function getEventBySlug(slug: string): Promise<EventRow | null> {
   const [row] = await db().select().from(events).where(eq(events.slug, slug)).limit(1);
-  return row ? ({ ...row, phase: row.phase as Phase } satisfies EventRow) : null;
+  return row ? toEvent(row) : null;
 }
 
 /**
@@ -44,7 +59,7 @@ export async function setEventPhase(eventId: string, phase: Phase): Promise<Even
     .set({ phase, closed_at: phase === "results" ? new Date() : null })
     .where(eq(events.id, eventId))
     .returning();
-  return row ? { ...row, phase: row.phase as Phase } : null;
+  return row ? toEvent(row) : null;
 }
 
 export async function setSubmissionsOpen(eventId: string, open: boolean): Promise<void> {

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Barlow, Barlow_Condensed, EB_Garamond } from "next/font/google";
 import "./globals.css";
-import { EVENT } from "@/lib/site";
+import { EventProvider } from "@/components/event-context";
+import { getSettings } from "@/lib/current-settings";
 
 const bebas = Bebas_Neue({
   weight: "400",
@@ -29,14 +30,18 @@ const garamond = EB_Garamond({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: `${EVENT.name} · ${EVENT.host.name}`,
-  description: EVENT.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const event = await getSettings();
+  return {
+    title: `${event.name} · ${event.host.name}`,
+    description: event.description,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const settings = await getSettings();
   return (
     // suppressHydrationWarning: the inline theme script below adds the "light"
     // class to <html> before React hydrates, so the class attribute is
@@ -56,7 +61,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-body antialiased">{children}</body>
+      <body className="font-body antialiased">
+        <EventProvider settings={settings}>{children}</EventProvider>
+      </body>
     </html>
   );
 }

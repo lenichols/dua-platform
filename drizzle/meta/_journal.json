@@ -15,6 +15,20 @@
       "when": 1794584074903,
       "tag": "0001_row_level_security",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794587383131,
+      "tag": "0002_event_settings_and_marks",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794587389859,
+      "tag": "0003_drop_fixed_score_columns",
+      "breakpoints": true
     }
   ]
 }
