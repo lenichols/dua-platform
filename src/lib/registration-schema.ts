@@ -7,10 +7,7 @@ const optionalUrl = z
   .or(z.literal(""))
   .default("");
 
-// Public pre-event registration. Lighter than the project submission schema —
-// this just builds the participant list.
-export const registrationSchema = z
-  .object({
+const registrationFields = {
     full_name: z.string().trim().min(2, "Full name required"),
     email: z.string().trim().email("Valid email required"),
     phone: z
@@ -35,15 +32,37 @@ export const registrationSchema = z
       .string()
       .trim()
       .min(2, "Tell us who referred you (a name or organization)"),
-  })
-  .refine(
-    (d) => d.participating_as !== "Team" || d.team_name.trim().length > 0,
-    { message: "Team name required", path: ["team_name"] },
-  )
-  .refine((d) => d.linkedin_url !== "" || d.website_url !== "", {
-    message: "Add a LinkedIn profile or personal website so we can verify you",
-    path: ["linkedin_url"],
-  });
+};
+
+const refineRegistration = <T extends z.ZodTypeAny>(schema: T) =>
+  schema
+    .refine(
+      (d: { participating_as: string; team_name: string }) =>
+        d.participating_as !== "Team" || d.team_name.trim().length > 0,
+      { message: "Team name required", path: ["team_name"] },
+    )
+    .refine((d: { linkedin_url: string; website_url: string }) => d.linkedin_url !== "" || d.website_url !== "", {
+      message: "Add a LinkedIn profile or personal website so we can verify you",
+      path: ["linkedin_url"],
+    });
+
+// Public pre-event registration. Lighter than the project submission schema —
+// this just builds the participant list.
+export const registrationSchema = refineRegistration(z.object(registrationFields));
+
+/**
+ * The registration rules for an event: the same, except that questions the
+ * organizer has switched off are not required.
+ */
+export function registrationSchemaFor(hidden: ReadonlySet<string>) {
+  const optional = z.string().trim().optional().default("");
+  const relaxed = Object.fromEntries(
+    Object.keys(registrationFields)
+      .filter((k) => hidden.has(k))
+      .map((k) => [k, optional]),
+  );
+  return refineRegistration(z.object({ ...registrationFields, ...relaxed })) as unknown as typeof registrationSchema;
+}
 
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 

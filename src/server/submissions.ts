@@ -17,12 +17,13 @@ export type SubmitOutcome =
 export async function createSubmission(
   event: EventRow,
   input: SubmissionInput,
+  custom: Record<string, string> = {},
 ): Promise<SubmitOutcome> {
   if (!submissionsAccepting(event)) return { ok: false, reason: "closed" };
   try {
     const [row] = await db()
       .insert(submissions)
-      .values({ ...input, event_id: event.id, is_submission_complete: true })
+      .values({ ...input, custom, event_id: event.id, is_submission_complete: true })
       .returning({ id: submissions.id });
     return { ok: true, id: row.id };
   } catch (e) {
@@ -40,12 +41,13 @@ export async function updateSubmission(
   event: EventRow,
   id: string,
   input: SubmissionInput,
+  custom: Record<string, string> = {},
 ): Promise<SubmitOutcome> {
   if (!submissionsAccepting(event)) return { ok: false, reason: "closed" };
   try {
     const [row] = await db()
       .update(submissions)
-      .set({ ...input, updated_at: new Date() })
+      .set({ ...input, custom, updated_at: new Date() })
       .where(and(eq(submissions.event_id, event.id), eq(submissions.id, id)))
       .returning({ id: submissions.id });
     return row ? { ok: true, id: row.id } : { ok: false, reason: "missing" };
@@ -60,7 +62,7 @@ export async function getSubmissionForEdit(
   event: EventRow,
   id: string,
   fields: readonly string[],
-): Promise<Record<string, string> | null> {
+): Promise<{ values: Record<string, string>; custom: Record<string, string> } | null> {
   const [row] = await db()
     .select()
     .from(submissions)
@@ -72,7 +74,7 @@ export async function getSubmissionForEdit(
     const v = (row as Record<string, unknown>)[f];
     if (v != null && v !== "") out[f] = String(v);
   }
-  return out;
+  return { values: out, custom: row.custom };
 }
 
 /** Everything, contact details included, for the admin panel. */

@@ -350,6 +350,7 @@ edited there and takes effect when you press Save:
 | Basics | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size. |
 | Look | The accent colour used across the site, and your own logo in place of the Dua mark. |
 | Judging | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. |
+| Questions | Switch off built-in questions your event doesn't need, and add your own to the registration and submission forms: short or long text, pick one, pick any, or a link. Choose which answers judges see. |
 | Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on. |
 | Homepage | The introduction, highlight cards, an example problem per track, and the questions and answers. |
 
@@ -397,7 +398,7 @@ tests beside them run against a real database.
 | Who | Can |
 | --- | --- |
 | Public | Register and submit while the admin has those forms open. Edit their own submission through its private link. |
-| Judges | See complete, unhidden submissions once judging opens, without any contact details. Read and write only their own scores and conflicts. See panel averages and anonymous notes once results open. |
+| Judges | See complete, unhidden submissions once judging opens, without any contact details. Answers to your own questions reach them only where you tick "Show the answer to judges". Read and write only their own scores and conflicts. See panel averages and anonymous notes once results open. |
 | Mentors | See what judges see. Never score. |
 | Admins | See everything, including contact details. Preview results at any time. |
 | Admins with the viewer role | See everything admins see. Change nothing. |
@@ -416,8 +417,8 @@ to `npm run db:migrate && npm run build`.
 
 ## Roadmap
 
-1. **More in the admin panel.** Custom form fields, and more than one event
-   per deployment (the database is already built for it).
+1. **More than one event per deployment.** The database is already built for
+   it; what's missing is choosing and creating events in the admin panel.
 2. **One-command setup.** A container image for the app, alongside the
    database one.
 

@@ -7,7 +7,14 @@
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/components/event-context";
-import { type Criterion, type EventSettings } from "@/lib/event-settings";
+import {
+  CUSTOM_FIELD_TYPES,
+  HIDEABLE,
+  type Criterion,
+  type CustomField,
+  type EventSettings,
+  type FormName,
+} from "@/lib/event-settings";
 import { saveSettings, uploadCampaignImage } from "./actions";
 
 type ListKey = {
@@ -371,6 +378,110 @@ export function EventPanel({
         )}
       </Section>
 
+      <Section
+        title="Questions"
+        hint={`${draft.customFields.registration.length + draft.customFields.submission.length} of your own · ${draft.hidden.registration.length + draft.hidden.submission.length} switched off`}
+      >
+        <p className="text-[0.7rem] text-dust">
+          Switch off built-in questions your event doesn&apos;t need, and add your own. Names,
+          emails and the project&apos;s title and description are always asked.
+        </p>
+        {(["registration", "submission"] as FormName[]).map((form) => (
+          <div key={form} className="mt-5" data-questions={form}>
+            <div className="field-label">
+              {form === "registration" ? "Registration form" : "Submission form"}
+            </div>
+            <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              {HIDEABLE[form].map((h) => (
+                <label key={h.id} className="flex items-center gap-2 text-sm text-bone">
+                  <input
+                    type="checkbox"
+                    data-ask={h.id}
+                    checked={!draft.hidden[form].includes(h.id)}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      set("hidden", {
+                        ...draft.hidden,
+                        [form]: e.target.checked
+                          ? draft.hidden[form].filter((id) => id !== h.id)
+                          : [...draft.hidden[form], h.id],
+                      })
+                    }
+                  />
+                  Ask: {h.label}
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 text-xs text-dust">Your own questions</div>
+            <Rows<CustomField>
+              items={draft.customFields[form]}
+              disabled={disabled}
+              max={30}
+              addLabel="+ Add a question"
+              blank={{ key: "", label: "", type: "text", required: false, options: [], help: "", showToJudges: false }}
+              onChange={(next) =>
+                set("customFields", {
+                  ...draft.customFields,
+                  // A question's id follows its wording until it's first saved;
+                  // after that it stays put so earlier answers keep their place.
+                  [form]: next.map((f, i) =>
+                    saved.customFields[form].some((s) => s.key === f.key && f.key !== "")
+                      ? f
+                      : { ...f, key: uniqueFieldKey(slug(f.label), next, i) },
+                  ),
+                })
+              }
+              render={(f, edit) => (
+                <div className="grid gap-2">
+                  <div className="grid gap-2 md:grid-cols-[1fr_12rem]">
+                    {text("Question", f.label, (v) => edit({ label: v }))}
+                    <label className="block">
+                      <span className="field-label">Answer type</span>
+                      <select
+                        className="field-input mt-1"
+                        value={f.type}
+                        disabled={disabled}
+                        onChange={(e) => edit({ type: e.target.value as CustomField["type"] })}
+                      >
+                        {CUSTOM_FIELD_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {TYPE_LABELS[t]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  {(f.type === "select" || f.type === "checkboxes") &&
+                    text("Options", f.options.join("\n"), (v) => edit({ options: v.split("\n") }), {
+                      area: 3,
+                      hint: "One per line.",
+                    })}
+                  {text("Help text", f.help, (v) => edit({ help: v }), { hint: "Optional. Shown under the question." })}
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-bone">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={f.required} disabled={disabled} onChange={(e) => edit({ required: e.target.checked })} />
+                      Required
+                    </label>
+                    {form === "submission" && (
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" checked={f.showToJudges} disabled={disabled} onChange={(e) => edit({ showToJudges: e.target.checked })} />
+                        Show the answer to judges
+                      </label>
+                    )}
+                  </div>
+                  {form === "submission" && f.showToJudges && (
+                    <p className="text-[0.7rem] text-dust">
+                      Don&apos;t ask for contact details in a question judges can see.
+                    </p>
+                  )}
+                </div>
+              )}
+            />
+          </div>
+        ))}
+      </Section>
+
       <Section title="Form options" hint="The choices offered in dropdowns and checklists">
         <p className="mb-3 text-[0.7rem] text-dust">One option per line.</p>
         <div className="grid gap-4 md:grid-cols-2">
@@ -472,6 +583,20 @@ export function EventPanel({
       )}
     </div>
   );
+}
+
+const TYPE_LABELS: Record<CustomField["type"], string> = {
+  text: "Short text",
+  textarea: "Long text",
+  select: "Pick one",
+  checkboxes: "Pick any",
+  url: "Link",
+};
+
+function uniqueFieldKey(base: string, fields: CustomField[], self: number): string {
+  let key = base === "criterion" ? "question" : base;
+  for (let n = 2; fields.some((f, j) => j !== self && f.key === key); n++) key = `${base.slice(0, 27)}_${n}`;
+  return key;
 }
 
 function uniqueKey(base: string, criteria: Criterion[], self: number): string {

@@ -27,8 +27,13 @@ export default async function EditSubmissionPage({
     valid && (await getPhase()) === "submissions" && (await getSubmissionsOpen());
 
   let initial: Record<string, string> | null = null;
+  let initialCustom: Record<string, string> = {};
   if (valid && open) {
-    initial = await getSubmissionForEdit(await getCurrentEvent(), id, FORM_FIELDS);
+    const saved = await getSubmissionForEdit(await getCurrentEvent(), id, FORM_FIELDS);
+    if (saved) {
+      initial = saved.values;
+      initialCustom = saved.custom;
+    }
   }
 
   const problem = !valid
@@ -114,7 +119,7 @@ export default async function EditSubmissionPage({
               </p>
             </div>
 
-            <SubmitForm initial={initial} edit={{ id, token: t }} />
+            <SubmitForm initial={initial} initialCustom={initialCustom} edit={{ id, token: t }} />
           </>
         )}
       </PageShell>

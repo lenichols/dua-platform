@@ -31,6 +31,8 @@ const LABELS: Record<string, string> = {
   topN: "Places in the final ranking",
   rubric: "Rubric",
   theme: "Look",
+  customFields: "Your own questions",
+  hidden: "Questions",
   tracks: "Challenge tracks",
   problemBriefs: "Problem briefs",
   home: "Homepage",

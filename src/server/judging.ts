@@ -5,6 +5,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { recusals, results_locks, scores, submissions, type LockedPlace } from "@/db/schema";
+import { customAnswerRows } from "@/lib/custom-fields";
 import { SCALE_MAX, totalScore, type Evidence, type Marks, type Rubric } from "@/lib/rubric";
 import type { EventRow } from "./event";
 import {
@@ -134,6 +135,25 @@ export async function getSubmissionForViewer(
   if (!row) return null;
   if (!canSeeThisSubmission(viewer, event.phase, row)) return null;
   return toJudgeVisible(row);
+}
+
+/**
+ * Answers to the organizer's own questions, for the submission page. Only
+ * questions marked "show to judges" are included, whoever is looking, so
+ * this never carries anything the organizer hasn't cleared for the panel.
+ */
+export async function getAnswersForViewer(
+  event: EventRow,
+  viewer: Viewer,
+  submissionId: string,
+): Promise<{ key: string; label: string; value: string; type: string }[]> {
+  if (!(await getSubmissionForViewer(event, viewer, submissionId))) return [];
+  const [row] = await db()
+    .select({ custom: submissions.custom })
+    .from(submissions)
+    .where(and(eq(submissions.event_id, event.id), eq(submissions.id, submissionId)))
+    .limit(1);
+  return customAnswerRows(event.settings.customFields.submission, row?.custom, { judgesOnly: true });
 }
 
 // ── a judge's own scores and conflicts ───────────────────────────

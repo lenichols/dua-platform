@@ -104,6 +104,8 @@ export const registrations = pgTable(
     website_url: text("website_url"),
     heard_about: text("heard_about"),
     referred_by: text("referred_by"),
+    /** Answers to questions the organizer added, by question key. */
+    custom: jsonb("custom").$type<Record<string, string>>().notNull().default({}),
     unsubscribed_at: timestamp("unsubscribed_at", { withTimezone: true }),
     created_at: createdAt(),
   },
@@ -200,6 +202,9 @@ export const submissions = pgTable(
 
     mentor_name: text("mentor_name"),
     mentor_linkedin_url: text("mentor_linkedin_url"),
+
+    /** Answers to questions the organizer added, by question key. */
+    custom: jsonb("custom").$type<Record<string, string>>().notNull().default({}),
 
     // Organizer controls
     is_submission_complete: boolean("is_submission_complete").notNull().default(true),

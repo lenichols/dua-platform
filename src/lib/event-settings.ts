@@ -70,6 +70,94 @@ export const rubricSchema = z
 export type Criterion = z.infer<typeof criterionSchema>;
 export type Rubric = z.infer<typeof rubricSchema>;
 
+// ── questions on the forms ───────────────────────────────────────
+
+export const CUSTOM_FIELD_TYPES = ["text", "textarea", "select", "checkboxes", "url"] as const;
+export type CustomFieldType = (typeof CUSTOM_FIELD_TYPES)[number];
+
+/** A question an organizer has added to a form. */
+export const customFieldSchema = z
+  .object({
+    /** Short id the answer is stored under. Never shown. */
+    key: z
+      .string()
+      .trim()
+      .regex(/^[a-z][a-z0-9_]{0,30}$/, "Use lowercase letters, numbers and underscores"),
+    label: required(160),
+    type: z.enum(CUSTOM_FIELD_TYPES),
+    required: z.boolean(),
+    /** The choices, for "select" and "checkboxes". */
+    options: list(40),
+    /** A line of help shown under the question. */
+    help: line(300),
+    /**
+     * Whether judges and mentors see the answer. Off by default: don't turn
+     * it on for anything that identifies or contacts a person.
+     */
+    showToJudges: z.boolean(),
+  })
+  .superRefine((f, ctx) => {
+    if ((f.type === "select" || f.type === "checkboxes") && f.options.length === 0)
+      ctx.addIssue({ code: "custom", message: `"${f.label}" needs at least one option`, path: ["options"] });
+  });
+
+export type CustomField = z.infer<typeof customFieldSchema>;
+
+const customFieldList = z
+  .array(customFieldSchema)
+  .max(30)
+  .superRefine((fields, ctx) => {
+    const keys = fields.map((f) => f.key);
+    if (new Set(keys).size !== keys.length)
+      ctx.addIssue({ code: "custom", message: "Each question needs its own key" });
+  });
+
+/**
+ * Built-in questions an organizer can switch off. Each entry lists the
+ * columns it covers; a hidden question is neither shown nor required.
+ */
+export const HIDEABLE = {
+  submission: [
+    { id: "mentor", label: "Mentor", columns: ["mentor_name", "mentor_linkedin_url"] },
+    { id: "problem_brief", label: "Problem brief", columns: ["problem_brief"] },
+    { id: "customer_type", label: "Who is it for?", columns: ["customer_type"] },
+    { id: "region", label: "Your region", columns: ["region"] },
+    { id: "focus_area", label: "Focus area", columns: ["focus_area"] },
+    { id: "solution_stage", label: "Solution stage", columns: ["solution_stage"] },
+    { id: "area_of_specification", label: "Area of specification", columns: ["area_of_specification"] },
+    { id: "applies_ai", label: "Does it apply AI?", columns: ["applies_ai"] },
+    { id: "impact_focus", label: "Impact focus", columns: ["impact_focus"] },
+    { id: "target_region", label: "Target region / market", columns: ["target_region"] },
+    { id: "core_problem", label: "Core problem", columns: ["core_problem"] },
+    {
+      id: "materials",
+      label: "Pitch deck, one-page summary and disclosure",
+      columns: ["pitch_deck_url", "summary_url", "disclosure_statement"],
+    },
+    { id: "announcement", label: "LinkedIn announcement", columns: ["linkedin_post_url"] },
+  ],
+  registration: [
+    { id: "primary_interest", label: "Primary interest (track)", columns: ["primary_interest"] },
+    { id: "experience_level", label: "Experience level", columns: ["experience_level"] },
+    { id: "organization", label: "Organization", columns: ["organization"] },
+    { id: "partner_org", label: "Partner organizations", columns: ["partner_org"] },
+    { id: "heard_about", label: "How did you hear about us", columns: ["heard_about"] },
+    { id: "referred_by", label: "Referred by", columns: ["referred_by"] },
+  ],
+} as const;
+
+export type FormName = keyof typeof HIDEABLE;
+
+const hideableIds = (form: FormName) => HIDEABLE[form].map((h) => h.id) as string[];
+const hiddenList = (form: FormName) =>
+  z.array(z.string()).transform((ids) => [...new Set(ids)].filter((id) => hideableIds(form).includes(id)));
+
+/** The columns a form should neither show nor require. */
+export function hiddenColumns(settings: Pick<EventSettings, "hidden">, form: FormName): Set<string> {
+  const off = new Set<string>(settings.hidden[form]);
+  return new Set(HIDEABLE[form].filter((h) => off.has(h.id)).flatMap((h) => h.columns as readonly string[]));
+}
+
 // ── the whole event ──────────────────────────────────────────────
 
 export const settingsSchema = z.object({
@@ -115,6 +203,12 @@ export const settingsSchema = z.object({
   /** How many places the final ranking locks. */
   topN: z.coerce.number().int().min(1).max(20),
   rubric: rubricSchema,
+
+  // Questions on the forms
+  /** Questions added by the organizer. */
+  customFields: z.object({ registration: customFieldList, submission: customFieldList }),
+  /** Built-in questions switched off, by id: see HIDEABLE. */
+  hidden: z.object({ registration: hiddenList("registration"), submission: hiddenList("submission") }),
 
   // Option lists on the forms
   tracks: list(),
@@ -240,6 +334,9 @@ export const DEFAULT_SETTINGS: EventSettings = {
 
   topN: 6,
   rubric: DEFAULT_RUBRIC,
+
+  customFields: { registration: [], submission: [] },
+  hidden: { registration: [], submission: [] },
 
   tracks: ["Web & Mobile Apps", "AI & Data", "Hardware & Devices", "Developer Tools", "Social Good"],
   problemBriefs: [

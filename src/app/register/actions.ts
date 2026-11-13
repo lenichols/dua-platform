@@ -1,6 +1,8 @@
 "use server";
 
-import { registrationSchema } from "@/lib/registration-schema";
+import { parseCustomAnswers } from "@/lib/custom-fields";
+import { hiddenColumns } from "@/lib/event-settings";
+import { registrationSchemaFor } from "@/lib/registration-schema";
 import { getCurrentEvent } from "@/server/event";
 import { registrationAccepting } from "@/server/policy";
 import { createRegistration } from "@/server/registrations";
@@ -23,20 +25,22 @@ export async function registerParticipant(
   if (!registrationAccepting(event)) return { ok: false, error: CLOSED };
 
   const raw = Object.fromEntries(form.entries());
-  const parsed = registrationSchema.safeParse(raw);
-  if (!parsed.success) {
+  // Questions the organizer switched off aren't required; ones they added are checked too.
+  const parsed = registrationSchemaFor(hiddenColumns(event.settings, "registration")).safeParse(raw);
+  const custom = parseCustomAnswers(event.settings.customFields.registration, form);
+  if (!parsed.success || !custom.ok) {
     return {
       ok: false,
       error: "Please fix the errors below.",
-      fieldErrors: parsed.error.flatten().fieldErrors as Record<
-        string,
-        string[]
-      >,
+      fieldErrors: {
+        ...(parsed.success ? {} : (parsed.error.flatten().fieldErrors as Record<string, string[]>)),
+        ...(custom.ok ? {} : custom.fieldErrors),
+      },
     };
   }
 
   // Personal details: only admins can read these back.
-  const result = await createRegistration(event, "participant", parsed.data);
+  const result = await createRegistration(event, "participant", { ...parsed.data, custom: custom.values });
   if (result.ok) return { ok: true, id: result.id };
   return { ok: false, error: result.reason === "duplicate" ? DUPLICATE : CLOSED };
 }

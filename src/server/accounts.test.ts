@@ -79,6 +79,13 @@ describe("registration", () => {
     await expect(listRegistrations(event, PUBLIC)).rejects.toBeInstanceOf(NotAllowed);
   });
 
+  it("stores answers to the organizer's own questions", async () => {
+    const event = await makeEvent({ registration_open: true });
+    await createRegistration(event, "participant", { ...person(), custom: { tshirt: "M" } });
+    const [row] = await listRegistrations(event, ADMIN);
+    expect(row.custom).toEqual({ tshirt: "M" });
+  });
+
   it("can be unsubscribed once", async () => {
     const event = await makeEvent({ registration_open: true });
     const r = await createRegistration(event, "participant", person());
@@ -148,7 +155,16 @@ describe("submissions", () => {
     expect(row.project_name).toBe("Notebook 2");
     expect(row.hidden_from_judges).toBe(true);
     expect(row.review_note).toBe("check the video");
-    expect((await getSubmissionForEdit(event, id, ["project_name"]))?.project_name).toBe("Notebook 2");
+    expect((await getSubmissionForEdit(event, id, ["project_name"]))?.values.project_name).toBe("Notebook 2");
+  });
+
+  it("store answers to the organizer's own questions, and replace them on edit", async () => {
+    const event = await makeEvent({ submissions_open: true });
+    const created = await createSubmission(event, submission("Notebook"), { stack: "Rust" });
+    const id = created.ok ? created.id : "";
+    expect((await getSubmissionForEdit(event, id, ["project_name"]))?.custom).toEqual({ stack: "Rust" });
+    await updateSubmission(event, id, submission("Notebook"), { stack: "Go" });
+    expect((await listSubmissionsForAdmin(event.id))[0].custom).toEqual({ stack: "Go" });
   });
 
   it("can't be edited once submissions close, or from another event", async () => {

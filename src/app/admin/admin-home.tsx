@@ -46,6 +46,7 @@ import {
 } from "./actions";
 import { EventPanel } from "./event-panel";
 import { useEvent } from "@/components/event-context";
+import { customAnswerRows } from "@/lib/custom-fields";
 
 type Phase = "submissions" | "judging" | "results";
 
@@ -90,6 +91,7 @@ type Submission = {
   hidden_from_judges: boolean | null;
   created_at: string;
   edit_url?: string;
+  custom?: Record<string, string> | null;
 } & Partial<Record<SubmissionDetailField, string | number | null>>;
 
 // Shown in the submission modal. Loaded with the list so it opens instantly.
@@ -154,6 +156,7 @@ type Registration = {
   website_url: string | null;
   heard_about: string | null;
   referred_by: string | null;
+  custom?: Record<string, string> | null;
   role: "participant" | "mentor" | null;
   created_at: string;
 };
@@ -1833,6 +1836,8 @@ function RegistrationsPanel({
     safePage * REG_PAGE_SIZE,
   );
 
+  const customQuestions = useEvent().customFields.registration;
+
   function exportCsv() {
     const cols: { k: keyof Registration; h: string }[] = [
       { k: "full_name", h: "Name" },
@@ -1854,12 +1859,20 @@ function RegistrationsPanel({
       { k: "created_at", h: "Registered At" },
     ];
     const esc = (v: unknown) => {
-      const s = v == null ? "" : String(v);
+      let s = v == null ? "" : String(v);
+      // A cell starting with one of these would run as a formula when the
+      // file is opened in a spreadsheet; a leading apostrophe makes it text.
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = [
-      cols.map((c) => c.h).join(","),
-      ...sorted.map((r) => cols.map((c) => esc(r[c.k])).join(",")),
+      [...cols.map((c) => c.h), ...customQuestions.map((q) => q.label)].map(esc).join(","),
+      ...sorted.map((r) =>
+        [
+          ...cols.map((c) => esc(r[c.k])),
+          ...customQuestions.map((q) => esc(r.custom?.[q.key])),
+        ].join(","),
+      ),
     ];
     const blob = new Blob([lines.join("\n")], {
       type: "text/csv;charset=utf-8;",
@@ -2166,6 +2179,24 @@ function RoleBadge({
   );
 }
 
+/** Answers to the organizer's own questions, in the form's order. */
+function CustomAnswers({
+  form,
+  answers,
+}: {
+  form: "registration" | "submission";
+  answers: Record<string, string> | null | undefined;
+}) {
+  const fields = useEvent().customFields[form];
+  return (
+    <>
+      {customAnswerRows(fields, answers).map((a) => (
+        <Detail key={a.key} label={a.label} value={a.value} />
+      ))}
+    </>
+  );
+}
+
 function Detail({ label, value }: { label: string; value: ReactNode }) {
   if (value == null || value === "") return null;
   return (
@@ -2293,6 +2324,7 @@ function RegistrationDetail({
         )}
         <Detail label="Heard via" value={r.heard_about} />
         <Detail label="Referred by" value={r.referred_by} />
+        <CustomAnswers form="registration" answers={r.custom} />
         <Detail label="Registered" value={registered} />
       </div>
 
@@ -2666,6 +2698,7 @@ function SubmissionModal({
           </section>
 
           {longText("Core problem", s.core_problem)}
+          <CustomAnswers form="submission" answers={s.custom} />
           {longText("Problem statement", s.problem_statement)}
           {longText("Description", s.project_description)}
           {longText("Disclosure: before vs. during the event", s.disclosure_statement)}

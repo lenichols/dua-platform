@@ -17,6 +17,7 @@ import type { EventRow } from "./event";
 import {
   JUDGE_VISIBLE_COLUMNS,
   declareConflict,
+  getAnswersForViewer,
   getOwnProgress,
   getOwnRecusal,
   getOwnScore,
@@ -329,5 +330,37 @@ describe("an event with its own rubric and number of places", () => {
 
     const notes = await listJudgeNotes(inPhase(custom, "results"), viewer, strong);
     expect(notes[0].lines.map((l) => l.criterion)).toEqual(["Craft", "Story"]);
+  });
+});
+
+describe("answers to the organizer's own questions", () => {
+  const q = (key: string, showToJudges: boolean) => ({
+    key,
+    label: key,
+    type: "text" as const,
+    required: false,
+    options: [],
+    help: "",
+    showToJudges,
+  });
+
+  it("reach judges only for questions marked for them, and never before judging", async () => {
+    const custom = await makeEvent({
+      phase: "judging",
+      settings: { customFields: { registration: [], submission: [q("stack", true), q("backup_phone", false)] } },
+    });
+    const sub = await makeSubmission(custom, { custom: { stack: "Rust", backup_phone: "+1 555 0199" } });
+    const hiddenSub = await makeSubmission(custom, { hidden_from_judges: true, custom: { stack: "Go" } });
+    const judge = await makeJudge(custom);
+    const mentor = await makeJudge(custom, "mentor");
+
+    for (const viewer of [judge.viewer, mentor.viewer, ADMIN]) {
+      const rows = await getAnswersForViewer(custom, viewer, sub);
+      expect(rows.map((r) => [r.key, r.value])).toEqual([["stack", "Rust"]]);
+      expect(JSON.stringify(rows)).not.toContain("555 0199");
+    }
+    expect(await getAnswersForViewer(custom, judge.viewer, hiddenSub)).toEqual([]);
+    expect(await getAnswersForViewer(inPhase(custom, "submissions"), judge.viewer, sub)).toEqual([]);
+    expect(await getAnswersForViewer(custom, PUBLIC, sub)).toEqual([]);
   });
 });

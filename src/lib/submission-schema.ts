@@ -170,3 +170,17 @@ export const submissionSchema = z.object({
 });
 
 export type SubmissionInput = z.infer<typeof submissionSchema>;
+
+/**
+ * The submission rules for an event: the same as above, except that
+ * questions the organizer has switched off are not required.
+ */
+export function submissionSchemaFor(hidden: ReadonlySet<string>) {
+  const optional = z.string().trim().optional().default("");
+  const relaxed = Object.fromEntries(
+    Object.keys(submissionSchema.shape)
+      .filter((k) => hidden.has(k))
+      .map((k) => [k, optional]),
+  );
+  return submissionSchema.extend(relaxed) as unknown as typeof submissionSchema;
+}

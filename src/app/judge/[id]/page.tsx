@@ -4,6 +4,7 @@ import { Breadcrumbs, HeaderBar, PageShell } from "@/components/shell";
 import { getAdminSession } from "@/app/admin/auth";
 import { getCurrentEvent } from "@/server/event";
 import {
+  getAnswersForViewer,
   getOwnRecusal,
   getOwnScore,
   getSubmissionForViewer,
@@ -52,6 +53,8 @@ export default async function JudgeSubmissionPage({
   // shown anonymously as "Judge A/B/C…" and without the scores, to keep the
   // "aggregates only" rule.
   const judgeNotes = await listJudgeNotes(event, viewer, id);
+  // The organizer's own questions, where they chose to show the answer to judges.
+  const answers = await getAnswersForViewer(event, viewer, id);
 
   const crumbs = judge
     ? [
@@ -205,6 +208,23 @@ export default async function JudgeSubmissionPage({
                 <p className="mt-1 text-sm">{sub.technologies_used}</p>
               </div>
             )}
+            {answers.map((a) => (
+              <div key={a.key} data-custom-answer={a.key}>
+                <div className="field-label">{a.label}</div>
+                {a.type === "url" && safeHref(a.value) ? (
+                  <a
+                    href={safeHref(a.value)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block break-all text-sm text-crimson underline"
+                  >
+                    {a.value}
+                  </a>
+                ) : (
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{a.value}</p>
+                )}
+              </div>
+            ))}
             {sub.disclosure_statement && (
               <div className="rounded-md border border-line bg-ink-4/60 px-3 py-2">
                 <div className="field-label">
