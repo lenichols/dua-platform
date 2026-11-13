@@ -110,6 +110,16 @@ describe("resolveSettings", () => {
   });
 });
 
+describe("the GitHub link setting", () => {
+  it("is on by default, and a theme saved before it existed keeps its colour", () => {
+    expect(DEFAULT_SETTINGS.theme.showSourceLink).toBe(true);
+    const older = resolveSettings({ theme: { accent: "#0A7F5A", logoUrl: "" } });
+    expect(older.theme).toEqual({ accent: "#0A7F5A", logoUrl: "", showSourceLink: true });
+    const off = resolveSettings({ theme: { accent: "#0A7F5A", logoUrl: "", showSourceLink: false } });
+    expect(off.theme.showSourceLink).toBe(false);
+  });
+});
+
 describe("theme", () => {
   it("turns a hex colour into the accent and two darker shades", async () => {
     const { accentShades } = await import("./event-settings");

@@ -197,6 +197,8 @@ export const settingsSchema = z.object({
       .trim()
       .max(500)
       .refine((v) => v === "" || /^https?:\/\//i.test(v), "Use a full address starting with https://"),
+    /** Whether the header links to Dua's source code on GitHub. */
+    showSourceLink: z.boolean().default(true),
   }),
 
   // Judging
@@ -333,7 +335,7 @@ export const DEFAULT_SETTINGS: EventSettings = {
   announceUrl: "https://example.org/hackathon",
 
   // The violet from the Dua logo.
-  theme: { accent: "#662EFF", logoUrl: "" },
+  theme: { accent: "#662EFF", logoUrl: "", showSourceLink: true },
 
   topN: 6,
   rubric: DEFAULT_RUBRIC,

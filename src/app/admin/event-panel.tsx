@@ -248,6 +248,16 @@ export function EventPanel({
             )}
           </div>
         </div>
+        <label className="mt-4 flex items-center gap-2 text-sm text-bone">
+          <input
+            type="checkbox"
+            data-source-link-toggle
+            checked={draft.theme.showSourceLink}
+            disabled={disabled}
+            onChange={(e) => set("theme", { ...draft.theme, showSourceLink: e.target.checked })}
+          />
+          Show a GitHub link to Dua&apos;s source code in the header
+        </label>
       </Section>
 
       <Section title="Judging" hint={`${criteria.length} criteria · top ${draft.topN} places`}>
