@@ -1,6 +1,15 @@
 import Link from "next/link";
-import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
-import { PhaseTrack, SignInLayout } from "@/components/sign-in-layout";
+import {
+  Breadcrumbs,
+  HeaderBar,
+  PageShell,
+  SectionTitle,
+} from "@/components/shell";
+import {
+  PhaseTrack,
+  SignInLayout,
+  SignInStage,
+} from "@/components/sign-in-layout";
 import { sampleAdminLogins } from "@/server/demo";
 import { getAdminSession, type AdminSession } from "./auth";
 import { AdminSignIn } from "./sign-in";
@@ -35,11 +44,17 @@ export default async function AdminPage() {
       <HeaderBar
         rightSlot={
           session ? (
-            <Link href="/admin" className="pill hover:border-accent hover:text-accent">
+            <Link
+              href="/admin"
+              className="pill hover:border-accent hover:text-accent"
+            >
               ← Admin Home
             </Link>
           ) : (
-            <Link href="/" className="pill hover:border-accent hover:text-accent">
+            <Link
+              href="/"
+              className="pill hover:border-accent hover:text-accent"
+            >
               ← Home
             </Link>
           )
@@ -48,28 +63,33 @@ export default async function AdminPage() {
       <PageShell maxWidth="max-w-7xl">
         {!session ? (
           <div className="mx-auto max-w-5xl">
-            <Breadcrumbs
-              items={[
-                { label: "Home", href: "/" },
-                { label: "Admin" },
-              ]}
-            />
-            <SignInLayout
-              status="Organizers only"
-              title="Admin Sign In"
-              intro="Run the event from here: open and close the forms, manage judges, and publish results."
-              aside={
-                <PhaseTrack
-                  phase={event.phase}
-                  facts={[
-                    { label: "Registration", value: event.registration_open ? "Open" : "Closed" },
-                    { label: "Submission form", value: event.submissions_open ? "Open" : "Closed" },
-                  ]}
-                />
-              }
-            >
-              <AdminSignIn samples={await sampleAdminLogins()} />
-            </SignInLayout>
+            <SignInStage>
+              <Breadcrumbs
+                items={[{ label: "Home", href: "/" }, { label: "Admin" }]}
+              />
+              <SignInLayout
+                status="Organizers only"
+                title="Admin Sign In"
+                intro="Run the event from here: open and close the forms, manage judges, and publish results."
+                aside={
+                  <PhaseTrack
+                    phase={event.phase}
+                    facts={[
+                      {
+                        label: "Registration",
+                        value: event.registration_open ? "Open" : "Closed",
+                      },
+                      {
+                        label: "Submission form",
+                        value: event.submissions_open ? "Open" : "Closed",
+                      },
+                    ]}
+                  />
+                }
+              >
+                <AdminSignIn samples={await sampleAdminLogins()} />
+              </SignInLayout>
+            </SignInStage>
           </div>
         ) : (
           <AdminContent session={session} />
@@ -81,19 +101,22 @@ export default async function AdminPage() {
 
 async function AdminContent({ session }: { session: AdminSession }) {
   const event = await getCurrentEvent();
-  const [judges, subs, progress, scores, lock, registrations, recusals] = await Promise.all([
-    listJudges(event.id),
-    // Everything the submission modal shows, so it opens instantly.
-    listSubmissionsForAdmin(event.id),
-    judgingProgress(event.id),
-    scoreActivity(event.id),
-    getResultsLockForAdmin(event.id),
-    listRegistrations(event, { kind: "admin", role: session.role }),
-    listRecusals(event.id),
-  ]);
+  const [judges, subs, progress, scores, lock, registrations, recusals] =
+    await Promise.all([
+      listJudges(event.id),
+      // Everything the submission modal shows, so it opens instantly.
+      listSubmissionsForAdmin(event.id),
+      judgingProgress(event.id),
+      scoreActivity(event.id),
+      getResultsLockForAdmin(event.id),
+      listRegistrations(event, { kind: "admin", role: session.role }),
+      listRecusals(event.id),
+    ]);
 
   // Only owners manage the admin roster, so only they pay for the query.
-  const teamResult = canManageTeam(session.role) ? await listAdminUsers() : null;
+  const teamResult = canManageTeam(session.role)
+    ? await listAdminUsers()
+    : null;
   const campaignResult = await listCampaigns(event.id);
 
   // Build per-judge voting progress

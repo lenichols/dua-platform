@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 /**
  * The sign-in pages' layout: what you're signing in to on the left, the form
- * on the right. Stacks on a phone.
+ * on the right, each centred in its half. Stacks on a phone.
  */
 export function SignInLayout({
   status,
@@ -22,13 +22,13 @@ export function SignInLayout({
 }) {
   return (
     <div className="grid overflow-hidden rounded-2xl border border-line bg-ink-3 md:grid-cols-[1.15fr_1fr]">
-      <div className="border-b border-line bg-accent/[0.06] p-7 md:border-b-0 md:border-r md:p-10">
+      <div className="flex flex-col justify-center border-b border-line bg-accent/[0.06] p-7 md:border-b-0 md:border-r md:p-10">
         {status && <p className="text-sm font-bold text-accent">{status}</p>}
         <h1 className="hex-title mt-1 text-3xl md:text-4xl">{title}</h1>
         <p className="mt-3 max-w-md text-dust">{intro}</p>
         {aside && <div className="mt-8">{aside}</div>}
       </div>
-      <div className="p-7 md:p-10">{children}</div>
+      <div className="flex flex-col justify-center p-7 md:p-10">{children}</div>
     </div>
   );
 }
@@ -107,5 +107,15 @@ export function PhaseTrack({
         ))}
       </dl>
     </div>
+  );
+}
+
+/**
+ * Centres a sign-in panel in the space under the header, so it doesn't sit
+ * high on a tall screen. On a short screen it simply starts at the top.
+ */
+export function SignInStage({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-[calc(100vh-13rem)] flex-col justify-center">{children}</div>
   );
 }
