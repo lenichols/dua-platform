@@ -1,11 +1,10 @@
 # Dua Contributor License Agreement
 
-> **Draft.** This text has not been reviewed by a lawyer. Have it reviewed,
-> and replace `[PROJECT OWNER]` with the legal name of the person or company
-> that owns the project, before accepting outside contributions.
+> **Draft.** This text has not been reviewed by a lawyer. Have it reviewed
+> before accepting outside contributions.
 
 Thank you for contributing to Dua ("the Project"), which is owned and managed
-by `[PROJECT OWNER]` ("the Owner"). This agreement sets out the terms under
+by NDM Advisory ("the Owner"). This agreement sets out the terms under
 which you contribute. It protects you, the Owner, and the people who use Dua.
 
 By commenting "I have read the CLA Document and I hereby sign the CLA" on a

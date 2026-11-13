@@ -2,7 +2,6 @@ name: CLA
 
 # Asks each new contributor to sign CLA.md by commenting on their pull
 # request, and records the signature on the cla-signatures branch.
-# Change OWNER/REPO below to this repository before the first pull request.
 
 on:
   issue_comment:
@@ -27,6 +26,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: signatures/cla.json
-          path-to-document: https://github.com/OWNER/REPO/blob/main/CLA.md
+          path-to-document: https://github.com/lenichols/dua-platform/blob/main/CLA.md
           branch: cla-signatures
           allowlist: dependabot[bot],github-actions[bot]
