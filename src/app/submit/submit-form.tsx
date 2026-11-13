@@ -804,23 +804,25 @@ export function SubmitForm({
             </div>
           )}
 
-          <div>
-            <label className="field-label">
-              Problem Statement *{" "}
-              <span className="text-dust">(max 250 words)</span>
-            </label>
-            <textarea
-              name="problem_statement"
-              onInput={trackWords}
-              required
-              rows={5}
-              minLength={30}
-              placeholder="Explain the problem you chose: who has it, why it persists, and why it matters."
-              className="field-input mt-1"
-            />
-            {wordCount("problem_statement")}
-            {err("problem_statement")}
-          </div>
+          {shown("problem_statement") && (
+            <div>
+              <label className="field-label">
+                Problem Statement *{" "}
+                <span className="text-dust">(max 250 words)</span>
+              </label>
+              <textarea
+                name="problem_statement"
+                onInput={trackWords}
+                required
+                rows={5}
+                minLength={30}
+                placeholder="Explain the problem you chose: who has it, why it persists, and why it matters."
+                className="field-input mt-1"
+              />
+              {wordCount("problem_statement")}
+              {err("problem_statement")}
+            </div>
+          )}
 
           <div>
             <label className="field-label">
@@ -1136,9 +1138,7 @@ function ConfirmModal({
     if (!v || v.trim() === "") return null;
     return (
       <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-        <dt className="text-[0.7rem] text-dust">
-          {label}
-        </dt>
+        <dt className="text-[0.7rem] text-dust">{label}</dt>
         <dd className="text-sm text-bone break-words">{v}</dd>
       </div>
     );
@@ -1171,9 +1171,7 @@ function ConfirmModal({
 
         <div className="max-h-[50vh] space-y-4 overflow-y-auto rounded-md border border-line bg-ink-4 p-4">
           <section>
-            <div className="mb-2 text-xs font-bold text-accent">
-              Submitter
-            </div>
+            <div className="mb-2 text-xs font-bold text-accent">Submitter</div>
             <dl className="divide-y divide-line/60">
               {row("member1_name", "Name")}
               {row("member1_email", "Email")}
@@ -1196,9 +1194,7 @@ function ConfirmModal({
               {row("team_size", "Size")}
               {members.length > 0 && (
                 <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-                  <dt className="text-[0.7rem] text-dust">
-                    Members
-                  </dt>
+                  <dt className="text-[0.7rem] text-dust">Members</dt>
                   <dd className="text-sm text-bone">{members.join(", ")}</dd>
                 </div>
               )}
@@ -1206,9 +1202,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 text-xs font-bold text-accent">
-              Mentor
-            </div>
+            <div className="mb-2 text-xs font-bold text-accent">Mentor</div>
             <dl className="divide-y divide-line/60">
               {row("mentor_name", "Name")}
               {row("mentor_linkedin_url", "LinkedIn")}
@@ -1216,9 +1210,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 text-xs font-bold text-accent">
-              Project
-            </div>
+            <div className="mb-2 text-xs font-bold text-accent">Project</div>
             <dl className="divide-y divide-line/60">
               {row("project_name", "Name")}
               {row("challenge_track", "Track")}
@@ -1250,9 +1242,7 @@ function ConfirmModal({
               {row("demo_video_url", "Video URL")}
               {row("demo_video_short_url", "Pitch Video")}
               <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-                <dt className="text-[0.7rem] text-dust">
-                  All Members
-                </dt>
+                <dt className="text-[0.7rem] text-dust">All Members</dt>
                 <dd className="text-sm">
                   {values["all_members_in_video"] === "checked" ? (
                     <span className="text-jade">✓ Confirmed in video</span>

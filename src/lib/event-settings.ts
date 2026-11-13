@@ -120,6 +120,7 @@ export const HIDEABLE = {
   submission: [
     { id: "mentor", label: "Mentor", columns: ["mentor_name", "mentor_linkedin_url"] },
     { id: "problem_brief", label: "Problem brief", columns: ["problem_brief"] },
+    { id: "problem_statement", label: "Problem statement", columns: ["problem_statement"] },
     { id: "customer_type", label: "Who is it for?", columns: ["customer_type"] },
     { id: "region", label: "Your region", columns: ["region"] },
     { id: "focus_area", label: "Focus area", columns: ["focus_area"] },

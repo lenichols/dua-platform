@@ -178,4 +178,30 @@ describe("form rules with questions switched off", () => {
     expect(relaxed.success && relaxed.data.linkedin_post_url).toBe("");
     expect(submissionSchemaFor(all).safeParse({ ...entry, project_name: "" }).success).toBe(false);
   });
+
+  it("let an event drop the problem statement", () => {
+    const entry = {
+      member1_name: "Ada Example",
+      member1_email: "ada@example.org",
+      phone: "+1 555 0100",
+      country: "Canada",
+      solo_or_team: "Solo",
+      project_name: "Notebook",
+      project_category: "Notes",
+      project_description: "One place for notes that works without a connection, built in a weekend.",
+      project_description_summary: "Offline notes",
+      technologies_used: "TypeScript",
+    };
+    const everythingElseOff = new Set(
+      HIDEABLE.submission.filter((h) => h.id !== "problem_statement").flatMap((h) => [...h.columns]),
+    );
+    // Still required while the question is on…
+    expect(submissionSchemaFor(everythingElseOff).safeParse(entry).success).toBe(false);
+    // …and not once it's switched off.
+    const off = new Set([...everythingElseOff, "problem_statement"]);
+    expect(submissionSchemaFor(off).safeParse(entry).success).toBe(true);
+    expect(hiddenColumns(resolveSettings({ hidden: { registration: [], submission: ["problem_statement"] } }), "submission")).toEqual(
+      new Set(["problem_statement"]),
+    );
+  });
 });
