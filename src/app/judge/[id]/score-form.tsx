@@ -27,7 +27,8 @@ export function ScoreForm({
   existing: ExistingScore | null;
 }) {
   const router = useRouter();
-  const rubric = useEvent().rubric;
+  const { rubric, judging } = useEvent();
+  const needEvidence = judging.requireEvidence;
   const RUBRIC = rubric.criteria;
   const prior = existing;
   const [scores, setScores] = useState<Scores>(() =>
@@ -48,9 +49,9 @@ export function ScoreForm({
       setErr("Score every criterion before submitting.");
       return;
     }
-    const missing = RUBRIC.filter(
-      (c) => (evidence[c.key] ?? "").trim().length < MIN_EVIDENCE_LENGTH,
-    );
+    const missing = needEvidence
+      ? RUBRIC.filter((c) => (evidence[c.key] ?? "").trim().length < MIN_EVIDENCE_LENGTH)
+      : [];
     if (missing.length > 0) {
       setErr(
         `Write one sentence of evidence for ${missing.map((c) => c.label).join(", ")}.`,
@@ -147,10 +148,16 @@ export function ScoreForm({
               <textarea
                 id={`evidence-${c.key}`}
                 rows={2}
-                required
-                minLength={MIN_EVIDENCE_LENGTH}
+                required={needEvidence}
+                minLength={needEvidence ? MIN_EVIDENCE_LENGTH : undefined}
                 className="field-input mt-1.5 text-xs"
-                placeholder={c.example ? `Evidence: ${c.example}` : "One sentence of evidence"}
+                placeholder={
+                  c.example
+                    ? `Evidence: ${c.example}`
+                    : needEvidence
+                      ? "One sentence of evidence"
+                      : "Evidence (optional)"
+                }
                 value={evidence[ek] ?? ""}
                 onChange={(e) =>
                   setEvidence((v) => ({ ...v, [ek]: e.target.value }))
@@ -162,9 +169,10 @@ export function ScoreForm({
       </div>
 
       <p className="text-[0.68rem] text-dust">
-        One sentence of evidence per score: what the team showed, not what they
-        claimed. Evidence appears on the results page as Judge A, Judge B… —
-        never with your name.
+        {needEvidence
+          ? "One sentence of evidence per score: what the team showed, not what they claimed."
+          : "Evidence is optional: a sentence on what the team showed helps the panel."}{" "}
+        Evidence appears on the results page as Judge A, Judge B… and never with your name.
       </p>
 
       {err && (

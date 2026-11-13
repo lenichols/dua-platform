@@ -17,11 +17,30 @@ export type Viewer =
 
 export const PUBLIC: Viewer = { kind: "public" };
 
-type Switches = { phase: Phase; submissions_open: boolean; registration_open: boolean };
+type Switches = {
+  phase: Phase;
+  submissions_open: boolean;
+  registration_open: boolean;
+  /** Present on a real event; left out in simple tests, meaning "all on". */
+  settings?: { features: { registration: boolean; mentors: boolean } };
+};
 
-/** Registration and mentor sign-up: the admin switch, and only before judging. */
+/**
+ * Participant registration: the admin switch, only before judging, and only
+ * if the event uses registration at all.
+ */
 export function registrationAccepting(e: Switches): boolean {
-  return e.phase === "submissions" && e.registration_open;
+  return (
+    e.phase === "submissions" && e.registration_open && (e.settings?.features.registration ?? true)
+  );
+}
+
+/**
+ * Mentor sign-up: the same admin switch and phase, and only if the event has
+ * a mentor programme.
+ */
+export function mentorSignupAccepting(e: Switches): boolean {
+  return e.phase === "submissions" && e.registration_open && (e.settings?.features.mentors ?? true);
 }
 
 /** New submissions and edits: the admin switch, and only before judging. */
@@ -55,27 +74,32 @@ export function canScore(v: Viewer, phase: Phase): boolean {
   return v.kind === "judge" && v.role === "judge" && phase === "judging";
 }
 
-/** Declaring or withdrawing a conflict follows the same rule as scoring. */
-export function canRecuse(v: Viewer, phase: Phase): boolean {
-  return canScore(v, phase);
+/**
+ * Declaring or withdrawing a conflict follows the same rule as scoring, and
+ * an event can turn conflict declarations off.
+ */
+export function canRecuse(v: Viewer, phase: Phase, recusalsOn = true): boolean {
+  return recusalsOn && canScore(v, phase);
 }
 
 /**
  * Panel-wide averages and the final ranking. Admins can preview them at any
- * time; judges and mentors only once results are open.
+ * time; judges and mentors only once results are open; the public only once
+ * results are open and the event has chosen to publish them.
  */
-export function canSeeResults(v: Viewer, phase: Phase): boolean {
+export function canSeeResults(v: Viewer, phase: Phase, publicResults = false): boolean {
   if (v.kind === "admin") return true;
   if (v.kind === "judge") return phase === "results";
-  return false;
+  // Everyone else: only the final ranking, and only if the event publishes it.
+  return publicResults && phase === "results";
 }
 
 /**
- * Other judges' evidence sentences, shown without names or scores.
- * Same audience as the results.
+ * Other judges' evidence sentences, shown without names or scores. For
+ * judges, mentors and admins; never the public, even with public results.
  */
 export function canSeeJudgeNotes(v: Viewer, phase: Phase): boolean {
-  return canSeeResults(v, phase);
+  return v.kind !== "public" && canSeeResults(v, phase);
 }
 
 /**

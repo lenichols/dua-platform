@@ -347,7 +347,9 @@ describe("answers to the organizer's own questions", () => {
   it("reach judges only for questions marked for them, and never before judging", async () => {
     const custom = await makeEvent({
       phase: "judging",
-      settings: { customFields: { registration: [], submission: [q("stack", true), q("backup_phone", false)] } },
+      settings: {
+        customFields: { registration: [], mentor: [], submission: [q("stack", true), q("backup_phone", false)] },
+      },
     });
     const sub = await makeSubmission(custom, { custom: { stack: "Rust", backup_phone: "+1 555 0199" } });
     const hiddenSub = await makeSubmission(custom, { hidden_from_judges: true, custom: { stack: "Go" } });

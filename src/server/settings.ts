@@ -33,6 +33,8 @@ const LABELS: Record<string, string> = {
   theme: "Look",
   customFields: "Your own questions",
   hidden: "Questions",
+  features: "Features",
+  judging: "Judging rules",
   tracks: "Challenge tracks",
   problemBriefs: "Problem briefs",
   home: "Homepage",

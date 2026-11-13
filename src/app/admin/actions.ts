@@ -711,6 +711,8 @@ export async function sendCampaignTest(
     return { ok: false, error: "Enter a valid test address." };
   const invalid = validateCampaign(subject, bodyHtml);
   if (invalid) return { ok: false, error: invalid };
+  if (!(await getCurrentEvent()).settings.features.emailCampaigns)
+    return { ok: false, error: "Email campaigns are switched off for this event." };
   if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
 
   const html = renderCampaignEmail({
@@ -753,6 +755,8 @@ export async function sendCampaign(
   if (invalid) return { ok: false, error: invalid };
   if (confirm !== "SEND")
     return { ok: false, error: 'Type SEND in the confirmation box to send.' };
+  if (!(await getCurrentEvent()).settings.features.emailCampaigns)
+    return { ok: false, error: "Email campaigns are switched off for this event." };
   if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
 
   const event = await getCurrentEvent();

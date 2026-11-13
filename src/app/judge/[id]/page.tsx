@@ -10,6 +10,7 @@ import {
   getSubmissionForViewer,
   listJudgeNotes,
 } from "@/server/judging";
+import { hiddenQuestions } from "@/lib/event-settings";
 import type { Viewer } from "@/server/policy";
 import { getJudgeSession } from "../auth";
 import { safeHref } from "@/lib/url";
@@ -53,6 +54,55 @@ export default async function JudgeSubmissionPage({
   // shown anonymously as "Judge A/B/C…" and without the scores, to keep the
   // "aggregates only" rule.
   const judgeNotes = await listJudgeNotes(event, viewer, id);
+  // What to do before scoring, built from what this event asks teams for, so
+  // it never points a judge at something the form doesn't collect.
+  const asked = (id: string) =>
+    !hiddenQuestions(event.settings, "submission").has(id);
+  const { requireEvidence, recusals } = event.settings.judging;
+  const videos = [
+    asked("demo_video") && "demo video",
+    asked("pitch_video") && "pitch video",
+  ].filter(Boolean);
+  const steps = [
+    asked("problem_brief") && {
+      lead: "Read the team's brief first.",
+      rest: "Its success metrics define what a 5 looks like.",
+    },
+    videos.length > 0 && {
+      lead: `Watch the ${videos.join(", then the ")}.`,
+      rest: asked("demo_video")
+        ? "The demo video is the source of truth for what was actually built."
+        : "It shows what the team says they built.",
+    },
+    {
+      lead: asked("materials")
+        ? "Read the one-page summary and description."
+        : "Read the description.",
+      rest: "Gaps between promise and delivery weigh on the score.",
+    },
+    asked("materials") && {
+      lead: "Check the disclosure.",
+      rest: "Score what was built during the event. Flag undisclosed prior work to the organizers rather than marking it down.",
+    },
+    (asked("code_links") || asked("materials")) && {
+      lead:
+        asked("code_links") && asked("materials")
+          ? "Open the build files and pitch deck."
+          : asked("code_links")
+            ? "Open the build files."
+            : "Open the pitch deck.",
+      rest: "Look for signs of real work, not just claims.",
+    },
+    {
+      lead: requireEvidence
+        ? "Score every criterion 1–5 and write one sentence of evidence for each"
+        : "Score every criterion 1–5",
+      rest: requireEvidence
+        ? "— what the team showed, not what they claimed."
+        : "on what the team showed, not what they claimed.",
+    },
+  ].filter((x): x is { lead: string; rest: string } => Boolean(x));
+
   // The organizer's own questions, where they chose to show the answer to judges.
   const answers = await getAnswersForViewer(event, viewer, id);
 
@@ -87,7 +137,9 @@ export default async function JudgeSubmissionPage({
 
         <div className="mb-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            {sub.solo_or_team && <span className="pill">{sub.solo_or_team}</span>}
+            {sub.solo_or_team && (
+              <span className="pill">{sub.solo_or_team}</span>
+            )}
             {sub.team_name && <span className="pill">{sub.team_name}</span>}
             {sub.challenge_track && (
               <span className="pill">{sub.challenge_track}</span>
@@ -102,7 +154,9 @@ export default async function JudgeSubmissionPage({
             {sub.solution_stage && (
               <span className="pill">{sub.solution_stage}</span>
             )}
-            {sub.customer_type && <span className="pill">{sub.customer_type}</span>}
+            {sub.customer_type && (
+              <span className="pill">{sub.customer_type}</span>
+            )}
             {sub.area_of_specification && (
               <span className="pill">{sub.area_of_specification}</span>
             )}
@@ -112,7 +166,8 @@ export default async function JudgeSubmissionPage({
           </div>
           {sub.problem_brief && (
             <p className="mb-2 text-sm text-dust">
-              Problem brief: <span className="font-bold text-bone">{sub.problem_brief}</span>
+              Problem brief:{" "}
+              <span className="font-bold text-bone">{sub.problem_brief}</span>
             </p>
           )}
           <h1 className="hex-title text-4xl md:text-5xl">{sub.project_name}</h1>
@@ -131,49 +186,18 @@ export default async function JudgeSubmissionPage({
               </span>
             </div>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-bone/90">
-              <li>
-                <strong className="text-accent">Read the team&apos;s brief first</strong>
-                . Its success metrics define what a 5 looks like.
-              </li>
-              <li>
-                <strong className="text-accent">
-                  Watch the demo video, then the pitch video.
-                </strong>{" "}
-                The demo video is the source of truth for what was actually
-                built.
-              </li>
-              <li>
-                <strong className="text-accent">
-                  Read the one-page summary and description.
-                </strong>{" "}
-                Gaps between promise and delivery weigh on Feasibility and
-                Impact.
-              </li>
-              <li>
-                <strong className="text-accent">Check the disclosure.</strong>{" "}
-                Score what was built during the sprint. Flag undisclosed prior
-                work to the organizers rather than marking it down.
-              </li>
-              <li>
-                <strong className="text-accent">
-                  Open the build files and pitch deck.
-                </strong>{" "}
-                Look for signs of real work: commits during the sprint,
-                calculations that add up, a cost model that exists.
-              </li>
-              <li>
-                <strong className="text-accent">
-                  Score every criterion 1–5 and write one sentence of evidence
-                  for each
-                </strong>{" "}
-                — what the team showed, not what they claimed.
-              </li>
+              {steps.map((step) => (
+                <li key={step.lead}>
+                  <strong className="text-accent">{step.lead}</strong>{" "}
+                  {step.rest}
+                </li>
+              ))}
             </ol>
             <p className="mt-3 text-[0.7rem] text-dust">
               Whole numbers only; use 2 and 4 when a team falls between levels.
               You can update a score any time until voting closes. If the video
-              won&apos;t play or a link is broken, don&apos;t score it — tell the
-              organizers.
+              won&apos;t play or a link is broken, don&apos;t score it — tell
+              the organizers.
             </p>
           </div>
         )}
@@ -380,7 +404,9 @@ export default async function JudgeSubmissionPage({
                 submissionId={String(sub.id)}
                 existing={existing ?? null}
               />
-              <ConflictCard submissionId={String(sub.id)} recusal={null} />
+              {recusals && (
+                <ConflictCard submissionId={String(sub.id)} recusal={null} />
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -403,7 +429,7 @@ export default async function JudgeSubmissionPage({
                 </p>
               </div>
 
-              {isJudge && phase === "submissions" && (
+              {isJudge && recusals && phase === "submissions" && (
                 <ConflictCard submissionId={String(sub.id)} recusal={null} />
               )}
 
@@ -412,7 +438,8 @@ export default async function JudgeSubmissionPage({
                   <div className="mb-3 flex items-center gap-2">
                     <span className="pill-accent">✎ Judge Notes</span>
                     <span className="text-[0.65rem] text-dust">
-                      {judgeNotes.length} note{judgeNotes.length === 1 ? "" : "s"}
+                      {judgeNotes.length} note
+                      {judgeNotes.length === 1 ? "" : "s"}
                     </span>
                   </div>
                   <ul className="space-y-3">
@@ -426,9 +453,16 @@ export default async function JudgeSubmissionPage({
                         </div>
                         <dl className="space-y-1">
                           {n.lines.map((l) => (
-                            <div key={l.criterion} className="text-sm text-bone/90">
-                              <dt className="inline font-semibold">{l.criterion}: </dt>
-                              <dd className="inline whitespace-pre-wrap">{l.text}</dd>
+                            <div
+                              key={l.criterion}
+                              className="text-sm text-bone/90"
+                            >
+                              <dt className="inline font-semibold">
+                                {l.criterion}:{" "}
+                              </dt>
+                              <dd className="inline whitespace-pre-wrap">
+                                {l.text}
+                              </dd>
                             </div>
                           ))}
                         </dl>

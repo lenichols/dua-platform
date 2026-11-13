@@ -209,6 +209,7 @@ export function AdminHome({
 }) {
   const readOnly = !canWrite(session.role);
   const showTeam = canManageTeam(session.role);
+  const { features } = useEvent();
 
   const tabs: Tab[] = [
     "home",
@@ -217,7 +218,7 @@ export function AdminHome({
     "judges",
     "submissions",
     "results",
-    "email",
+    ...(features.emailCampaigns ? (["email"] as Tab[]) : []),
     ...(showTeam ? (["team"] as Tab[]) : []),
     // Every role gets this — changing your own password is self-service, not
     // an operational control.
@@ -328,7 +329,7 @@ export function AdminHome({
       {tab === "team" && showTeam && (
         <TeamPanel team={team} loadError={teamError} session={session} />
       )}
-      {tab === "email" && (
+      {tab === "email" && features.emailCampaigns && (
         <EmailPanel
           campaigns={campaigns}
           loadError={campaignsError}
@@ -1832,7 +1833,13 @@ function RegistrationsPanel({
     safePage * REG_PAGE_SIZE,
   );
 
-  const customQuestions = useEvent().customFields.registration;
+  // Participants and mentors each have their own extra questions; a row
+  // fills only the columns for its own form.
+  const eventSettings = useEvent();
+  const customQuestions = [
+    ...eventSettings.customFields.registration.map((q) => ({ ...q, role: "participant" })),
+    ...eventSettings.customFields.mentor.map((q) => ({ ...q, role: "mentor" })),
+  ];
 
   function exportCsv() {
     const cols: { k: keyof Registration; h: string }[] = [
@@ -1866,7 +1873,9 @@ function RegistrationsPanel({
       ...sorted.map((r) =>
         [
           ...cols.map((c) => esc(r[c.k])),
-          ...customQuestions.map((q) => esc(r.custom?.[q.key])),
+          ...customQuestions.map((q) =>
+            esc((r.role ?? "participant") === q.role ? r.custom?.[q.key] : ""),
+          ),
         ].join(","),
       ),
     ];
@@ -2180,7 +2189,7 @@ function CustomAnswers({
   form,
   answers,
 }: {
-  form: "registration" | "submission";
+  form: "registration" | "submission" | "mentor";
   answers: Record<string, string> | null | undefined;
 }) {
   const fields = useEvent().customFields[form];
@@ -2320,7 +2329,7 @@ function RegistrationDetail({
         )}
         <Detail label="Heard via" value={r.heard_about} />
         <Detail label="Referred by" value={r.referred_by} />
-        <CustomAnswers form="registration" answers={r.custom} />
+        <CustomAnswers form={r.role === "mentor" ? "mentor" : "registration"} answers={r.custom} />
         <Detail label="Registered" value={registered} />
       </div>
 
@@ -2771,7 +2780,8 @@ function ResultsPanel({
 }) {
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
-  const { topN } = useEvent();
+  const { topN, judging } = useEvent();
+  const plainAverage = judging.ranking === "average";
   const byId = new Map(submissions.map((s) => [s.id, s]));
 
   async function compute(fd: FormData) {
@@ -2788,10 +2798,11 @@ function ResultsPanel({
       <form action={compute} className="card space-y-3">
         <div className="pill-accent">Compute Top {topN}</div>
         <p className="text-sm text-dust">
-          Runs the Monte Carlo algorithm (1000 trials) on all current scores,
-          locks in projects that place in at least 70% of trials, and fills the rest via
-          weighted random draw from the bubble. Saves the result and flips the
-          app to <span className="text-accent">results</span> phase.
+          {plainAverage
+            ? "Ranks projects by the average of their judges' totals, with ties settled by the rubric's tie-breakers."
+            : "Evens out harsh and generous judges, then re-runs the ranking 1,000 times with small variations. Projects that place in at least 70% of runs are locked in; the rest are drawn from the close contenders."}{" "}
+          Saves the result and moves the event to the{" "}
+          <span className="text-accent">results</span> phase.
         </p>
         <div>
           <label className="field-label">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Breadcrumbs,
   HeaderBar,
@@ -14,6 +15,8 @@ export const dynamic = "force-dynamic";
 export default async function RegisterPage() {
   const EVENT = await getSettings();
   const phase = await getPhase();
+  // An event that doesn't use registration sends people straight to submitting.
+  if (!EVENT.features.registration) redirect("/submit");
   const open = phase === "submissions" && (await getRegistrationOpen());
 
   return (

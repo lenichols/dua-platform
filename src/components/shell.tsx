@@ -69,12 +69,16 @@ export async function Footer() {
           </div>
         </div>
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          <Link href="/register" className="transition hover:text-accent">
-            Register
-          </Link>
-          <Link href="/mentor" className="transition hover:text-accent">
-            Become a Mentor
-          </Link>
+          {EVENT.features.registration && (
+            <Link href="/register" className="transition hover:text-accent">
+              Register
+            </Link>
+          )}
+          {EVENT.features.mentors && (
+            <Link href="/mentor" className="transition hover:text-accent">
+              Become a mentor
+            </Link>
+          )}
           <a
             href={EVENT.host.url}
             target="_blank"

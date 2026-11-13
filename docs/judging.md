@@ -1,7 +1,16 @@
 # How judging works
 
-The ranking logic is in [`src/lib/monte-carlo.ts`](../src/lib/monte-carlo.ts). It
-uses your event's rubric, set in the admin panel, and is covered by tests.
+An event chooses one of two ways to rank projects, under **Event → Judging**.
+Both use your event's rubric and are covered by tests.
+
+**Plain average.** Projects are ordered by the average of their judges' totals,
+with ties settled by the rubric's tie-breakers. Simple to explain; it takes
+every mark at face value. The code is in
+[`src/lib/ranking.ts`](../src/lib/ranking.ts).
+
+**Evened out (the default).** Fairer when judges score on different scales.
+The code is in [`src/lib/monte-carlo.ts`](../src/lib/monte-carlo.ts), and it
+works like this:
 
 1. **Per-judge normalization.** Each judge's scores on each criterion are
    rescaled to mean 0 and standard deviation 1 before the weights are applied.

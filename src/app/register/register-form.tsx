@@ -5,11 +5,12 @@ import { registerParticipant } from "./actions";
 import { COUNTRIES } from "@/lib/countries";
 import { CustomFields } from "@/components/custom-fields";
 import { useEvent } from "@/components/event-context";
+import { hiddenQuestions } from "@/lib/event-settings";
 
 export function RegisterForm() {
   const EVENT = useEvent();
   // Built-in questions the organizer has switched off in the Event tab.
-  const off = new Set<string>(EVENT.hidden.registration);
+  const off = hiddenQuestions(EVENT, "registration");
   const shown = (id: string) => !off.has(id);
   const {
     experienceLevels: EXPERIENCE_LEVELS,
@@ -87,22 +88,24 @@ export function RegisterForm() {
             />
             {err("email")}
           </div>
-          <div>
-            <label className="field-label">Phone Number *</label>
-            <input
-              name="phone"
-              type="tel"
-              required
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="+1 555 123 4567"
-              className="field-input mt-1"
-            />
-            {err("phone")}
-            <p className="mt-1 text-xs text-dust">
-              Include your country code if outside the US.
-            </p>
-          </div>
+          {shown("phone") && (
+            <div>
+              <label className="field-label">Phone Number *</label>
+              <input
+                name="phone"
+                type="tel"
+                required
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+1 555 123 4567"
+                className="field-input mt-1"
+              />
+              {err("phone")}
+              <p className="mt-1 text-xs text-dust">
+                Include your country code if outside the US.
+              </p>
+            </div>
+          )}
           <div>
             <label className="field-label">Country *</label>
             <select
@@ -132,33 +135,39 @@ export function RegisterForm() {
               />
             </div>
           )}
-          <div>
-            <label className="field-label">LinkedIn Profile</label>
-            <input
-              name="linkedin_url"
-              type="url"
-              inputMode="url"
-              placeholder="https://linkedin.com/in/you"
-              className="field-input mt-1"
-            />
-            {err("linkedin_url")}
-          </div>
-          <div>
-            <label className="field-label">Personal Website</label>
-            <input
-              name="website_url"
-              type="url"
-              inputMode="url"
-              placeholder="https://your-site.com"
-              className="field-input mt-1"
-            />
-            {err("website_url")}
-          </div>
-          <p className="text-xs text-dust md:col-span-2">
-            Add your LinkedIn <span className="text-dust">and/or</span> a
-            personal website so organizers can verify who you are.{" "}
-            <span className="text-bone/80">At least one is required.</span>
-          </p>
+          {shown("verification") && (
+            <div>
+              <label className="field-label">LinkedIn Profile</label>
+              <input
+                name="linkedin_url"
+                type="url"
+                inputMode="url"
+                placeholder="https://linkedin.com/in/you"
+                className="field-input mt-1"
+              />
+              {err("linkedin_url")}
+            </div>
+          )}
+          {shown("verification") && (
+            <div>
+              <label className="field-label">Personal Website</label>
+              <input
+                name="website_url"
+                type="url"
+                inputMode="url"
+                placeholder="https://your-site.com"
+                className="field-input mt-1"
+              />
+              {err("website_url")}
+            </div>
+          )}
+          {shown("verification") && (
+            <p className="text-xs text-dust md:col-span-2">
+              Add your LinkedIn <span className="text-dust">and/or</span> a
+              personal website so organizers can verify who you are.{" "}
+              <span className="text-bone/80">At least one is required.</span>
+            </p>
+          )}
         </div>
       </fieldset>
 
@@ -167,30 +176,32 @@ export function RegisterForm() {
           How You&apos;ll Compete
         </legend>
 
-        <div className="flex gap-2">
-          {(["Solo", "Team"] as const).map((opt) => (
-            <label
-              key={opt}
-              className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition ${
-                mode === opt
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-line bg-ink-4 text-dust hover:border-accent/60"
-              }`}
-            >
-              <input
-                type="radio"
-                name="participating_as"
-                value={opt}
-                checked={mode === opt}
-                onChange={() => setMode(opt)}
-                className="sr-only"
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
+        {shown("team") && (
+          <div className="flex gap-2">
+            {(["Solo", "Team"] as const).map((opt) => (
+              <label
+                key={opt}
+                className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition ${
+                  mode === opt
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-line bg-ink-4 text-dust hover:border-accent/60"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="participating_as"
+                  value={opt}
+                  checked={mode === opt}
+                  onChange={() => setMode(opt)}
+                  className="sr-only"
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        )}
 
-        {mode === "Team" && (
+        {shown("team") && mode === "Team" && (
           <div>
             <label className="field-label">Team Name *</label>
             <input name="team_name" required className="field-input mt-1" />

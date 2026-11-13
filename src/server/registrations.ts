@@ -6,7 +6,13 @@ import { db, isUniqueViolation } from "@/db";
 import { registrations } from "@/db/schema";
 import type { EventRow } from "./event";
 import { plainAll } from "./plain";
-import { NotAllowed, canSeeRegistrations, registrationAccepting, type Viewer } from "./policy";
+import {
+  NotAllowed,
+  canSeeRegistrations,
+  mentorSignupAccepting,
+  registrationAccepting,
+  type Viewer,
+} from "./policy";
 
 export type RegistrationRole = "participant" | "mentor";
 
@@ -19,17 +25,25 @@ export type RegisterOutcome =
   | { ok: true; id: string }
   | { ok: false; reason: "closed" | "duplicate" };
 
-/** Add a sign-up. Refused while registration is closed. */
+/** Add a sign-up. Refused while sign-ups are closed, or the event doesn't take them. */
 export async function createRegistration(
   event: EventRow,
   role: RegistrationRole,
   data: NewRegistration,
 ): Promise<RegisterOutcome> {
-  if (!registrationAccepting(event)) return { ok: false, reason: "closed" };
+  const accepting = role === "mentor" ? mentorSignupAccepting(event) : registrationAccepting(event);
+  if (!accepting) return { ok: false, reason: "closed" };
   try {
     const [row] = await db()
       .insert(registrations)
-      .values({ ...data, event_id: event.id, role })
+      // A question that wasn't asked arrives blank; "Solo or team" only
+      // accepts its two answers or nothing.
+      .values({
+        ...data,
+        participating_as: data.participating_as || null,
+        event_id: event.id,
+        role,
+      })
       .returning({ id: registrations.id });
     return { ok: true, id: row.id };
   } catch (e) {

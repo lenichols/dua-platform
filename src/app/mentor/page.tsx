@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   Breadcrumbs,
   HeaderBar,
@@ -14,6 +15,8 @@ export const dynamic = "force-dynamic";
 export default async function MentorPage() {
   const EVENT = await getSettings();
   const phase = await getPhase();
+  // An event without a mentor programme has no mentor page.
+  if (!EVENT.features.mentors) notFound();
   const open = phase === "submissions" && (await getRegistrationOpen());
 
   return (

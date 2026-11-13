@@ -116,11 +116,28 @@ const customFieldList = z
  * Built-in questions an organizer can switch off. Each entry lists the
  * columns it covers; a hidden question is neither shown nor required.
  */
+const TEAMMATE_DETAILS = [2, 3, 4, 5].flatMap((n) => [
+  `member${n}_linkedin_url`,
+  `member${n}_occupation`,
+  `member${n}_country`,
+]);
+
 export const HIDEABLE = {
   submission: [
+    { id: "phone", label: "Phone number", columns: ["phone"] },
+    { id: "location", label: "Country, state and city", columns: ["country", "state_region", "city"] },
+    {
+      id: "submitter_profile",
+      label: "Affiliation, role and LinkedIn profile",
+      columns: ["affiliated_org", "submitter_role", "submitter_linkedin_url"],
+    },
+    { id: "teammate_details", label: "Team-mates' LinkedIn, occupation and country", columns: TEAMMATE_DETAILS },
     { id: "mentor", label: "Mentor", columns: ["mentor_name", "mentor_linkedin_url"] },
+    { id: "challenge_track", label: "Challenge track", columns: ["challenge_track"] },
     { id: "problem_brief", label: "Problem brief", columns: ["problem_brief"] },
     { id: "problem_statement", label: "Problem statement", columns: ["problem_statement"] },
+    { id: "project_category", label: "Project category", columns: ["project_category"] },
+    { id: "technologies_used", label: "Technologies used", columns: ["technologies_used"] },
     { id: "customer_type", label: "Who is it for?", columns: ["customer_type"] },
     { id: "region", label: "Your region", columns: ["region"] },
     { id: "focus_area", label: "Focus area", columns: ["focus_area"] },
@@ -130,6 +147,9 @@ export const HIDEABLE = {
     { id: "impact_focus", label: "Impact focus", columns: ["impact_focus"] },
     { id: "target_region", label: "Target region / market", columns: ["target_region"] },
     { id: "core_problem", label: "Core problem", columns: ["core_problem"] },
+    { id: "code_links", label: "GitHub and live demo links", columns: ["github_url", "live_demo_url"] },
+    { id: "demo_video", label: "Demo video", columns: ["demo_video_url", "all_members_in_video"] },
+    { id: "pitch_video", label: "Pitch video", columns: ["demo_video_short_url"] },
     {
       id: "materials",
       label: "Pitch deck, one-page summary and disclosure",
@@ -138,6 +158,13 @@ export const HIDEABLE = {
     { id: "announcement", label: "LinkedIn announcement", columns: ["linkedin_post_url"] },
   ],
   registration: [
+    { id: "phone", label: "Phone number", columns: ["phone"] },
+    {
+      id: "verification",
+      label: "LinkedIn or website, to verify identity",
+      columns: ["linkedin_url", "website_url"],
+    },
+    { id: "team", label: "Solo or team, and team name", columns: ["participating_as", "team_name"] },
     { id: "primary_interest", label: "Primary interest (track)", columns: ["primary_interest"] },
     { id: "experience_level", label: "Experience level", columns: ["experience_level"] },
     { id: "organization", label: "Organization", columns: ["organization"] },
@@ -145,7 +172,18 @@ export const HIDEABLE = {
     { id: "heard_about", label: "How did you hear about us", columns: ["heard_about"] },
     { id: "referred_by", label: "Referred by", columns: ["referred_by"] },
   ],
-} as const;
+  mentor: [
+    { id: "phone", label: "Phone number", columns: ["phone"] },
+    { id: "occupation", label: "Title or occupation", columns: ["occupation"] },
+    { id: "organization", label: "Organization", columns: ["organization"] },
+    { id: "linkedin", label: "LinkedIn profile", columns: ["linkedin_url"] },
+    { id: "website", label: "Personal website", columns: ["website_url"] },
+    { id: "primary_interest", label: "Track they can mentor", columns: ["primary_interest"] },
+    { id: "experience_level", label: "Experience level", columns: ["experience_level"] },
+    { id: "heard_about", label: "How did you hear about us", columns: ["heard_about"] },
+    { id: "referred_by", label: "Referred by", columns: ["referred_by"] },
+  ],
+} as const satisfies Record<string, readonly { id: string; label: string; columns: readonly string[] }[]>;
 
 export type FormName = keyof typeof HIDEABLE;
 
@@ -153,10 +191,28 @@ const hideableIds = (form: FormName) => HIDEABLE[form].map((h) => h.id) as strin
 const hiddenList = (form: FormName) =>
   z.array(z.string()).transform((ids) => [...new Set(ids)].filter((id) => hideableIds(form).includes(id)));
 
-/** The columns a form should neither show nor require. */
-export function hiddenColumns(settings: Pick<EventSettings, "hidden">, form: FormName): Set<string> {
+/**
+ * The ids of the built-in questions a form should not ask. Turning the mentor
+ * programme off also removes the mentor question from the submission form.
+ */
+export function hiddenQuestions(
+  settings: Pick<EventSettings, "hidden" | "features">,
+  form: FormName,
+): Set<string> {
   const off = new Set<string>(settings.hidden[form]);
-  return new Set(HIDEABLE[form].filter((h) => off.has(h.id)).flatMap((h) => h.columns as readonly string[]));
+  if (form === "submission" && !settings.features.mentors) off.add("mentor");
+  return off;
+}
+
+/** The columns a form should neither show nor require. */
+export function hiddenColumns(
+  settings: Pick<EventSettings, "hidden" | "features">,
+  form: FormName,
+): Set<string> {
+  const off = hiddenQuestions(settings, form);
+  return new Set(
+    HIDEABLE[form].filter((h) => off.has(h.id)).flatMap((h) => h.columns as readonly string[]),
+  );
 }
 
 // ── the whole event ──────────────────────────────────────────────
@@ -209,9 +265,46 @@ export const settingsSchema = z.object({
 
   // Questions on the forms
   /** Questions added by the organizer. */
-  customFields: z.object({ registration: customFieldList, submission: customFieldList }),
+  customFields: z.object({
+    registration: customFieldList,
+    submission: customFieldList,
+    mentor: customFieldList.default([]),
+  }),
   /** Built-in questions switched off, by id: see HIDEABLE. */
-  hidden: z.object({ registration: hiddenList("registration"), submission: hiddenList("submission") }),
+  hidden: z.object({
+    registration: hiddenList("registration"),
+    submission: hiddenList("submission"),
+    mentor: hiddenList("mentor").default([]),
+  }),
+
+  // Parts of the platform an event may not need
+  features: z.object({
+    /** Mentor sign-up, and the mentor question on submissions. */
+    mentors: z.boolean().default(true),
+    /** Registering before submitting. Off means teams go straight to submitting. */
+    registration: z.boolean().default(true),
+    /** Sending email to registrants from the admin panel. */
+    emailCampaigns: z.boolean().default(true),
+    /** The "How it works" steps on the homepage. */
+    howItWorks: z.boolean().default(true),
+  }),
+
+  // How judging runs
+  judging: z.object({
+    /** Hide team and member names from judges and mentors. */
+    anonymous: z.boolean().default(false),
+    /** Require a sentence of evidence with every score. */
+    requireEvidence: z.boolean().default(true),
+    /**
+     * "normalized" evens out harsh and generous judges and tests how stable
+     * the ranking is; "average" ranks by the plain average of judges' totals.
+     */
+    ranking: z.enum(["normalized", "average"]).default("normalized"),
+    /** Let judges declare a conflict of interest and step back from a project. */
+    recusals: z.boolean().default(true),
+    /** Show the final ranking to everyone once results are open. */
+    publicResults: z.boolean().default(false),
+  }),
 
   // Option lists on the forms
   tracks: list(),
@@ -341,8 +434,16 @@ export const DEFAULT_SETTINGS: EventSettings = {
   topN: 6,
   rubric: DEFAULT_RUBRIC,
 
-  customFields: { registration: [], submission: [] },
-  hidden: { registration: [], submission: [] },
+  customFields: { registration: [], submission: [], mentor: [] },
+  hidden: { registration: [], submission: [], mentor: [] },
+  features: { mentors: true, registration: true, emailCampaigns: true, howItWorks: true },
+  judging: {
+    anonymous: false,
+    requireEvidence: true,
+    ranking: "normalized",
+    recusals: true,
+    publicResults: false,
+  },
 
   tracks: ["Web & Mobile Apps", "AI & Data", "Hardware & Devices", "Developer Tools", "Social Good"],
   problemBriefs: [

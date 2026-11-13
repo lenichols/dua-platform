@@ -17,8 +17,11 @@ export default async function ResultsPage() {
   const isJudge = viewer.kind === "judge";
   const adminSignedIn = viewer.kind === "admin";
 
-  // Gate: only judges and admin can see results
-  if (!isJudge && !adminSignedIn) {
+  const { publicResults, ranking } = event.settings.judging;
+  const isPublic = !isJudge && !adminSignedIn;
+
+  // Unless the event publishes its results, only judges, mentors and admins see them.
+  if (isPublic && !publicResults) {
     return (
       <>
         <HeaderBar
@@ -45,7 +48,7 @@ export default async function ResultsPage() {
   }
 
   // Judges and mentors wait for the results phase; admins can preview.
-  if (!canSeeResults(viewer, phase)) {
+  if (!canSeeResults(viewer, phase, publicResults)) {
     return (
       <>
         <HeaderBar
@@ -59,14 +62,13 @@ export default async function ResultsPage() {
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
-              { label: "Judge", href: "/judge" },
+              ...(isPublic ? [] : [{ label: "Judge", href: "/judge" }]),
               { label: "Results" },
             ]}
           />
           <SectionTitle
-            eyebrow={`Phase: ${phase}`}
             title="Results Locked"
-            subtitle="Results will be revealed once the admin closes voting."
+            subtitle="Results will be shown here once judging has finished."
           />
         </PageShell>
       </>
@@ -94,6 +96,46 @@ export default async function ResultsPage() {
 
   const top6 = lock?.top6 ?? [];
   const byId = new Map(rows.map((r) => [r.submission_id, r]));
+
+  if (isPublic) {
+    const placed = [...top6].sort((a, b) => a.rank - b.rank);
+    return (
+      <>
+        <HeaderBar
+          rightSlot={
+            <Link href="/" className="pill hover:border-accent hover:text-accent">
+              ← Home
+            </Link>
+          }
+        />
+        <PageShell maxWidth="max-w-3xl">
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Results" }]} />
+          <SectionTitle
+            title={`The Top ${topN}`}
+            subtitle="The final ranking, from the judging panel's scores."
+          />
+          {placed.length === 0 ? (
+            <div className="card text-dust">The ranking hasn&apos;t been published yet.</div>
+          ) : (
+            <ol className="card divide-y divide-line p-0" data-public-results>
+              {placed.map((t) => {
+                const r = byId.get(t.submission_id);
+                return (
+                  <li key={t.submission_id} className="flex items-center gap-4 px-5 py-4">
+                    <span className="w-8 font-display text-2xl font-semibold text-accent">{t.rank}</span>
+                    <span className="flex-1 font-bold text-bone">{r?.project_name ?? "—"}</span>
+                    {r?.avg_total != null && (
+                      <span className="tabular-nums text-dust">{num(r.avg_total)} / 100</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </PageShell>
+      </>
+    );
+  }
 
   const crumbs = adminSignedIn && !isJudge
     ? [
@@ -164,7 +206,9 @@ export default async function ResultsPage() {
                       ))}
                     </div>
                     <div className="mt-3 text-[0.68rem] text-dust">
-                      Chance of placing: {(t.probability * 100).toFixed(0)}%
+                      {ranking === "normalized" && (
+                        <>Chance of placing: {(t.probability * 100).toFixed(0)}%</>
+                      )}
                     </div>
                   </Link>
                 );

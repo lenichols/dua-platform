@@ -30,14 +30,15 @@ already use, including Supabase.
 | Mentor sign-up | `/mentor` | Public | Volunteer mentor sign-up, on the same switch as registration. |
 | Submission | `/submit` | Public | Project submission form with a private edit link emailed to the team. Opened and closed by its own admin switch. |
 | Judging | `/judge` | Judges, mentors | Sign in, then score each project 1–5 on the rubric you set, with one sentence of evidence per score. Judges can declare a conflict to recuse themselves. Mentors can read but not score. |
-| Results | `/results` | Judges, mentors, admins | Averages only, never one judge's scores, plus the final ranking. Visible once the phase is `results`. |
+| Results | `/results` | Judges, mentors, admins; the public if you choose | Averages only, never one judge's scores, plus the final ranking. Visible once the phase is `results`. |
 | Admin | `/admin` | Organizers | Phase control, registrations with CSV export, judges, submissions, results, email campaigns, and admin accounts with roles. |
 
 The event moves through three phases, switched by an admin:
 **submissions → judging → results**.
 
 Organizers set up the whole event from the admin panel: its name and dates,
-the questions on the forms, the rubric, the colours and logo.
+the questions on the forms, the rubric and judging rules, which features are
+on, the colours and logo.
 
 ## Screenshots
 
@@ -127,8 +128,6 @@ you'd like to contribute: open an issue first so we can agree on the approach.
 
 **Forms**
 
-- [ ] Custom and switchable questions on the mentor sign-up form, as the
-      registration and submission forms already have.
 - [ ] A check of every page at phone width.
 - [ ] Let organizers reorder questions, and place their own among the
       built-in ones rather than in a section at the end.

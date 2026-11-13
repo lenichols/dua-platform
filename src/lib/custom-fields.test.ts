@@ -8,8 +8,19 @@ import {
   settingsSchema,
   type CustomField,
 } from "./event-settings";
-import { registrationSchemaFor } from "./registration-schema";
+import {
+  mentorRegistrationSchema,
+  mentorRegistrationSchemaFor,
+  registrationSchemaFor,
+} from "./registration-schema";
 import { submissionSchema, submissionSchemaFor } from "./submission-schema";
+
+// The questions on the registration form, for checking the switch list against.
+const REGISTRATION_FIELDS = {
+  full_name: 1, email: 1, phone: 1, country: 1, participating_as: 1, team_name: 1,
+  primary_interest: 1, experience_level: 1, organization: 1, partner_org: 1,
+  linkedin_url: 1, website_url: 1, heard_about: 1, referred_by: 1,
+};
 
 const field = (over: Partial<CustomField> & { key: string }): CustomField => ({
   label: over.key,
@@ -119,7 +130,7 @@ describe("questions in the event's settings", () => {
 
   it("can only switch off questions that are meant to be optional", () => {
     const s = resolveSettings({ hidden: { registration: ["referred_by", "email"], submission: ["mentor", "project_name"] } });
-    expect(s.hidden).toEqual({ registration: ["referred_by"], submission: ["mentor"] });
+    expect(s.hidden).toEqual({ registration: ["referred_by"], submission: ["mentor"], mentor: [] });
     expect(hiddenColumns(s, "submission")).toEqual(new Set(["mentor_name", "mentor_linkedin_url"]));
     expect(hiddenColumns(DEFAULT_SETTINGS, "submission").size).toBe(0);
   });
@@ -127,6 +138,10 @@ describe("questions in the event's settings", () => {
   it("only offers to switch off columns that exist on the form", () => {
     for (const h of HIDEABLE.submission)
       for (const c of h.columns) expect(Object.keys(submissionSchema.shape)).toContain(c);
+    const registration = Object.keys(REGISTRATION_FIELDS);
+    for (const h of HIDEABLE.registration) for (const c of h.columns) expect(registration).toContain(c);
+    for (const h of HIDEABLE.mentor)
+      for (const c of h.columns) expect(Object.keys(mentorRegistrationSchema.shape)).toContain(c);
   });
 });
 
@@ -148,8 +163,13 @@ describe("form rules with questions switched off", () => {
     expect(registrationSchemaFor(butOne).safeParse(registration).success).toBe(false);
   });
 
-  it("keep the rules that aren't switchable", () => {
-    const all = new Set(HIDEABLE.registration.flatMap((h) => [...h.columns]));
+  it("keep the rules for questions that are still being asked", () => {
+    // Everything optional is off except identity links and solo-or-team.
+    const all = new Set(
+      HIDEABLE.registration
+        .filter((h) => h.id !== "verification" && h.id !== "team")
+        .flatMap((h) => [...h.columns]),
+    );
     expect(registrationSchemaFor(all).safeParse({ ...registration, email: "nope" }).success).toBe(false);
     expect(registrationSchemaFor(all).safeParse({ ...registration, linkedin_url: "" }).success).toBe(false);
     expect(
@@ -203,5 +223,59 @@ describe("form rules with questions switched off", () => {
     expect(hiddenColumns(resolveSettings({ hidden: { registration: [], submission: ["problem_statement"] } }), "submission")).toEqual(
       new Set(["problem_statement"]),
     );
+  });
+});
+
+describe("the newer switches", () => {
+  const person = { full_name: "Sam Example", email: "sam@example.org" };
+  const everything = (form: "registration" | "mentor") =>
+    new Set<string>(HIDEABLE[form].flatMap((h) => [...h.columns]));
+
+  it("let registration ask for a name and an email and nothing else", () => {
+    expect(registrationSchemaFor(everything("registration")).safeParse({ ...person, country: "Canada" }).success).toBe(true);
+    // Country isn't switchable on this form.
+    expect(registrationSchemaFor(everything("registration")).safeParse(person).success).toBe(false);
+  });
+
+  it("drop the identity-link rule only when that question is off", () => {
+    const base = { ...person, phone: "+1 555 0100", country: "Canada", participating_as: "Solo", primary_interest: "x", experience_level: "x", heard_about: "x", referred_by: "Someone" };
+    expect(registrationSchemaFor(new Set()).safeParse(base).success).toBe(false);
+    expect(registrationSchemaFor(new Set(["linkedin_url", "website_url"])).safeParse(base).success).toBe(true);
+  });
+
+  it("drop the team-name rule only when solo-or-team is off", () => {
+    const base = { ...person, phone: "+1 555 0100", country: "Canada", linkedin_url: "https://example.org/in/sam", primary_interest: "x", experience_level: "x", heard_about: "x", referred_by: "Someone" };
+    expect(registrationSchemaFor(new Set()).safeParse({ ...base, participating_as: "Team" }).success).toBe(false);
+    expect(registrationSchemaFor(new Set(["participating_as", "team_name"])).safeParse(base).success).toBe(true);
+  });
+
+  it("work on the mentor form too", () => {
+    const mentor = { ...person, country: "Canada" };
+    expect(mentorRegistrationSchemaFor(new Set()).safeParse(mentor).success).toBe(false);
+    expect(mentorRegistrationSchemaFor(everything("mentor")).safeParse(mentor).success).toBe(true);
+    expect(mentorRegistrationSchemaFor(everything("mentor")).safeParse({ ...mentor, email: "nope" }).success).toBe(false);
+  });
+
+  it("remove the mentor question from submissions when the mentor programme is off", () => {
+    const off = resolveSettings({ features: { mentors: false } });
+    expect(hiddenColumns(off, "submission")).toEqual(new Set(["mentor_name", "mentor_linkedin_url"]));
+    expect(hiddenColumns(DEFAULT_SETTINGS, "submission").size).toBe(0);
+  });
+
+  it("default to today's behaviour, and survive settings saved before they existed", () => {
+    expect(DEFAULT_SETTINGS.features).toEqual({ mentors: true, registration: true, emailCampaigns: true, howItWorks: true });
+    expect(DEFAULT_SETTINGS.judging).toEqual({ anonymous: false, requireEvidence: true, ranking: "normalized", recusals: true, publicResults: false });
+    const older = resolveSettings({
+      name: "Older Event",
+      hidden: { registration: ["referred_by"], submission: [] },
+      customFields: { registration: [field({ key: "tshirt" })], submission: [] },
+      judging: { anonymous: true },
+    });
+    expect(older.name).toBe("Older Event");
+    expect(older.hidden.registration).toEqual(["referred_by"]);
+    expect(older.customFields.registration.map((f) => f.key)).toEqual(["tshirt"]);
+    expect(older.customFields.mentor).toEqual([]);
+    expect(older.judging).toEqual({ ...DEFAULT_SETTINGS.judging, anonymous: true });
+    expect(older.features).toEqual(DEFAULT_SETTINGS.features);
   });
 });

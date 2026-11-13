@@ -22,16 +22,48 @@ type ListKey = {
 }[keyof EventSettings];
 
 const LISTS: { key: ListKey; label: string; hint: string }[] = [
-  { key: "tracks", label: "Challenge tracks", hint: "Registration, mentor and submission forms, and the homepage." },
-  { key: "problemBriefs", label: "Problem briefs", hint: "Submission form. Include an option for teams bringing their own problem." },
-  { key: "experienceLevels", label: "Participant experience levels", hint: "Registration form." },
-  { key: "mentorExperienceLevels", label: "Mentor experience levels", hint: "Mentor sign-up form." },
-  { key: "heardAbout", label: "How did you hear about us", hint: "Registration and mentor forms." },
-  { key: "partnerOrgs", label: "Partner organizations", hint: "Registration form." },
+  {
+    key: "tracks",
+    label: "Challenge tracks",
+    hint: "Registration, mentor and submission forms, and the homepage.",
+  },
+  {
+    key: "problemBriefs",
+    label: "Problem briefs",
+    hint: "Submission form. Include an option for teams bringing their own problem.",
+  },
+  {
+    key: "experienceLevels",
+    label: "Participant experience levels",
+    hint: "Registration form.",
+  },
+  {
+    key: "mentorExperienceLevels",
+    label: "Mentor experience levels",
+    hint: "Mentor sign-up form.",
+  },
+  {
+    key: "heardAbout",
+    label: "How did you hear about us",
+    hint: "Registration and mentor forms.",
+  },
+  {
+    key: "partnerOrgs",
+    label: "Partner organizations",
+    hint: "Registration form.",
+  },
   { key: "focusAreas", label: "Focus areas", hint: "Submission form." },
-  { key: "impactFocus", label: "Impact focus", hint: "Submission form, pick any that apply." },
+  {
+    key: "impactFocus",
+    label: "Impact focus",
+    hint: "Submission form, pick any that apply.",
+  },
   { key: "regions", label: "Regions", hint: "Submission form." },
-  { key: "areasOfSpecification", label: "Areas of specification", hint: "Submission form." },
+  {
+    key: "areasOfSpecification",
+    label: "Areas of specification",
+    hint: "Submission form.",
+  },
   { key: "solutionStages", label: "Solution stages", hint: "Submission form." },
   { key: "affiliations", label: "Affiliations", hint: "Submission form." },
   { key: "roles", label: "Roles", hint: "Submission form." },
@@ -57,17 +89,27 @@ export function EventPanel({
   const router = useRouter();
   const [draft, setDraft] = useState<EventSettings>(saved);
   const [pending, start] = useTransition();
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(
+    null,
+  );
 
-  const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(saved), [draft, saved]);
-  const weightTotal = draft.rubric.criteria.reduce((t, c) => t + (Number(c.weight) || 0), 0);
+  const dirty = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(saved),
+    [draft, saved],
+  );
+  const weightTotal = draft.rubric.criteria.reduce(
+    (t, c) => t + (Number(c.weight) || 0),
+    0,
+  );
 
   function set<K extends keyof EventSettings>(key: K, value: EventSettings[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
     setResult(null);
   }
-  const setHome = <K extends keyof EventSettings["home"]>(key: K, value: EventSettings["home"][K]) =>
-    set("home", { ...draft.home, [key]: value });
+  const setHome = <K extends keyof EventSettings["home"]>(
+    key: K,
+    value: EventSettings["home"][K],
+  ) => set("home", { ...draft.home, [key]: value });
 
   // ── rubric ──
   const criteria = draft.rubric.criteria;
@@ -94,10 +136,17 @@ export function EventPanel({
     );
   const addCriterion = () => {
     let key = "criterion";
-    for (let n = 2; criteria.some((c) => c.key === key); n++) key = `criterion_${n}`;
+    for (let n = 2; criteria.some((c) => c.key === key); n++)
+      key = `criterion_${n}`;
     setRubric([
       ...criteria,
-      { key, label: "", weight: 0, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
+      {
+        key,
+        label: "",
+        weight: 0,
+        anchors: { limited: "", solid: "", exceptional: "" },
+        example: "",
+      },
     ]);
   };
 
@@ -117,7 +166,10 @@ export function EventPanel({
     start(async () => {
       const r = await saveSettings(draft);
       if (r.ok) {
-        setResult({ ok: true, message: "Saved. The site now shows these settings." });
+        setResult({
+          ok: true,
+          message: "Saved. The site now shows these settings.",
+        });
         router.refresh();
       } else {
         setResult({ ok: false, message: r.error });
@@ -152,37 +204,91 @@ export function EventPanel({
           onChange={(e) => onChange(e.target.value)}
         />
       )}
-      {opts.hint && <span className="mt-1 block text-[0.7rem] text-dust">{opts.hint}</span>}
+      {opts.hint && (
+        <span className="mt-1 block text-[0.7rem] text-dust">{opts.hint}</span>
+      )}
+    </label>
+  );
+
+  const toggle = (
+    label: string,
+    hint: string,
+    value: boolean,
+    onChange: (v: boolean) => void,
+    id: string,
+  ) => (
+    <label className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        className="mt-1"
+        data-toggle={id}
+        checked={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span>
+        <span className="block text-sm font-bold text-bone">{label}</span>
+        <span className="block text-xs text-dust">{hint}</span>
+      </span>
     </label>
   );
 
   return (
     <div className="space-y-4" data-panel="event">
       <p className="text-sm text-dust">
-        Everything here is specific to your event. Changes appear on the site as soon as you save.
-        {readOnly && " Your account is read-only, so you can look but not change anything."}
+        Everything here is specific to your event. Changes appear on the site as
+        soon as you save.
+        {readOnly &&
+          " Your account is read-only, so you can look but not change anything."}
       </p>
 
       <Section title="Basics" hint="Name, dates and who's running it" open>
         <div className="grid gap-4 md:grid-cols-2">
           {text("Event name", draft.name, (v) => set("name", v))}
-          {text("Word to highlight in the name", draft.accentWord, (v) => set("accentWord", v), {
-            hint: "One word from the name, drawn in the accent colour. Optional.",
-          })}
+          {text(
+            "Word to highlight in the name",
+            draft.accentWord,
+            (v) => set("accentWord", v),
+            {
+              hint: "One word from the name, drawn in the accent colour. Optional.",
+            },
+          )}
           {text("Tagline", draft.tagline, (v) => set("tagline", v))}
-          {text("Dates", draft.dates, (v) => set("dates", v), { hint: "Shown as written, e.g. March 5 – 7, 2027." })}
-          {text("Submission deadline", draft.submissionDeadline, (v) => set("submissionDeadline", v), {
-            hint: "Shown as written. Closing the form is a separate switch on the Home tab.",
+          {text("Dates", draft.dates, (v) => set("dates", v), {
+            hint: "Shown as written, e.g. March 5 – 7, 2027.",
           })}
-          {text("Judging opens", draft.judgingOpens, (v) => set("judgingOpens", v))}
-          {text("Format", draft.format, (v) => set("format", v), { placeholder: "In person · Online · Hybrid" })}
+          {text(
+            "Submission deadline",
+            draft.submissionDeadline,
+            (v) => set("submissionDeadline", v),
+            {
+              hint: "Shown as written. Closing the form is a separate switch on the Home tab.",
+            },
+          )}
+          {text("Judging opens", draft.judgingOpens, (v) =>
+            set("judgingOpens", v),
+          )}
+          {text("Format", draft.format, (v) => set("format", v), {
+            placeholder: "In person · Online · Hybrid",
+          })}
           {text("Prizes", draft.prizes, (v) => set("prizes", v))}
-          {text("Host name", draft.host.name, (v) => set("host", { ...draft.host, name: v }))}
-          {text("Host website", draft.host.url, (v) => set("host", { ...draft.host, url: v }))}
-          {text("Contact email", draft.contactEmail, (v) => set("contactEmail", v), {
-            hint: "Shown to participants who need help.",
-          })}
-          {text("Page teams tag when announcing", draft.announceUrl, (v) => set("announceUrl", v))}
+          {text("Host name", draft.host.name, (v) =>
+            set("host", { ...draft.host, name: v }),
+          )}
+          {text("Host website", draft.host.url, (v) =>
+            set("host", { ...draft.host, url: v }),
+          )}
+          {text(
+            "Contact email",
+            draft.contactEmail,
+            (v) => set("contactEmail", v),
+            {
+              hint: "Shown to participants who need help.",
+            },
+          )}
+          {text("Page teams tag when announcing", draft.announceUrl, (v) =>
+            set("announceUrl", v),
+          )}
           <label className="block">
             <span className="field-label">Largest team size</span>
             <select
@@ -200,7 +306,12 @@ export function EventPanel({
           </label>
         </div>
         <div className="mt-4">
-          {text("Description for search engines and link previews", draft.description, (v) => set("description", v), { area: 2 })}
+          {text(
+            "Description for search engines and link previews",
+            draft.description,
+            (v) => set("description", v),
+            { area: 2 },
+          )}
         </div>
       </Section>
 
@@ -212,28 +323,41 @@ export function EventPanel({
               <input
                 type="color"
                 className="h-11 w-14 cursor-pointer rounded-md border border-line bg-ink-5 p-1"
-                value={/^#[0-9a-fA-F]{6}$/.test(draft.theme.accent) ? draft.theme.accent : "#662EFF"}
+                value={
+                  /^#[0-9a-fA-F]{6}$/.test(draft.theme.accent)
+                    ? draft.theme.accent
+                    : "#662EFF"
+                }
                 disabled={disabled}
-                onChange={(e) => set("theme", { ...draft.theme, accent: e.target.value })}
+                onChange={(e) =>
+                  set("theme", { ...draft.theme, accent: e.target.value })
+                }
               />
               <input
                 className="field-input"
                 data-accent
                 value={draft.theme.accent}
                 disabled={disabled}
-                onChange={(e) => set("theme", { ...draft.theme, accent: e.target.value })}
+                onChange={(e) =>
+                  set("theme", { ...draft.theme, accent: e.target.value })
+                }
               />
             </span>
             <span className="mt-1 block text-[0.7rem] text-dust">
-              Used for buttons, links and highlights. Pick one that reads well on both a dark and
-              a light background.
+              Used for buttons, links and highlights. Pick one that reads well
+              on both a dark and a light background.
             </span>
           </label>
           <div>
-            {text("Logo address", draft.theme.logoUrl, (v) => set("theme", { ...draft.theme, logoUrl: v }), {
-              placeholder: "https://…",
-              hint: "A square image works best. Leave empty to show the Dua mark. Use PNG or JPEG if you send email: Gmail won't show SVG.",
-            })}
+            {text(
+              "Logo address",
+              draft.theme.logoUrl,
+              (v) => set("theme", { ...draft.theme, logoUrl: v }),
+              {
+                placeholder: "https://…",
+                hint: "A square image works best. Leave empty to show the Dua mark. Use PNG or JPEG if you send email: Gmail won't show SVG.",
+              },
+            )}
             {!readOnly && (
               <label className="btn mt-2 cursor-pointer">
                 {uploading ? "Uploading…" : "Upload an image"}
@@ -254,13 +378,75 @@ export function EventPanel({
             data-source-link-toggle
             checked={draft.theme.showSourceLink}
             disabled={disabled}
-            onChange={(e) => set("theme", { ...draft.theme, showSourceLink: e.target.checked })}
+            onChange={(e) =>
+              set("theme", { ...draft.theme, showSourceLink: e.target.checked })
+            }
           />
           Show a GitHub link to Dua&apos;s source code in the header
         </label>
       </Section>
 
-      <Section title="Judging" hint={`${criteria.length} criteria · top ${draft.topN} places`}>
+      <Section
+        title="Judging"
+        hint={`${criteria.length} criteria · top ${draft.topN} places`}
+      >
+        <div className="mb-5 grid gap-3">
+          {toggle(
+            "Anonymous judging",
+            "Judges and mentors don't see team names, member names or the mentor's name.",
+            draft.judging.anonymous,
+            (v) => set("judging", { ...draft.judging, anonymous: v }),
+            "anonymous",
+          )}
+          {toggle(
+            "Require evidence",
+            "Each score needs a sentence saying what the team showed.",
+            draft.judging.requireEvidence,
+            (v) => set("judging", { ...draft.judging, requireEvidence: v }),
+            "requireEvidence",
+          )}
+          {toggle(
+            "Conflict declarations",
+            "Judges can step back from a project they're connected to.",
+            draft.judging.recusals,
+            (v) => set("judging", { ...draft.judging, recusals: v }),
+            "recusals",
+          )}
+          {toggle(
+            "Publish the final ranking",
+            "Once results are open, anyone can see the placed projects and their totals. Off keeps results to judges, mentors and admins.",
+            draft.judging.publicResults,
+            (v) => set("judging", { ...draft.judging, publicResults: v }),
+            "publicResults",
+          )}
+          <label className="block max-w-xl">
+            <span className="field-label">How the ranking is worked out</span>
+            <select
+              className="field-input mt-1"
+              data-ranking
+              value={draft.judging.ranking}
+              disabled={disabled}
+              onChange={(e) =>
+                set("judging", {
+                  ...draft.judging,
+                  ranking: e.target.value as "normalized" | "average",
+                })
+              }
+            >
+              <option value="normalized">
+                Even out harsh and generous judges (recommended)
+              </option>
+              <option value="average">
+                Plain average of judges&apos; totals
+              </option>
+            </select>
+            <span className="mt-1 block text-[0.7rem] text-dust">
+              The first is fairer when judges score on different scales. The
+              second is simpler to explain.
+            </span>
+          </label>
+        </div>
+
         <label className="block max-w-xs">
           <span className="field-label">Places in the final ranking</span>
           <input
@@ -284,19 +470,24 @@ export function EventPanel({
           </div>
         </div>
         <p className="mt-1 text-[0.7rem] text-dust">
-          Judges give each criterion a score from 1 to 5 with a sentence of evidence. Ties are
-          settled by the ticked criteria, in the order listed.
+          Judges give each criterion a score from 1 to 5 with a sentence of
+          evidence. Ties are settled by the ticked criteria, in the order
+          listed.
         </p>
         {rubricLocked && (
           <div className="mt-2 rounded-md border border-line bg-ink-4 px-3 py-2 text-xs text-dust">
-            Judges have started scoring, so criteria can&apos;t be added, removed or re-weighted.
-            Names and guidance can still be edited.
+            Judges have started scoring, so criteria can&apos;t be added,
+            removed or re-weighted. Names and guidance can still be edited.
           </div>
         )}
 
         <div className="mt-3 space-y-3">
           {criteria.map((c, i) => (
-            <div key={i} className="rounded-md border border-line bg-ink-4 p-3" data-criterion-row>
+            <div
+              key={i}
+              className="rounded-md border border-line bg-ink-4 p-3"
+              data-criterion-row
+            >
               <div className="grid gap-3 md:grid-cols-[1fr_7rem_auto]">
                 <label className="block">
                   <span className="field-label">Name</span>
@@ -308,9 +499,13 @@ export function EventPanel({
                       editCriterion(i, {
                         label: e.target.value,
                         // A new criterion's id follows its name until it's saved.
-                        ...(saved.rubric.criteria.some((s) => s.key === c.key) || rubricLocked
+                        ...(saved.rubric.criteria.some(
+                          (s) => s.key === c.key,
+                        ) || rubricLocked
                           ? {}
-                          : { key: uniqueKey(slug(e.target.value), criteria, i) }),
+                          : {
+                              key: uniqueKey(slug(e.target.value), criteria, i),
+                            }),
                       })
                     }
                   />
@@ -324,21 +519,37 @@ export function EventPanel({
                     className="field-input mt-1"
                     value={c.weight}
                     disabled={disabled || rubricLocked}
-                    onChange={(e) => editCriterion(i, { weight: Number(e.target.value) })}
+                    onChange={(e) =>
+                      editCriterion(i, { weight: Number(e.target.value) })
+                    }
                   />
                 </label>
                 <div className="flex items-end gap-1">
-                  <button type="button" className="btn" disabled={disabled || i === 0} onClick={() => moveCriterion(i, -1)} aria-label="Move up">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={disabled || i === 0}
+                    onClick={() => moveCriterion(i, -1)}
+                    aria-label="Move up"
+                  >
                     ↑
                   </button>
-                  <button type="button" className="btn" disabled={disabled || i === criteria.length - 1} onClick={() => moveCriterion(i, 1)} aria-label="Move down">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={disabled || i === criteria.length - 1}
+                    onClick={() => moveCriterion(i, 1)}
+                    aria-label="Move down"
+                  >
                     ↓
                   </button>
                   <button
                     type="button"
                     className="btn"
                     disabled={disabled || rubricLocked || criteria.length === 1}
-                    onClick={() => setRubric(criteria.filter((_, j) => j !== i))}
+                    onClick={() =>
+                      setRubric(criteria.filter((_, j) => j !== i))
+                    }
                   >
                     Remove
                   </button>
@@ -354,26 +565,43 @@ export function EventPanel({
                 Use to settle ties
               </label>
               <details className="mt-2 text-xs">
-                <summary className="cursor-pointer text-dust hover:text-bone">Guidance for judges</summary>
+                <summary className="cursor-pointer text-dust hover:text-bone">
+                  Guidance for judges
+                </summary>
                 <div className="mt-2 grid gap-2">
-                  {(["limited", "solid", "exceptional"] as const).map((level, n) => (
-                    <label key={level} className="block">
-                      <span className="field-label">What a {n * 2 + 1} looks like</span>
-                      <input
-                        className="field-input mt-1"
-                        value={c.anchors[level]}
-                        disabled={disabled}
-                        onChange={(e) => editCriterion(i, { anchors: { ...c.anchors, [level]: e.target.value } })}
-                      />
-                    </label>
-                  ))}
+                  {(["limited", "solid", "exceptional"] as const).map(
+                    (level, n) => (
+                      <label key={level} className="block">
+                        <span className="field-label">
+                          What a {n * 2 + 1} looks like
+                        </span>
+                        <input
+                          className="field-input mt-1"
+                          value={c.anchors[level]}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            editCriterion(i, {
+                              anchors: {
+                                ...c.anchors,
+                                [level]: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                    ),
+                  )}
                   <label className="block">
-                    <span className="field-label">Example evidence sentence</span>
+                    <span className="field-label">
+                      Example evidence sentence
+                    </span>
                     <input
                       className="field-input mt-1"
                       value={c.example}
                       disabled={disabled}
-                      onChange={(e) => editCriterion(i, { example: e.target.value })}
+                      onChange={(e) =>
+                        editCriterion(i, { example: e.target.value })
+                      }
                     />
                   </label>
                 </div>
@@ -382,117 +610,199 @@ export function EventPanel({
           ))}
         </div>
         {!readOnly && !rubricLocked && criteria.length < 10 && (
-          <button type="button" className="btn mt-3" onClick={addCriterion} disabled={pending}>
+          <button
+            type="button"
+            className="btn mt-3"
+            onClick={addCriterion}
+            disabled={pending}
+          >
             + Add a criterion
           </button>
         )}
       </Section>
 
       <Section
-        title="Questions"
-        hint={`${draft.customFields.registration.length + draft.customFields.submission.length} of your own · ${draft.hidden.registration.length + draft.hidden.submission.length} switched off`}
+        title="Features"
+        hint="Parts of the platform your event may not need"
       >
-        <p className="text-[0.7rem] text-dust">
-          Switch off built-in questions your event doesn&apos;t need, and add your own. Names,
-          emails and the project&apos;s title and description are always asked.
-        </p>
-        {(["registration", "submission"] as FormName[]).map((form) => (
-          <div key={form} className="mt-5" data-questions={form}>
-            <div className="field-label">
-              {form === "registration" ? "Registration form" : "Submission form"}
-            </div>
-            <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-              {HIDEABLE[form].map((h) => (
-                <label key={h.id} className="flex items-center gap-2 text-sm text-bone">
-                  <input
-                    type="checkbox"
-                    data-ask={h.id}
-                    checked={!draft.hidden[form].includes(h.id)}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      set("hidden", {
-                        ...draft.hidden,
-                        [form]: e.target.checked
-                          ? draft.hidden[form].filter((id) => id !== h.id)
-                          : [...draft.hidden[form], h.id],
-                      })
-                    }
-                  />
-                  Ask: {h.label}
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-4 text-xs text-dust">Your own questions</div>
-            <Rows<CustomField>
-              items={draft.customFields[form]}
-              disabled={disabled}
-              max={30}
-              addLabel="+ Add a question"
-              blank={{ key: "", label: "", type: "text", required: false, options: [], help: "", showToJudges: false }}
-              onChange={(next) =>
-                set("customFields", {
-                  ...draft.customFields,
-                  // A question's id follows its wording until it's first saved;
-                  // after that it stays put so earlier answers keep their place.
-                  [form]: next.map((f, i) =>
-                    saved.customFields[form].some((s) => s.key === f.key && f.key !== "")
-                      ? f
-                      : { ...f, key: uniqueFieldKey(slug(f.label), next, i) },
-                  ),
-                })
-              }
-              render={(f, edit) => (
-                <div className="grid gap-2">
-                  <div className="grid gap-2 md:grid-cols-[1fr_12rem]">
-                    {text("Question", f.label, (v) => edit({ label: v }))}
-                    <label className="block">
-                      <span className="field-label">Answer type</span>
-                      <select
-                        className="field-input mt-1"
-                        value={f.type}
-                        disabled={disabled}
-                        onChange={(e) => edit({ type: e.target.value as CustomField["type"] })}
-                      >
-                        {CUSTOM_FIELD_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {TYPE_LABELS[t]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  {(f.type === "select" || f.type === "checkboxes") &&
-                    text("Options", f.options.join("\n"), (v) => edit({ options: v.split("\n") }), {
-                      area: 3,
-                      hint: "One per line.",
-                    })}
-                  {text("Help text", f.help, (v) => edit({ help: v }), { hint: "Optional. Shown under the question." })}
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-bone">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={f.required} disabled={disabled} onChange={(e) => edit({ required: e.target.checked })} />
-                      Required
-                    </label>
-                    {form === "submission" && (
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" checked={f.showToJudges} disabled={disabled} onChange={(e) => edit({ showToJudges: e.target.checked })} />
-                        Show the answer to judges
-                      </label>
-                    )}
-                  </div>
-                  {form === "submission" && f.showToJudges && (
-                    <p className="text-[0.7rem] text-dust">
-                      Don&apos;t ask for contact details in a question judges can see.
-                    </p>
-                  )}
-                </div>
-              )}
-            />
-          </div>
-        ))}
+        <div className="grid gap-3">
+          {toggle(
+            "Mentor programme",
+            "The mentor sign-up page, the links to it, and the mentor question on submissions.",
+            draft.features.mentors,
+            (v) => set("features", { ...draft.features, mentors: v }),
+            "mentors",
+          )}
+          {toggle(
+            "Registration before submitting",
+            "Off sends people straight to the submission form.",
+            draft.features.registration,
+            (v) => set("features", { ...draft.features, registration: v }),
+            "registration",
+          )}
+          {toggle(
+            "Email campaigns",
+            "The Email tab, for writing to everyone who registered.",
+            draft.features.emailCampaigns,
+            (v) => set("features", { ...draft.features, emailCampaigns: v }),
+            "emailCampaigns",
+          )}
+          {toggle(
+            '"How it works" on the homepage',
+            "The row of steps from registering to results.",
+            draft.features.howItWorks,
+            (v) => set("features", { ...draft.features, howItWorks: v }),
+            "howItWorks",
+          )}
+        </div>
       </Section>
 
-      <Section title="Form options" hint="The choices offered in dropdowns and checklists">
+      <Section
+        title="Questions"
+        hint={`${FORMS.reduce((n, f) => n + draft.customFields[f].length, 0)} of your own · ${FORMS.reduce((n, f) => n + draft.hidden[f].length, 0)} switched off`}
+      >
+        <p className="text-[0.7rem] text-dust">
+          Switch off built-in questions your event doesn&apos;t need, and add
+          your own. Names, emails and the project&apos;s name, description and
+          summary are always asked.
+        </p>
+        {(["registration", "mentor", "submission"] as FormName[]).map(
+          (form) => (
+            <div key={form} className="mt-5" data-questions={form}>
+              <div className="field-label">{FORM_LABELS[form]}</div>
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                {HIDEABLE[form].map((h) => (
+                  <label
+                    key={h.id}
+                    className="flex items-center gap-2 text-sm text-bone"
+                  >
+                    <input
+                      type="checkbox"
+                      data-ask={h.id}
+                      checked={!draft.hidden[form].includes(h.id)}
+                      disabled={disabled}
+                      onChange={(e) =>
+                        set("hidden", {
+                          ...draft.hidden,
+                          [form]: e.target.checked
+                            ? draft.hidden[form].filter((id) => id !== h.id)
+                            : [...draft.hidden[form], h.id],
+                        })
+                      }
+                    />
+                    Ask: {h.label}
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-4 text-xs text-dust">Your own questions</div>
+              <Rows<CustomField>
+                items={draft.customFields[form]}
+                disabled={disabled}
+                max={30}
+                addLabel="+ Add a question"
+                blank={{
+                  key: "",
+                  label: "",
+                  type: "text",
+                  required: false,
+                  options: [],
+                  help: "",
+                  showToJudges: false,
+                }}
+                onChange={(next) =>
+                  set("customFields", {
+                    ...draft.customFields,
+                    // A question's id follows its wording until it's first saved;
+                    // after that it stays put so earlier answers keep their place.
+                    [form]: next.map((f, i) =>
+                      saved.customFields[form].some(
+                        (s) => s.key === f.key && f.key !== "",
+                      )
+                        ? f
+                        : { ...f, key: uniqueFieldKey(slug(f.label), next, i) },
+                    ),
+                  })
+                }
+                render={(f, edit) => (
+                  <div className="grid gap-2">
+                    <div className="grid gap-2 md:grid-cols-[1fr_12rem]">
+                      {text("Question", f.label, (v) => edit({ label: v }))}
+                      <label className="block">
+                        <span className="field-label">Answer type</span>
+                        <select
+                          className="field-input mt-1"
+                          value={f.type}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            edit({
+                              type: e.target.value as CustomField["type"],
+                            })
+                          }
+                        >
+                          {CUSTOM_FIELD_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {TYPE_LABELS[t]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    {(f.type === "select" || f.type === "checkboxes") &&
+                      text(
+                        "Options",
+                        f.options.join("\n"),
+                        (v) => edit({ options: v.split("\n") }),
+                        {
+                          area: 3,
+                          hint: "One per line.",
+                        },
+                      )}
+                    {text("Help text", f.help, (v) => edit({ help: v }), {
+                      hint: "Optional. Shown under the question.",
+                    })}
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-bone">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={f.required}
+                          disabled={disabled}
+                          onChange={(e) => edit({ required: e.target.checked })}
+                        />
+                        Required
+                      </label>
+                      {form === "submission" && (
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={f.showToJudges}
+                            disabled={disabled}
+                            onChange={(e) =>
+                              edit({ showToJudges: e.target.checked })
+                            }
+                          />
+                          Show the answer to judges
+                        </label>
+                      )}
+                    </div>
+                    {form === "submission" && f.showToJudges && (
+                      <p className="text-[0.7rem] text-dust">
+                        Don&apos;t ask for contact details in a question judges
+                        can see.
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
+            </div>
+          ),
+        )}
+      </Section>
+
+      <Section
+        title="Form options"
+        hint="The choices offered in dropdowns and checklists"
+      >
         <p className="mb-3 text-[0.7rem] text-dust">One option per line.</p>
         <div className="grid gap-4 md:grid-cols-2">
           {LISTS.map((l) => (
@@ -506,7 +816,9 @@ export function EventPanel({
                 disabled={disabled}
                 onChange={(e) => set(l.key, e.target.value.split("\n"))}
               />
-              <span className="mt-1 block text-[0.7rem] text-dust">{l.hint}</span>
+              <span className="mt-1 block text-[0.7rem] text-dust">
+                {l.hint}
+              </span>
             </label>
           ))}
         </div>
@@ -514,7 +826,9 @@ export function EventPanel({
 
       <Section title="Homepage" hint="The copy visitors read first">
         <div className="grid gap-4">
-          {text("Introduction heading", draft.home.introTitle, (v) => setHome("introTitle", v))}
+          {text("Introduction heading", draft.home.introTitle, (v) =>
+            setHome("introTitle", v),
+          )}
           {text("Introduction", draft.home.intro, (v) => setHome("intro", v), {
             area: 6,
             hint: "Leave a blank line between paragraphs. Leave empty to hide the section.",
@@ -522,11 +836,19 @@ export function EventPanel({
         </div>
 
         <div className="mt-5 field-label">Highlights</div>
-        <p className="text-[0.7rem] text-dust">Up to six cards, each with an example that opens when clicked.</p>
+        <p className="text-[0.7rem] text-dust">
+          Up to six cards, each with an example that opens when clicked.
+        </p>
         <div className="mt-2 grid gap-3 md:grid-cols-3">
-          {text("Small heading", draft.home.pillarsEyebrow, (v) => setHome("pillarsEyebrow", v))}
-          {text("Heading", draft.home.pillarsTitle, (v) => setHome("pillarsTitle", v))}
-          {text("Line under the heading", draft.home.pillarsSubtitle, (v) => setHome("pillarsSubtitle", v))}
+          {text("Small heading", draft.home.pillarsEyebrow, (v) =>
+            setHome("pillarsEyebrow", v),
+          )}
+          {text("Heading", draft.home.pillarsTitle, (v) =>
+            setHome("pillarsTitle", v),
+          )}
+          {text("Line under the heading", draft.home.pillarsSubtitle, (v) =>
+            setHome("pillarsSubtitle", v),
+          )}
         </div>
         <Rows
           items={draft.home.pillars}
@@ -539,26 +861,36 @@ export function EventPanel({
             <div className="grid gap-2">
               {text("Title", p.title, (v) => edit({ title: v }))}
               {text("Text", p.text, (v) => edit({ text: v }))}
-              {text("Example", p.example, (v) => edit({ example: v }), { area: 2 })}
+              {text("Example", p.example, (v) => edit({ example: v }), {
+                area: 2,
+              })}
             </div>
           )}
         />
 
-        <div className="mt-5 field-label">An example problem for each track</div>
+        <div className="mt-5 field-label">
+          An example problem for each track
+        </div>
         <div className="mt-2 grid gap-3">
-          {draft.tracks.filter((t) => t.trim()).map((track) => {
-            const current = draft.home.trackExamples.find((t) => t.track === track)?.example ?? "";
-            return (
-              <div key={track}>
-                {text(track, current, (v) =>
-                  setHome("trackExamples", [
-                    ...draft.home.trackExamples.filter((t) => t.track !== track),
-                    ...(v.trim() ? [{ track, example: v }] : []),
-                  ]),
-                )}
-              </div>
-            );
-          })}
+          {draft.tracks
+            .filter((t) => t.trim())
+            .map((track) => {
+              const current =
+                draft.home.trackExamples.find((t) => t.track === track)
+                  ?.example ?? "";
+              return (
+                <div key={track}>
+                  {text(track, current, (v) =>
+                    setHome("trackExamples", [
+                      ...draft.home.trackExamples.filter(
+                        (t) => t.track !== track,
+                      ),
+                      ...(v.trim() ? [{ track, example: v }] : []),
+                    ]),
+                  )}
+                </div>
+              );
+            })}
         </div>
 
         <div className="mt-5 field-label">Questions and answers</div>
@@ -580,20 +912,46 @@ export function EventPanel({
 
       {!readOnly && (
         <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-ink-3 p-3 shadow-card">
-          <button className="btn-accent" onClick={save} disabled={pending || !dirty} data-save-settings>
+          <button
+            className="btn-accent"
+            onClick={save}
+            disabled={pending || !dirty}
+            data-save-settings
+          >
             {pending ? "Saving…" : "Save changes"}
           </button>
-          <button className="btn" onClick={() => { setDraft(saved); setResult(null); }} disabled={pending || !dirty}>
+          <button
+            className="btn"
+            onClick={() => {
+              setDraft(saved);
+              setResult(null);
+            }}
+            disabled={pending || !dirty}
+          >
             Discard
           </button>
-          <span className={`text-xs ${result ? (result.ok ? "text-jade" : "text-blood") : "text-dust"}`} data-save-result>
-            {result ? result.message : dirty ? "You have unsaved changes." : "No changes to save."}
+          <span
+            className={`text-xs ${result ? (result.ok ? "text-jade" : "text-blood") : "text-dust"}`}
+            data-save-result
+          >
+            {result
+              ? result.message
+              : dirty
+                ? "You have unsaved changes."
+                : "No changes to save."}
           </span>
         </div>
       )}
     </div>
   );
 }
+
+const FORMS: FormName[] = ["registration", "mentor", "submission"];
+const FORM_LABELS: Record<FormName, string> = {
+  registration: "Registration form",
+  mentor: "Mentor sign-up form",
+  submission: "Submission form",
+};
 
 const TYPE_LABELS: Record<CustomField["type"], string> = {
   text: "Short text",
@@ -603,15 +961,21 @@ const TYPE_LABELS: Record<CustomField["type"], string> = {
   url: "Link",
 };
 
-function uniqueFieldKey(base: string, fields: CustomField[], self: number): string {
+function uniqueFieldKey(
+  base: string,
+  fields: CustomField[],
+  self: number,
+): string {
   let key = base === "criterion" ? "question" : base;
-  for (let n = 2; fields.some((f, j) => j !== self && f.key === key); n++) key = `${base.slice(0, 27)}_${n}`;
+  for (let n = 2; fields.some((f, j) => j !== self && f.key === key); n++)
+    key = `${base.slice(0, 27)}_${n}`;
   return key;
 }
 
 function uniqueKey(base: string, criteria: Criterion[], self: number): string {
   let key = base;
-  for (let n = 2; criteria.some((c, j) => j !== self && c.key === key); n++) key = `${base.slice(0, 27)}_${n}`;
+  for (let n = 2; criteria.some((c, j) => j !== self && c.key === key); n++)
+    key = `${base.slice(0, 27)}_${n}`;
   return key;
 }
 
@@ -630,7 +994,9 @@ function Section({
     <details className="card group" open={open} data-section={title}>
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 [&::-webkit-details-marker]:hidden">
         <span className="text-base font-bold text-bone">
-          <span className="mr-2 inline-block text-accent transition group-open:rotate-90">▸</span>
+          <span className="mr-2 inline-block text-accent transition group-open:rotate-90">
+            ▸
+          </span>
           {title}
         </span>
         <span className="text-xs text-dust">{hint}</span>
@@ -662,7 +1028,9 @@ function Rows<T>({
     <div className="mt-2 space-y-3">
       {items.map((item, i) => (
         <div key={i} className="rounded-md border border-line bg-ink-4 p-3">
-          {render(item, (patch) => onChange(items.map((x, j) => (j === i ? { ...x, ...patch } : x))))}
+          {render(item, (patch) =>
+            onChange(items.map((x, j) => (j === i ? { ...x, ...patch } : x))),
+          )}
           <button
             type="button"
             className="btn mt-2"
@@ -674,7 +1042,11 @@ function Rows<T>({
         </div>
       ))}
       {!disabled && items.length < max && (
-        <button type="button" className="btn" onClick={() => onChange([...items, blank])}>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => onChange([...items, blank])}
+        >
           {addLabel}
         </button>
       )}

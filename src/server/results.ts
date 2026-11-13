@@ -5,12 +5,14 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { events, results_locks, scores, submissions, tie_breaks, type LockedPlace } from "@/db/schema";
 import { drawBubble, monteCarloTop, type ScoreRow } from "@/lib/monte-carlo";
+import { rankByAverage } from "@/lib/ranking";
 import type { EventRow } from "./event";
 
 /**
  * Run the ranking for an event, lock the top places, and move the event to
  * the results phase. How many places, and the rubric, come from the event's
- * settings. The same seed over the same scores always gives the same ranking.
+ * settings, as does the method: evened-out and tested for stability, or plain
+ * averages. Either way the same scores (and seed) always give the same ranking.
  */
 export async function computeAndLockResults(
   event: EventRow,
@@ -42,13 +44,21 @@ export async function computeAndLockResults(
   const eligible = new Set(subs.map((s) => s.id));
   const counted: ScoreRow[] = scoreRows.filter((s) => eligible.has(s.submission_id));
 
-  const mc = monteCarloTop(counted, subs, rubric, { seed, trials: 1000, topN });
-  const drawn = drawBubble(mc.bubble, mc.rankings, topN - mc.autoLocked.length, seed);
-  const top6: LockedPlace[] = [...mc.autoLocked, ...drawn].slice(0, topN).map((sid, i) => ({
-    submission_id: sid,
-    rank: i + 1,
-    probability: mc.rankings.find((r) => r.submission_id === sid)?.p_top_n ?? 0,
-  }));
+  let top6: LockedPlace[];
+  if (event.settings.judging.ranking === "average") {
+    // Plain averages. There is no chance involved, so every place is certain.
+    top6 = rankByAverage(counted, subs.map((s) => s.id), rubric)
+      .slice(0, topN)
+      .map((r, i) => ({ submission_id: r.submission_id, rank: i + 1, probability: 1 }));
+  } else {
+    const mc = monteCarloTop(counted, subs, rubric, { seed, trials: 1000, topN });
+    const drawn = drawBubble(mc.bubble, mc.rankings, topN - mc.autoLocked.length, seed);
+    top6 = [...mc.autoLocked, ...drawn].slice(0, topN).map((sid, i) => ({
+      submission_id: sid,
+      rank: i + 1,
+      probability: mc.rankings.find((r) => r.submission_id === sid)?.p_top_n ?? 0,
+    }));
+  }
 
   await db().transaction(async (tx) => {
     await tx

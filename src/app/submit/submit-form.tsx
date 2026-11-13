@@ -6,6 +6,7 @@ import { COUNTRIES } from "@/lib/countries";
 import { CustomFields } from "@/components/custom-fields";
 import { useEvent } from "@/components/event-context";
 import { customFieldName } from "@/lib/custom-fields";
+import { hiddenQuestions } from "@/lib/event-settings";
 
 function formatPhone(v: string) {
   let s = v.replace(/[^\d+()\-\s]/g, "");
@@ -50,7 +51,7 @@ export function SubmitForm({
 } = {}) {
   const EVENT = useEvent();
   // Built-in questions the organizer has switched off in the Event tab.
-  const off = new Set<string>(EVENT.hidden.submission);
+  const off = hiddenQuestions(EVENT, "submission");
   const shown = (id: string) => !off.has(id);
   const {
     tracks: TRACKS,
@@ -267,117 +268,131 @@ export function SubmitForm({
               />
               {err("member1_email")}
             </div>
-            <div>
-              <label className="field-label">Phone Number *</label>
-              <input
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(formatPhone(e.target.value))}
-                placeholder="+1 (555) 123-4567"
-                className="field-input mt-1"
-              />
-              {err("phone")}
-            </div>
-            <div>
-              <label className="field-label">Country *</label>
-              <select
-                name="country"
-                required
-                defaultValue=""
-                autoComplete="country-name"
-                className="field-input mt-1"
-              >
-                <option value="">— Select —</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              {err("country")}
-            </div>
-            <div>
-              <label className="field-label">State / Province / Region</label>
-              <input
-                name="state_region"
-                autoComplete="address-level1"
-                placeholder="e.g. California · Lagos · Bavaria"
-                className="field-input mt-1"
-              />
-            </div>
-            <div>
-              <label className="field-label">City</label>
-              <input
-                name="city"
-                autoComplete="address-level2"
-                className="field-input mt-1"
-              />
-            </div>
-            <div>
-              <label className="field-label">Affiliated Org</label>
-              <select
-                value={orgChoice}
-                onChange={(e) => setOrgChoice(e.target.value)}
-                name={orgChoice === OTHER ? undefined : "affiliated_org"}
-                className="field-input mt-1"
-              >
-                <option value="">— Select —</option>
-                {ORGS.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-                <option value={OTHER}>Other…</option>
-              </select>
-              {orgChoice === OTHER && (
+            {shown("phone") && (
+              <div>
+                <label className="field-label">Phone Number *</label>
                 <input
-                  name="affiliated_org"
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   required
-                  placeholder="Type your org"
-                  className="field-input mt-2"
-                  autoFocus
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  placeholder="+1 (555) 123-4567"
+                  className="field-input mt-1"
                 />
-              )}
-            </div>
-            <div>
-              <label className="field-label">Role</label>
-              <select
-                value={roleChoice}
-                onChange={(e) => setRoleChoice(e.target.value)}
-                name={roleChoice === OTHER ? undefined : "submitter_role"}
-                className="field-input mt-1"
-              >
-                <option value="">— Select —</option>
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-                <option value={OTHER}>Other…</option>
-              </select>
-              {roleChoice === OTHER && (
+                {err("phone")}
+              </div>
+            )}
+            {shown("location") && (
+              <div>
+                <label className="field-label">Country *</label>
+                <select
+                  name="country"
+                  required
+                  defaultValue=""
+                  autoComplete="country-name"
+                  className="field-input mt-1"
+                >
+                  <option value="">— Select —</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                {err("country")}
+              </div>
+            )}
+            {shown("location") && (
+              <div>
+                <label className="field-label">State / Province / Region</label>
                 <input
-                  name="submitter_role"
-                  required
-                  placeholder="Type your role"
-                  className="field-input mt-2"
-                  autoFocus
+                  name="state_region"
+                  autoComplete="address-level1"
+                  placeholder="e.g. California · Lagos · Bavaria"
+                  className="field-input mt-1"
                 />
-              )}
-            </div>
-            <div className="md:col-span-2">
-              <label className="field-label">LinkedIn Profile URL</label>
-              <input
-                name="submitter_linkedin_url"
-                placeholder="https://linkedin.com/in/..."
-                className="field-input mt-1"
-              />
-              {err("submitter_linkedin_url")}
-            </div>
+              </div>
+            )}
+            {shown("location") && (
+              <div>
+                <label className="field-label">City</label>
+                <input
+                  name="city"
+                  autoComplete="address-level2"
+                  className="field-input mt-1"
+                />
+              </div>
+            )}
+            {shown("submitter_profile") && (
+              <div>
+                <label className="field-label">Affiliated Org</label>
+                <select
+                  value={orgChoice}
+                  onChange={(e) => setOrgChoice(e.target.value)}
+                  name={orgChoice === OTHER ? undefined : "affiliated_org"}
+                  className="field-input mt-1"
+                >
+                  <option value="">— Select —</option>
+                  {ORGS.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                  <option value={OTHER}>Other…</option>
+                </select>
+                {orgChoice === OTHER && (
+                  <input
+                    name="affiliated_org"
+                    required
+                    placeholder="Type your org"
+                    className="field-input mt-2"
+                    autoFocus
+                  />
+                )}
+              </div>
+            )}
+            {shown("submitter_profile") && (
+              <div>
+                <label className="field-label">Role</label>
+                <select
+                  value={roleChoice}
+                  onChange={(e) => setRoleChoice(e.target.value)}
+                  name={roleChoice === OTHER ? undefined : "submitter_role"}
+                  className="field-input mt-1"
+                >
+                  <option value="">— Select —</option>
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                  <option value={OTHER}>Other…</option>
+                </select>
+                {roleChoice === OTHER && (
+                  <input
+                    name="submitter_role"
+                    required
+                    placeholder="Type your role"
+                    className="field-input mt-2"
+                    autoFocus
+                  />
+                )}
+              </div>
+            )}
+            {shown("submitter_profile") && (
+              <div className="md:col-span-2">
+                <label className="field-label">LinkedIn Profile URL</label>
+                <input
+                  name="submitter_linkedin_url"
+                  placeholder="https://linkedin.com/in/..."
+                  className="field-input mt-1"
+                />
+                {err("submitter_linkedin_url")}
+              </div>
+            )}
           </div>
         </fieldset>
 
@@ -439,40 +454,46 @@ export function SubmitForm({
                       />
                       {err(`member${n}_email`)}
                     </div>
-                    <div>
-                      <label className="field-label">LinkedIn Profile</label>
-                      <input
-                        name={`member${n}_linkedin_url`}
-                        placeholder="https://linkedin.com/in/…"
-                        className="field-input mt-1"
-                      />
-                      {err(`member${n}_linkedin_url`)}
-                    </div>
-                    <div>
-                      <label className="field-label">Occupation</label>
-                      <input
-                        name={`member${n}_occupation`}
-                        placeholder="e.g. Software Engineer, Student"
-                        className="field-input mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="field-label">
-                        Country of Residence
-                      </label>
-                      <select
-                        name={`member${n}_country`}
-                        defaultValue=""
-                        className="field-input mt-1"
-                      >
-                        <option value="">— Select —</option>
-                        {COUNTRIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {shown("teammate_details") && (
+                      <div>
+                        <label className="field-label">LinkedIn Profile</label>
+                        <input
+                          name={`member${n}_linkedin_url`}
+                          placeholder="https://linkedin.com/in/…"
+                          className="field-input mt-1"
+                        />
+                        {err(`member${n}_linkedin_url`)}
+                      </div>
+                    )}
+                    {shown("teammate_details") && (
+                      <div>
+                        <label className="field-label">Occupation</label>
+                        <input
+                          name={`member${n}_occupation`}
+                          placeholder="e.g. Software Engineer, Student"
+                          className="field-input mt-1"
+                        />
+                      </div>
+                    )}
+                    {shown("teammate_details") && (
+                      <div>
+                        <label className="field-label">
+                          Country of Residence
+                        </label>
+                        <select
+                          name={`member${n}_country`}
+                          defaultValue=""
+                          className="field-input mt-1"
+                        >
+                          <option value="">— Select —</option>
+                          {COUNTRIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -539,22 +560,24 @@ export function SubmitForm({
               />
               {err("project_name")}
             </div>
-            <div>
-              <label className="field-label">Challenge Track *</label>
-              <select
-                name="challenge_track"
-                required
-                className="field-input mt-1"
-                defaultValue=""
-              >
-                <option value="">— Select —</option>
-                {TRACKS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {shown("challenge_track") && (
+              <div>
+                <label className="field-label">Challenge Track *</label>
+                <select
+                  name="challenge_track"
+                  required
+                  className="field-input mt-1"
+                  defaultValue=""
+                >
+                  <option value="">— Select —</option>
+                  {TRACKS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {shown("problem_brief") && (
               <div className="md:col-span-2">
                 <label className="field-label">Problem Brief *</label>
@@ -616,26 +639,30 @@ export function SubmitForm({
                 {err("region")}
               </div>
             )}
-            <div>
-              <label className="field-label">Project Category *</label>
-              <input
-                name="project_category"
-                required
-                placeholder="AI for Coding, Mental Health, …"
-                className="field-input mt-1"
-              />
-              {err("project_category")}
-            </div>
-            <div>
-              <label className="field-label">Technologies Used *</label>
-              <input
-                name="technologies_used"
-                required
-                placeholder="Python, React, Postgres, Raspberry Pi, …"
-                className="field-input mt-1"
-              />
-              {err("technologies_used")}
-            </div>
+            {shown("project_category") && (
+              <div>
+                <label className="field-label">Project Category *</label>
+                <input
+                  name="project_category"
+                  required
+                  placeholder="AI for Coding, Mental Health, …"
+                  className="field-input mt-1"
+                />
+                {err("project_category")}
+              </div>
+            )}
+            {shown("technologies_used") && (
+              <div>
+                <label className="field-label">Technologies Used *</label>
+                <input
+                  name="technologies_used"
+                  required
+                  placeholder="Python, React, Postgres, Raspberry Pi, …"
+                  className="field-input mt-1"
+                />
+                {err("technologies_used")}
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -854,86 +881,96 @@ export function SubmitForm({
             {err("project_description_summary")}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="field-label">GitHub URL</label>
-              <input name="github_url" className="field-input mt-1" />
-              {err("github_url")}
+          {shown("code_links") && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="field-label">GitHub URL</label>
+                <input name="github_url" className="field-input mt-1" />
+                {err("github_url")}
+              </div>
+              <div>
+                <label className="field-label">Live Demo URL</label>
+                <input name="live_demo_url" className="field-input mt-1" />
+                {err("live_demo_url")}
+              </div>
             </div>
-            <div>
-              <label className="field-label">Live Demo URL</label>
-              <input name="live_demo_url" className="field-input mt-1" />
-              {err("live_demo_url")}
-            </div>
-          </div>
+          )}
         </fieldset>
 
         {/* Demo Video — prominent, red-accented */}
-        <fieldset className="card space-y-4 border-blood/50 bg-gradient-to-br from-blood/5 to-transparent">
-          <legend className="inline-flex items-center gap-2 rounded-full border border-blood/60 bg-blood/20 px-3 py-1 text-[0.7rem] font-bold text-blood">
-            ▣ Required · Demo Video
-          </legend>
+        {(shown("demo_video") || shown("pitch_video")) && (
+          <fieldset className="card space-y-4 border-blood/50 bg-gradient-to-br from-blood/5 to-transparent">
+            <legend className="inline-flex items-center gap-2 rounded-full border border-blood/60 bg-blood/20 px-3 py-1 text-[0.7rem] font-bold text-blood">
+              ▣ Required · Demo Video
+            </legend>
 
-          <div className="rounded-md border border-blood/40 bg-ink-4/60 p-3 text-sm leading-relaxed">
-            <div className="mb-1 text-xs font-bold text-blood">
-              ⚠ Disqualification Notice
+            <div className="rounded-md border border-blood/40 bg-ink-4/60 p-3 text-sm leading-relaxed">
+              <div className="mb-1 text-xs font-bold text-blood">
+                ⚠ Disqualification Notice
+              </div>
+              <p className="text-bone/90">
+                A demonstration video <strong>must</strong> accompany this
+                submission. <span className="text-accent">3 to 5 minutes.</span>{" "}
+                Show <strong>all team members at least once</strong> in the
+                video. Submissions with no demo video will be{" "}
+                <strong className="text-blood">disqualified</strong>.
+              </p>
             </div>
-            <p className="text-bone/90">
-              A demonstration video <strong>must</strong> accompany this
-              submission. <span className="text-accent">3 to 5 minutes.</span>{" "}
-              Show <strong>all team members at least once</strong> in the video.
-              Submissions with no demo video will be{" "}
-              <strong className="text-blood">disqualified</strong>.
-            </p>
-          </div>
 
-          <div>
-            <label className="field-label">
-              Demo Video — 3 to 5 minutes (YouTube / Vimeo / Loom) *
-            </label>
-            <input
-              name="demo_video_url"
-              type="url"
-              required
-              placeholder="https://youtu.be/…  ·  https://vimeo.com/…  ·  https://loom.com/share/…"
-              className="field-input mt-1"
-            />
-            {err("demo_video_url")}
-          </div>
+            {shown("demo_video") && (
+              <div>
+                <label className="field-label">
+                  Demo Video — 3 to 5 minutes (YouTube / Vimeo / Loom) *
+                </label>
+                <input
+                  name="demo_video_url"
+                  type="url"
+                  required
+                  placeholder="https://youtu.be/…  ·  https://vimeo.com/…  ·  https://loom.com/share/…"
+                  className="field-input mt-1"
+                />
+                {err("demo_video_url")}
+              </div>
+            )}
 
-          <div>
-            <label className="field-label">
-              Pitch Video — 3 to 5 minutes{" "}
-              <span className="text-dust">(optional)</span>
-            </label>
-            <input
-              name="demo_video_short_url"
-              type="url"
-              placeholder="Your recorded pitch: the problem, the solution's value, and a demonstration"
-              className="field-input mt-1"
-            />
-            {err("demo_video_short_url")}
-          </div>
+            {shown("pitch_video") && (
+              <div>
+                <label className="field-label">
+                  Pitch Video — 3 to 5 minutes{" "}
+                  <span className="text-dust">(optional)</span>
+                </label>
+                <input
+                  name="demo_video_short_url"
+                  type="url"
+                  placeholder="Your recorded pitch: the problem, the solution's value, and a demonstration"
+                  className="field-input mt-1"
+                />
+                {err("demo_video_short_url")}
+              </div>
+            )}
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-ink-4 p-3 hover:border-accent/60">
-            <input
-              type="checkbox"
-              name="all_members_in_video"
-              value="checked"
-              required
-              className="mt-0.5 h-5 w-5 accent-accent"
-            />
-            <span className="text-sm">
-              <span className="font-semibold text-bone">
-                I confirm all team members appear in the demo video. *
-              </span>
-              <span className="block text-xs text-dust">
-                Required. If a member is unavailable, please re-record or
-                contact the organizers before submitting.
-              </span>
-            </span>
-          </label>
-        </fieldset>
+            {shown("demo_video") && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-ink-4 p-3 hover:border-accent/60">
+                <input
+                  type="checkbox"
+                  name="all_members_in_video"
+                  value="checked"
+                  required
+                  className="mt-0.5 h-5 w-5 accent-accent"
+                />
+                <span className="text-sm">
+                  <span className="font-semibold text-bone">
+                    I confirm all team members appear in the demo video. *
+                  </span>
+                  <span className="block text-xs text-dust">
+                    Required. If a member is unavailable, please re-record or
+                    contact the organizers before submitting.
+                  </span>
+                </span>
+              </label>
+            )}
+          </fieldset>
+        )}
 
         {/* Pitch materials + disclosure */}
         {shown("materials") && (
