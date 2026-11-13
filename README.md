@@ -19,7 +19,7 @@ already use, including Supabase.
 
 > **Status: early.** Dua runs today and ships with a made-up sample event, the
 > Open Build Hackathon. Expect the database schema to change before 1.0; the
-> [roadmap](#roadmap) covers what's coming.
+> [to-do list](#to-do) covers what isn't done yet.
 
 ## What you get
 
@@ -427,12 +427,45 @@ Dua is a standard Next.js app. Wherever you host it:
 On Vercel, import the repository, add the variables, and set the build command
 to `npm run db:migrate && npm run build`.
 
-## Roadmap
+## To do
 
-1. **More than one event per deployment.** The database is already built for
-   it; what's missing is choosing and creating events in the admin panel.
-2. **One-command setup.** A container image for the app, alongside the
-   database one.
+Dua works as it is. These are the things not done yet, none of them urgent.
+They'll be picked up over time, and any of them is a good place to start if
+you'd like to contribute: open an issue first so we can agree on the approach.
+
+**Setup and testing**
+
+- [ ] A container image for the app, so `docker compose up` starts everything
+      and not only the database.
+- [ ] An end-to-end test suite that drives a real browser through signing in,
+      scoring, the Event tab and the public forms, and runs in CI.
+- [ ] Check the optional providers against the real services: Resend, S3 on
+      AWS itself, and a hosted Supabase project. So far they've been run
+      against local stand-ins (see `npm run test:live`).
+
+**Admin panel**
+
+- [ ] Create and switch between events. The database already keeps every
+      event's data separate; one deployment still serves one event.
+- [ ] A screen-by-screen tidy of the admin panel. It follows the current
+      look, but its layouts predate it.
+- [ ] Set fonts and the page background colours from the Event tab. Today
+      only the accent colour and logo can be changed there.
+
+**Forms**
+
+- [ ] Custom and switchable questions on the mentor sign-up form, as the
+      registration and submission forms already have.
+- [ ] A check of every page at phone width.
+- [ ] Let organizers reorder questions, and place their own among the
+      built-in ones rather than in a section at the end.
+
+**Housekeeping**
+
+- [ ] Rename `top6` in the code and database. The number of ranked places is
+      a setting now; the name is left over from when it was fixed at six.
+- [ ] Rework the two effects that set state on mount (theme toggle, admin
+      paging), which lint currently reports as warnings.
 
 ## Development
 
