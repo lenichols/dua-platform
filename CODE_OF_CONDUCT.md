@@ -9,6 +9,6 @@ project: issues, pull requests, discussions or any other project space.
 
 ## Reporting
 
-Report a problem to the maintainer, [lenichols](https://github.com/lenichols) on GitHub. Reports are kept
+Report a problem to the maintainers at <conduct@ndmadvisory.com>. Reports are kept
 confidential. Maintainers will review every report and may remove comments,
 close threads, or ban someone from the project, temporarily or permanently.
