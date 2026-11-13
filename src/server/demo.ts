@@ -21,5 +21,8 @@ export async function sampleAdminLogins(): Promise<SampleLogin[]> {
   const lookup = await findAdminUserByEmail(DEMO_ADMIN.email);
   if (!lookup.ok || !lookup.user?.is_active) return [];
   const matches = await verifyAdminPassword(DEMO_ADMIN.password, lookup.user.password_hash);
-  return matches ? [DEMO_ADMIN] : [];
+  if (!matches) return [];
+  // Say what this account can actually do: it may be read-only.
+  const readOnly = lookup.user.role === "viewer";
+  return [{ ...DEMO_ADMIN, can: readOnly ? "Looks around, can't change anything" : DEMO_ADMIN.can }];
 }

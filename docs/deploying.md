@@ -2,13 +2,53 @@
 
 Dua is a standard Next.js app. Wherever you host it:
 
-1. Set the variables from [Settings](#settings).
+1. Set the variables under [Settings](#settings).
 2. Run `npm run db:migrate` against your database on each deploy. It skips
    migrations that have already been applied.
 3. Run `npm run build`, then `npm run start`.
 
-On Vercel, import the repository, add the variables, and set the build command
-to `npm run db:migrate && npm run build`.
+## On Vercel
+
+Import the repository and add the variables. [`vercel.json`](../vercel.json)
+already sets the build to run the migrations first, so there is nothing else
+to configure.
+
+Use a pooled connection string for the database, because each running copy of
+the app opens its own connections. With Supabase that's the **Transaction
+pooler** string from the project's **Connect** panel (port 6543), and set
+`DATABASE_POOL_MAX=3`. If your password has characters such as `@` or `#`,
+percent-encode them in the URL.
+
+`vercel.json` also schedules an hourly call to `/api/demo/reset`. On a real
+event that address doesn't exist and the call does nothing; it only matters
+for a public demo, below.
+
+## Running a public demo
+
+A demo site shows working logins on its sign-in pages, so it needs two things
+a real event doesn't: visitors mustn't be able to wreck it, and whatever they
+do change should put itself back.
+
+Set these in addition to the required settings:
+
+| Variable | Value | Why |
+| --- | --- | --- |
+| `DEMO_MODE` | `true` | Shows the sample logins and a banner saying the site is a demo. The first deploy loads the sample event. |
+| `DEMO_ADMIN_ROLE` | `viewer` | Makes the sample admin read-only: visitors can look around the admin panel but not change settings, send email or upload files. Leave it out and the sample admin can run the event. |
+| `CRON_SECRET` | a long random string | Lets the hourly reset run, and only the scheduler. On Vercel the scheduler sends it automatically. |
+
+Don't set an email provider on a demo, so nothing can be sent from it.
+
+The reset wipes everything visitors can change for the event (scores,
+registrations, submissions, settings) and loads the samples again. It leaves
+your own admin accounts alone, so you can still sign in with `ADMIN_PASSWORD`
+or an account you created. To run it by hand:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://your-demo.example.org/api/demo/reset
+```
+
+Off Vercel, call that address from any scheduler you have.
 
 ## Settings
 
@@ -35,6 +75,10 @@ Every setting Dua reads from the environment. Locally they go in `.env.local`; o
 | `SUPABASE_SECRET_KEY` | For Supabase Auth or Storage | The project's secret (or `service_role`) key. Never expose it. |
 | `SUPABASE_STORAGE_BUCKET` | No | Defaults to `dua-uploads`. |
 | `DEMO_MODE` | No | `true` shows sample logins on the sign-in pages and gives the seeded accounts fixed passwords. Never use it for a real event. |
+| `DEMO_ADMIN_ROLE` | No | `viewer` makes the sample admin read-only. For public demos. |
+| `CRON_SECRET` | For a public demo | Required by the scheduled reset at `/api/demo/reset`. |
+| `DATABASE_POOL_MAX` | No | Most connections each copy of the app opens. Defaults to 10; use about 3 on serverless hosts. |
+| `DATABASE_SSL` | No | `require` encrypts the database connection and checks its certificate; `no-verify` encrypts without checking. Unset leaves it to the connection string. |
 | `DUA_EVENT_SLUG` | No | Which event in the database to serve. Defaults to `default`. |
 
 ## Command-line helpers

@@ -3,11 +3,19 @@
 import pg from "pg";
 import { die } from "./_password.mjs";
 
+/** DATABASE_SSL, as in src/db/index.ts: "require", "no-verify", or unset. */
+export function databaseSsl() {
+  const v = process.env.DATABASE_SSL?.trim().toLowerCase();
+  if (v === "require") return true;
+  if (v === "no-verify") return { rejectUnauthorized: false };
+  return undefined;
+}
+
 /** A connection pool from DATABASE_URL. Remember to `await pool.end()`. */
 export function connect() {
   const url = process.env.DATABASE_URL;
   if (!url) die("DATABASE_URL is not set — pass --env-file=.env.local");
-  return new pg.Pool({ connectionString: url, max: 2 });
+  return new pg.Pool({ connectionString: url, max: 2, ssl: databaseSsl() });
 }
 
 /** The id of the event this deployment serves (DUA_EVENT_SLUG, or "default"). */

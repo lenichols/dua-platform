@@ -4,10 +4,25 @@
 //
 // Never turn this on for a real event: these logins are public.
 //
-// Keep the values in step with scripts/demo-data.mjs.
+// Keep the values in step with scripts/_demo-seed.mjs.
 
 export function demoMode(): boolean {
   return process.env.DEMO_MODE?.trim().toLowerCase() === "true";
+}
+
+/**
+ * What the sample admin may do. "admin" (the default) can run the event;
+ * "viewer" can look at everything and change nothing, which is the safe
+ * choice for a demo anyone on the internet can reach.
+ */
+export function demoAdminRole(): "admin" | "viewer" {
+  return process.env.DEMO_ADMIN_ROLE?.trim().toLowerCase() === "viewer" ? "viewer" : "admin";
+}
+
+/** Whether an email belongs to one of the sample accounts. */
+export function isSampleEmail(email: string): boolean {
+  const e = email.trim().toLowerCase();
+  return [DEMO_JUDGE.email, DEMO_MENTOR.email, DEMO_ADMIN.email].includes(e);
 }
 
 export type SampleLogin = {

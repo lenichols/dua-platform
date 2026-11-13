@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { demoMode, isSampleEmail } from "@/lib/demo";
 import { getViewer } from "@/lib/viewer";
 import { getCurrentEvent } from "@/server/event";
 import {
@@ -23,12 +24,15 @@ type Result = { ok: true } | { ok: false; error: string };
 // ── sign in / out ────────────────────────────────────────────────
 export async function signInJudge(email: string, password: string): Promise<Result> {
   const key = signInKey("judge", email);
-  if (await isLockedOut(key)) return { ok: false, error: LOCKED_OUT_MESSAGE };
+  // On a demo site the sample logins are public, so failed attempts on them
+  // don't count: one visitor's typos mustn't lock everyone else out.
+  const throttled = !(demoMode() && isSampleEmail(email));
+  if (throttled && (await isLockedOut(key))) return { ok: false, error: LOCKED_OUT_MESSAGE };
 
   const event = await getCurrentEvent();
   const judge = await verifyJudgeSignIn(event.id, email, password);
   if (!judge) {
-    await recordFailure(key);
+    if (throttled) await recordFailure(key);
     // One message for every failure, so it doesn't reveal who's on the roster.
     return { ok: false, error: "Wrong email or password. Check with the organizers." };
   }

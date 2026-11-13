@@ -17,11 +17,24 @@ function connectionString(): string {
   return url;
 }
 
+/**
+ * DATABASE_SSL: "require" encrypts and checks the server's certificate;
+ * "no-verify" encrypts without checking it, for hosts whose certificate
+ * Node doesn't recognize. Unset leaves it to the connection string.
+ */
+export function databaseSsl(value = process.env.DATABASE_SSL): boolean | { rejectUnauthorized: false } | undefined {
+  const v = value?.trim().toLowerCase();
+  if (v === "require") return true;
+  if (v === "no-verify") return { rejectUnauthorized: false };
+  return undefined;
+}
+
 export function getPool(): Pool {
   if (!holder.__duaPool) {
     holder.__duaPool = new Pool({
       connectionString: connectionString(),
       max: Number(process.env.DATABASE_POOL_MAX ?? 10),
+      ssl: databaseSsl(),
     });
   }
   return holder.__duaPool;

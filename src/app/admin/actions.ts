@@ -58,6 +58,7 @@ import {
   verifyAdminPassword,
 } from "@/lib/admin-password";
 import { ADMIN_ROLES, type AdminRole } from "@/lib/admin-roles";
+import { demoMode, isSampleEmail } from "@/lib/demo";
 import {
   htmlToText,
   renderCampaignEmail,
@@ -83,7 +84,10 @@ export async function signInAdmin(_: unknown, form: FormData) {
   const pw = String(form.get("password") ?? "");
 
   const key = signInKey("admin", email);
-  if (await isLockedOut(key)) return { ok: false as const, error: LOCKED_OUT_MESSAGE };
+  // See signInJudge: on a demo site, failures on the published login don't count.
+  const throttled = !(demoMode() && isSampleEmail(email));
+  if (throttled && (await isLockedOut(key)))
+    return { ok: false as const, error: LOCKED_OUT_MESSAGE };
 
   // Individual accounts first, so a teammate's own role is what they get.
   if (email) {
@@ -117,7 +121,7 @@ export async function signInAdmin(_: unknown, form: FormData) {
     redirect("/admin");
   }
 
-  await recordFailure(key);
+  if (throttled) await recordFailure(key);
   return { ok: false as const, error: "Wrong email or password." };
 }
 
