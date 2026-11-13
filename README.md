@@ -17,6 +17,10 @@ All it needs is Node.js and a Postgres database. Email, file storage and
 judge sign-in work out of the box and can each be switched to a service you
 already use, including Supabase.
 
+**[Try the live demo](https://dua-platform.vercel.app)**: a sample event you
+can sign in to as a judge, a mentor or a read-only admin. The logins are on
+its sign-in pages, and it resets every hour.
+
 > **Status: early.** Dua runs today and ships with a made-up sample event, the
 > Open Build Hackathon. Expect the database schema to change before 1.0; the
 > [to-do list](#to-do) covers what isn't done yet.
