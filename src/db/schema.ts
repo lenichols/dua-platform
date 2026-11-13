@@ -7,6 +7,12 @@
 // Every table that holds event data carries event_id, so one database can
 // hold more than one event. admin_users is the exception: an admin account
 // belongs to the deployment, not to a single event.
+//
+// Row-level security is switched on for every table, with no policies. The
+// app connects as the tables' owner, which Postgres lets straight through, so
+// nothing changes for it. What it closes is the side door on hosts such as
+// Supabase, which publish every table in the public schema through an API of
+// their own: with this on, that API returns nothing.
 
 import { sql } from "drizzle-orm";
 import {
@@ -60,7 +66,7 @@ export const events = pgTable(
     uniqueIndex("events_slug_uniq").on(t.slug),
     check("events_phase_check", sql`${t.phase} in ('submissions', 'judging', 'results')`),
   ],
-);
+).enableRLS();
 
 const eventId = () =>
   uuid("event_id")
@@ -109,7 +115,7 @@ export const registrations = pgTable(
       sql`${t.participating_as} is null or ${t.participating_as} in ('Solo', 'Team')`,
     ),
   ],
-);
+).enableRLS();
 
 // ── submissions ──────────────────────────────────────────────────
 
@@ -210,7 +216,7 @@ export const submissions = pgTable(
       sql`${t.solo_or_team} is null or ${t.solo_or_team} in ('Solo', 'Team')`,
     ),
   ],
-);
+).enableRLS();
 
 // ── judges ───────────────────────────────────────────────────────
 // Judges score. Mentors (role = 'mentor') can read submissions but not score.
@@ -232,7 +238,7 @@ export const judges = pgTable(
     uniqueIndex("judges_event_email_uniq").on(t.event_id, sql`lower(${t.email})`),
     check("judges_role_check", sql`${t.role} in ('judge', 'mentor')`),
   ],
-);
+).enableRLS();
 
 // ── scores ───────────────────────────────────────────────────────
 // One row per judge per submission: five criteria scored 1–5, each with a
@@ -275,7 +281,7 @@ export const scores = pgTable(
         and ${t.scalability} between 1 and 5`,
     ),
   ],
-);
+).enableRLS();
 
 // ── recusals ─────────────────────────────────────────────────────
 // A judge's declared conflict of interest with a submission.
@@ -298,7 +304,7 @@ export const recusals = pgTable(
     unique("recusals_judge_submission_uniq").on(t.judge_id, t.submission_id),
     index("recusals_submission_idx").on(t.submission_id),
   ],
-);
+).enableRLS();
 
 // ── results ──────────────────────────────────────────────────────
 
@@ -312,7 +318,7 @@ export const results_locks = pgTable("results_locks", {
   seed: bigint("seed", { mode: "number" }).notNull(),
   top6: jsonb("top6").$type<LockedPlace[]>().notNull(),
   locked_at: timestamp("locked_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}).enableRLS();
 
 /** A tie the panel settled by vote. */
 export const tie_breaks = pgTable("tie_breaks", {
@@ -327,7 +333,7 @@ export const tie_breaks = pgTable("tie_breaks", {
   reason: text("reason").notNull(),
   decided_by: text("decided_by").notNull(),
   created_at: createdAt(),
-});
+}).enableRLS();
 
 // ── admin accounts ───────────────────────────────────────────────
 
@@ -351,7 +357,7 @@ export const admin_users = pgTable(
     uniqueIndex("admin_users_email_uniq").on(sql`lower(${t.email})`),
     check("admin_users_role_check", sql`${t.role} in ('owner', 'admin', 'viewer')`),
   ],
-);
+).enableRLS();
 
 // ── email campaigns ──────────────────────────────────────────────
 
@@ -384,7 +390,7 @@ export const email_campaigns = pgTable(
       sql`${t.status} in ('draft', 'sending', 'sent', 'failed')`,
     ),
   ],
-);
+).enableRLS();
 
 // ── uploads ──────────────────────────────────────────────────────
 // Small public files, such as images in campaign emails, stored in the
@@ -398,7 +404,7 @@ export const uploads = pgTable("uploads", {
   size: integer("size").notNull(),
   created_by: text("created_by"),
   created_at: createdAt(),
-});
+}).enableRLS();
 
 // ── sign-in attempts ─────────────────────────────────────────────
 // Failed sign-ins, kept briefly, so repeated password guessing can be slowed.
@@ -415,4 +421,4 @@ export const sign_in_failures = pgTable(
     primaryKey({ columns: [t.seq] }),
     index("sign_in_failures_key_idx").on(t.key, t.failed_at),
   ],
-);
+).enableRLS();

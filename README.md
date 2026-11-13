@@ -92,7 +92,7 @@ Before real submissions open, remove the samples with
 
 ## Database options
 
-Dua works with any Postgres 14 or newer. It connects using one setting,
+Dua works with any Postgres 14 or newer, on your machine or hosted. It connects using one setting,
 `DATABASE_URL`, in `.env.local`.
 
 ### Docker Desktop
@@ -169,9 +169,30 @@ and port `54329`.
 Your tables are under **Servers → Dua → Databases → dua → Schemas → public →
 Tables**. Right-click a table and choose **View/Edit Data** to see its rows.
 
+### Supabase
+
+[Supabase](https://supabase.com) hosts Postgres, so Dua runs on it without
+any Docker on your machine. The free tier is enough for one event.
+
+1. Create a project and save the database password it gives you.
+2. Click **Connect** at the top of the project page and copy the
+   **Session pooler** connection string. It starts with `postgresql://` and
+   ends with `:5432/postgres`.
+3. Put it in `.env.local` as `DATABASE_URL`, with your password in place of
+   `[YOUR-PASSWORD]`.
+4. Run `npm run db:migrate`.
+
+Your tables then show up in Supabase's **Table Editor**, which does the same
+job as pgAdmin.
+
+Dua uses Supabase as a database only. It signs people in and stores files
+itself, so you don't need Supabase's API keys, Auth or Storage. Supabase also
+publishes every table through an API of its own; Dua switches on row-level
+security for all its tables, so that API returns nothing.
+
 ### A Postgres you already have
 
-Local, or hosted (Neon, Supabase, Amazon RDS, Render and others all work):
+Local, or hosted (Neon, Amazon RDS, Render and others all work):
 create an empty database, put its connection string in `DATABASE_URL`, and run
 `npm run db:migrate`. For example, with a local Postgres:
 
