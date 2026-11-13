@@ -5,7 +5,7 @@ request looks like, and the agreement you'll be asked to sign.
 
 ## Getting set up
 
-Follow [Run it locally](README.md#run-it-locally). You need Node.js 22.9+ and
+Follow [Running Dua locally](docs/running-locally.md). You need Node.js 22.9+ and
 Docker (or OrbStack) for the local database. Never point a development copy
 at a database that holds a real event's data.
 
@@ -21,6 +21,7 @@ is left alone.
 
 ## How the code is laid out
 
+- [docs/development.md](docs/development.md) has the commands and the folder layout.
 - `src/server/policy.ts` holds the rules for who may see and do what, as plain
   functions.
 - Everything else in `src/server/` reads and writes the database, and checks
