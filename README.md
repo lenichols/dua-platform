@@ -39,6 +39,23 @@ The event moves through three phases, switched by an admin:
 Organizers set up the whole event from the admin panel: its name and dates,
 the questions on the forms, the rubric, the colours and logo.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/home.png" alt="The event homepage"><br><sub>The event's homepage</sub></td>
+    <td width="50%"><img src="docs/images/judge-scoring.png" alt="A judge scoring a project"><br><sub>Scoring a project: a mark and a sentence of evidence per criterion</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/results.png" alt="The results leaderboard"><br><sub>Results: panel averages, never one judge's scores</sub></td>
+    <td><img src="docs/images/admin-event.png" alt="Editing the rubric in the admin panel"><br><sub>Setting the rubric in the admin panel</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/admin-home.png" alt="The admin panel's home tab"><br><sub>Running the event: phases, forms and judging progress</sub></td>
+    <td><img src="docs/images/judge-sign-in.png" alt="The judge sign-in page"><br><sub>Judge sign-in, showing how projects are scored</sub></td>
+  </tr>
+</table>
+
 ## Quick start
 
 You need [Node.js](https://nodejs.org) 22.9 or newer, and Docker Desktop or
