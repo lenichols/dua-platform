@@ -82,27 +82,36 @@ Leave the other lines as they are. Then:
 ```bash
 npm run db:up        # start the database
 npm run db:migrate   # create the tables
-npm run db:seed      # add five sample projects, a test judge and a test mentor
+npm run db:seed      # add five sample projects and sample judge, mentor and admin logins
 npm run dev          # start the site
 ```
-
-`db:seed` prints two passwords. Keep them: they're shown only once.
 
 Open <http://localhost:3000>.
 
 ### What to look at
 
-| To see | Go to | Sign in with |
-| --- | --- | --- |
-| The public site | <http://localhost:3000> | Nothing |
-| A judge's view | <http://localhost:3000/judge> | `demo.judge@example.org` and the judge password `db:seed` printed |
-| A mentor's view | <http://localhost:3000/judge> | `demo.mentor@example.org` and the mentor password |
-| The admin panel | <http://localhost:3000/admin> | Leave the email blank and enter your `ADMIN_PASSWORD` |
+`.env.local.example` turns on **demo mode**, so the seed creates three sample
+accounts with fixed passwords, and each sign-in page lists them: click one to
+fill in the form.
 
-Seeding puts the event in the **judging** phase so the test judge can score,
+| To see | Go to | Sign in as |
+| --- | --- | --- |
+| The public site | <http://localhost:3000> | Nobody |
+| A judge's view | <http://localhost:3000/judge> | `demo.judge@example.org` / `dua-demo-judge` |
+| A mentor's view | <http://localhost:3000/judge> | `demo.mentor@example.org` / `dua-demo-mentor` |
+| The admin panel | <http://localhost:3000/admin> | `demo.admin@example.org` / `dua-demo-admin` |
+
+The sample admin can run the event but can't manage admin accounts. For full
+access, leave the email blank and enter your `ADMIN_PASSWORD`.
+
+Seeding puts the event in the **judging** phase so the sample judge can score,
 which means the registration and submission forms show as closed. To see them
 open: in the admin panel's **Home** tab, switch the phase to **submissions**,
 then press **Open registration** and **Open submissions**.
+
+> **Before a real event, turn demo mode off.** Remove `DEMO_MODE=true` from
+> your settings and run `npm run db:seed -- --cleanup`. While it's on, anyone
+> who can reach your site can read working logins off the sign-in pages.
 
 ### Stopping and coming back
 
@@ -120,7 +129,7 @@ then press **Open registration** and **Open submissions**.
 | `No event "default" in the database` | Run `npm run db:migrate`. |
 | `connect ECONNREFUSED` on port 54329 | The database isn't running. Run `npm run db:up`. |
 | `Port 3000 is in use` | Something else is using it. Run `npm run dev -- -p 3001` and open port 3001 instead. |
-| Lost the test passwords | Run `npm run db:seed` again. It replaces the samples and prints new ones. |
+| The sample logins don't work | Run `npm run db:seed` again. It resets the samples and their passwords. |
 | `Too many failed attempts` at sign-in | Wait 15 minutes, or restart from a clean database (below). |
 | You want to start over | `docker compose down --volumes`, then the four commands under [First time](#first-time) from `npm run db:up`. This deletes all local data. |
 
@@ -338,6 +347,7 @@ password again from the admin panel afterwards.
 | `SUPABASE_PUBLISHABLE_KEY` | For Supabase Auth | The project's publishable (or `anon`) key. |
 | `SUPABASE_SECRET_KEY` | For Supabase Auth or Storage | The project's secret (or `service_role`) key. Never expose it. |
 | `SUPABASE_STORAGE_BUCKET` | No | Defaults to `dua-uploads`. |
+| `DEMO_MODE` | No | `true` shows sample logins on the sign-in pages and gives the seeded accounts fixed passwords. Never use it for a real event. |
 | `DUA_EVENT_SLUG` | No | Which event in the database to serve. Defaults to `default`. |
 
 ## Make it yours

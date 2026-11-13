@@ -11,6 +11,10 @@
 //   - the event moved to the judging phase, so the judge can sign in
 //     (pass --keep-phase to leave the phase alone)
 //
+// With DEMO_MODE=true in your settings, the sample accounts get fixed
+// passwords, a sample admin is added, and the sign-in pages show all three.
+// That is for trying Dua out or running a public demo, never a real event.
+//
 // Everything it writes is findable again: submissions carry review_note =
 // DEMO_TAG (an admin-only column) and both accounts use @example.org
 // addresses. Re-running replaces the samples and gives each account a fresh
@@ -23,10 +27,13 @@ import { die, generatePassword, hashPassword, parseArgs } from "./_password.mjs"
 
 const DEMO_TAG = "demo-seed: sample submission";
 
+// Keep these in step with src/lib/demo.ts, which the sign-in pages read.
+const DEMO_MODE = process.env.DEMO_MODE?.trim().toLowerCase() === "true";
 const ACCOUNTS = [
-  { key: "judge", name: "Demo Judge (Test)", email: "demo.judge@example.org", role: "judge" },
-  { key: "mentor", name: "Demo Mentor (Test)", email: "demo.mentor@example.org", role: "mentor" },
+  { key: "judge", name: "Demo Judge (Test)", email: "demo.judge@example.org", role: "judge", demoPassword: "dua-demo-judge" },
+  { key: "mentor", name: "Demo Mentor (Test)", email: "demo.mentor@example.org", role: "mentor", demoPassword: "dua-demo-mentor" },
 ];
+const DEMO_ADMIN = { name: "Demo Admin (Test)", email: "demo.admin@example.org", password: "dua-demo-admin" };
 
 // Every link is a placeholder on example.org.
 const links = (slug) => ({
@@ -241,6 +248,10 @@ if (cleanup) {
     );
     console.log(rowCount ? `✓ Removed ${a.email}` : `· ${a.email} wasn't there`);
   }
+  const { rowCount: admins } = await pool.query("delete from admin_users where lower(email) = $1", [
+    DEMO_ADMIN.email,
+  ]);
+  if (admins) console.log(`✓ Removed ${DEMO_ADMIN.email}`);
   await pool.end();
   process.exit(0);
 }
@@ -248,7 +259,8 @@ if (cleanup) {
 // ── accounts ─────────────────────────────────────────────────────
 const created = [];
 for (const a of ACCOUNTS) {
-  const password = String(args[`${a.key}-password`] ?? "") || generatePassword();
+  const password =
+    String(args[`${a.key}-password`] ?? "") || (DEMO_MODE ? a.demoPassword : generatePassword());
   if (password.length < 8) die(`--${a.key}-password must be at least 8 characters`);
   const { rows } = await pool.query(
     `insert into judges (event_id, name, email, role, is_active, password_hash)
@@ -260,6 +272,22 @@ for (const a of ACCOUNTS) {
     [eventId, a.name, a.email, a.role, await hashPassword(password)],
   );
   created.push({ ...a, password, judgeId: rows[0].id });
+}
+
+// ── sample admin (demo mode only) ────────────────────────────────
+// An admin, not an owner: it can run the event but can't manage accounts.
+if (DEMO_MODE) {
+  await pool.query(
+    `insert into admin_users (name, email, role, password_hash, is_active, created_by)
+     values ($1, $2, 'admin', $3, true, 'scripts/demo-data.mjs')
+     on conflict (lower(email))
+     do update set password_hash = excluded.password_hash, is_active = true, role = 'admin', updated_at = now()`,
+    [DEMO_ADMIN.name, DEMO_ADMIN.email, await hashPassword(DEMO_ADMIN.password)],
+  );
+  created.push({ role: "admin", email: DEMO_ADMIN.email, password: DEMO_ADMIN.password });
+} else {
+  // Outside demo mode nobody should be able to sign in with a published password.
+  await pool.query("delete from admin_users where lower(email) = $1", [DEMO_ADMIN.email]);
 }
 
 // ── submissions ──────────────────────────────────────────────────
@@ -319,6 +347,10 @@ if (args["keep-phase"] !== true) {
 
 await pool.end();
 
-console.log("\nSign in at /judge (passwords shown once):");
+console.log(
+  DEMO_MODE
+    ? "\nDemo mode is on: these logins are fixed and shown on the sign-in pages (/judge and /admin)."
+    : "\nSign in at /judge (passwords shown once):",
+);
 for (const c of created) console.log(`  ${c.role.padEnd(6)}  ${c.email}  ${c.password}`);
 console.log("\nRemove it all with: npm run db:seed -- --cleanup");

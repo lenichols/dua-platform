@@ -13,7 +13,7 @@ export function ThemeToggle() {
     const next = !document.documentElement.classList.contains("light");
     document.documentElement.classList.toggle("light", next);
     try {
-      localStorage.setItem("theme", next ? "light" : "dark");
+      localStorage.setItem("dua-theme", next ? "light" : "dark");
     } catch {
       /* ignore */
     }

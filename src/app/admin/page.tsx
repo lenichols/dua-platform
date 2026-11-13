@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
+import { PhaseTrack, SignInLayout } from "@/components/sign-in-layout";
+import { sampleAdminLogins } from "@/server/demo";
 import { getAdminSession, type AdminSession } from "./auth";
 import { AdminSignIn } from "./sign-in";
 import { AdminHome } from "./admin-home";
@@ -24,6 +26,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const session = await getAdminSession();
+  const event = await getCurrentEvent();
 
   // Signed in, "Home" means the admin dashboard, not the public site (the
   // logo still goes there). AdminHome renders its own breadcrumbs.
@@ -44,20 +47,29 @@ export default async function AdminPage() {
       />
       <PageShell maxWidth="max-w-7xl">
         {!session ? (
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto max-w-5xl">
             <Breadcrumbs
               items={[
                 { label: "Home", href: "/" },
                 { label: "Admin" },
               ]}
             />
-            <SectionTitle
-              center
-              eyebrow="Restricted"
+            <SignInLayout
+              status="Organizers only"
               title="Admin Sign In"
-              subtitle="Sign in with your admin account."
-            />
-            <AdminSignIn />
+              intro="Run the event from here: open and close the forms, manage judges, and publish results."
+              aside={
+                <PhaseTrack
+                  phase={event.phase}
+                  facts={[
+                    { label: "Registration", value: event.registration_open ? "Open" : "Closed" },
+                    { label: "Submission form", value: event.submissions_open ? "Open" : "Closed" },
+                  ]}
+                />
+              }
+            >
+              <AdminSignIn samples={await sampleAdminLogins()} />
+            </SignInLayout>
           </div>
         ) : (
           <AdminContent session={session} />

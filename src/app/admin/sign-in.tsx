@@ -1,45 +1,67 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { SampleLogins } from "@/components/sample-logins";
+import type { SampleLogin } from "@/lib/demo";
 import { signInAdmin } from "./actions";
 
-export function AdminSignIn() {
+export function AdminSignIn({ samples = [] }: { samples?: SampleLogin[] }) {
   const [state, action, pending] = useActionState(signInAdmin, null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   return (
-    <form action={action} className="card space-y-4">
+    <form action={action} className="space-y-4">
       <div>
-        <label className="field-label">Email</label>
+        <label className="field-label" htmlFor="admin-email">
+          Email
+        </label>
         <input
+          id="admin-email"
           type="email"
           name="email"
           autoComplete="username"
           className="field-input mt-1"
           placeholder="you@example.org"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           autoFocus
         />
       </div>
       <div>
-        <label className="field-label">Password</label>
+        <label className="field-label" htmlFor="admin-password">
+          Password
+        </label>
         <input
+          id="admin-password"
           type="password"
           name="password"
           required
           autoComplete="current-password"
           className="field-input mt-1"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
       </div>
       {state && "error" in state && state.error && (
-        <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
+        <div className="rounded-lg border border-blood/60 bg-blood/10 px-3 py-2 text-sm text-blood">
           {state.error}
         </div>
       )}
       <button className="btn-accent w-full" disabled={pending}>
-        {pending ? "Signing in…" : "🔓 Unlock Admin"}
+        {pending ? "Signing in…" : "Sign in"}
       </button>
-      <p className="text-[0.7rem] text-dust">
-        Using the original shared admin password? Leave the email blank and
-        enter it below — that still works and signs you in as an owner.
+      <p className="text-xs text-dust">
+        Setting up for the first time? Leave the email blank and enter the{" "}
+        <code>ADMIN_PASSWORD</code>
+        {" "}from your server&apos;s settings.
       </p>
+      <SampleLogins
+        logins={samples}
+        onPick={(l) => {
+          setEmail(l.email);
+          setPassword(l.password);
+        }}
+      />
     </form>
   );
 }

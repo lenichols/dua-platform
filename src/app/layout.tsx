@@ -56,7 +56,7 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.remove('light')}catch(e){}",
+              "try{if(localStorage.getItem('dua-theme')==='dark')document.documentElement.classList.remove('light')}catch(e){}",
           }}
         />
       </head>

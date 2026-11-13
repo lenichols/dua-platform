@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
-import { getPhase } from "@/lib/phase";
+import { Breadcrumbs, HeaderBar, PageShell } from "@/components/shell";
+import { RubricBar, SignInLayout } from "@/components/sign-in-layout";
+import { sampleJudgeLogins } from "@/server/demo";
+import { getCurrentEvent } from "@/server/event";
 import { getJudgeSession } from "./auth";
 import { JudgingNotOpen } from "./judging-not-open";
 import { JudgeSignIn } from "./sign-in";
@@ -9,7 +11,8 @@ import { JudgeSignIn } from "./sign-in";
 export const dynamic = "force-dynamic";
 
 export default async function JudgePage() {
-  const phase = await getPhase();
+  const event = await getCurrentEvent();
+  const phase = event.phase;
   // Judges and mentors aren't let in until an organizer opens judging.
   const notOpen = phase === "submissions";
   if (!notOpen && (await getJudgeSession())) redirect("/judge/dashboard");
@@ -23,7 +26,7 @@ export default async function JudgePage() {
           </Link>
         }
       />
-      <PageShell maxWidth="max-w-md">
+      <PageShell maxWidth="max-w-5xl">
         <Breadcrumbs
           items={[
             { label: "Home", href: "/" },
@@ -31,17 +34,18 @@ export default async function JudgePage() {
           ]}
         />
         {notOpen ? (
-          <JudgingNotOpen />
+          <div className="mx-auto max-w-md">
+            <JudgingNotOpen />
+          </div>
         ) : (
-          <>
-            <SectionTitle
-              center
-              eyebrow={phase === "judging" ? "Phase 2 · Judging Open" : `Phase: ${phase}`}
-              title="Judge Sign In"
-              subtitle="Judges and mentors: sign in with your email and the password from the organizers. Only emails on the roster will work."
-            />
-            <JudgeSignIn />
-          </>
+          <SignInLayout
+            status={phase === "judging" ? "Judging is open" : "Results are in"}
+            title="Judge Sign In"
+            intro="For judges and mentors. Sign in with the email the organizers have on the roster."
+            aside={<RubricBar criteria={event.settings.rubric.criteria} topN={event.settings.topN} />}
+          >
+            <JudgeSignIn samples={await sampleJudgeLogins(event.id)} />
+          </SignInLayout>
         )}
       </PageShell>
     </>
