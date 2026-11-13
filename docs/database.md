@@ -117,4 +117,4 @@ Hosted providers usually need `?sslmode=require` on the end of the URL.
 
 ---
 
-[Back to the README](../README.md) · [All guides](README.md)
+[Back to the README](../README.md)

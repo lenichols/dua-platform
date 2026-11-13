@@ -56,4 +56,4 @@ sign-ins are locked out for 15 minutes.
 
 ---
 
-[Back to the README](../README.md) · [All guides](README.md)
+[Back to the README](../README.md)

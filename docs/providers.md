@@ -61,4 +61,4 @@ password again from the admin panel afterwards.
 
 ---
 
-[Back to the README](../README.md) · [All guides](README.md)
+[Back to the README](../README.md)

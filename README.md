@@ -81,9 +81,7 @@ No Docker, or something not working? See
 | [Setting up your event](docs/your-event.md) | What organizers can change in the admin panel. |
 | [How judging works](docs/judging.md) | The ranking method, and who can see what. |
 | [Providers](docs/providers.md) | Email over Resend or SMTP, files in S3 or Supabase, judge sign-in through Supabase. |
-| [Settings](docs/configuration.md) | Every environment variable. |
-| [Deploying](docs/deploying.md) | Putting Dua on a server. |
-| [Development](docs/development.md) | Commands and code layout for contributors. |
+| [Deploying and settings](docs/deploying.md) | Putting Dua on a server, every environment variable, and the command-line helpers. |
 
 ## To do
 
@@ -127,10 +125,10 @@ you'd like to contribute: open an issue first so we can agree on the approach.
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; you'll
-be asked to sign the [contributor license agreement](CLA.md) on your first pull
+Contributions are welcome. Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) first; you'll
+be asked to sign the [contributor license agreement](.github/CLA.md) on your first pull
 request. Please report security problems privately, as described in
-[SECURITY.md](SECURITY.md).
+[SECURITY.md](.github/SECURITY.md).
 
 ## License
 

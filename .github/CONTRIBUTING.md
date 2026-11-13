@@ -5,7 +5,7 @@ request looks like, and the agreement you'll be asked to sign.
 
 ## Getting set up
 
-Follow [Running Dua locally](docs/running-locally.md). You need Node.js 22.9+ and
+Follow [Running Dua locally](../docs/running-locally.md). You need Node.js 22.9+ and
 Docker (or OrbStack) for the local database. Never point a development copy
 at a database that holds a real event's data.
 
@@ -19,9 +19,36 @@ npm test
 They create and use their own database, `dua_test`, so your development data
 is left alone.
 
+## Commands and folders
+
+```bash
+npm run dev           # local server
+npm test              # tests; needs the database running (npm run db:up)
+npm run lint          # ESLint
+npm run typecheck     # TypeScript
+npm run build         # production build
+npm run db:generate   # after editing src/db/schema.ts: write a new migration
+npm run test:live     # optional: check providers against real services
+```
+
+Tests use their own database, `dua_test`, created automatically on the same
+Postgres server. They never touch your development data.
+
+```
+src/
+├── app/         # pages and server actions, one folder per area
+├── components/  # shared layout: header, footer, logo, theme toggle
+├── db/          # the database schema and connection
+├── lib/         # event settings and defaults, ranking, email, validation
+└── server/      # all database reads and writes, and who may make them
+    └── providers/  # email, file storage and sign-in: one file each
+drizzle/         # SQL migrations, generated from src/db/schema.ts
+scripts/         # command-line helpers: migrate, seed, admins, imports
+test/            # test database setup and fixtures
+```
+
 ## How the code is laid out
 
-- [docs/development.md](docs/development.md) has the commands and the folder layout.
 - `src/server/policy.ts` holds the rules for who may see and do what, as plain
   functions.
 - Everything else in `src/server/` reads and writes the database, and checks

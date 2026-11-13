@@ -19,7 +19,7 @@
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:up": "docker compose up -d db",
     "db:seed": "node --env-file-if-exists=.env.local scripts/demo-data.mjs",
-    "test:live": "vitest run --config vitest.live.config.mts"
+    "test:live": "LIVE_TESTS=1 vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

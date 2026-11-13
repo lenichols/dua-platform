@@ -84,4 +84,4 @@ then press **Open registration** and **Open submissions**.
 
 ---
 
-[Back to the README](../README.md) · [All guides](README.md)
+[Back to the README](../README.md)

@@ -39,4 +39,4 @@ tests beside them run against a real database.
 
 ---
 
-[Back to the README](../README.md) · [All guides](README.md)
+[Back to the README](../README.md)
