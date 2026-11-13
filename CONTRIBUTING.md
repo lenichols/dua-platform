@@ -26,6 +26,10 @@ is left alone.
 - Everything else in `src/server/` reads and writes the database, and checks
   those rules first. Pages and server actions call these functions; they
   don't query the database themselves.
+- `src/server/providers/` has one file each for email, file storage and judge
+  sign-in. Adding a provider means writing one function there. If you add or
+  change one, run it against the real service with `npm run test:live` (the
+  file under `test/live/` says what to set) and say so in the pull request.
 - `src/db/schema.ts` is the database. After changing it, run
   `npm run db:generate` and commit the new file under `drizzle/`.
 

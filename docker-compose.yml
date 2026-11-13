@@ -2,6 +2,7 @@
 #
 #   docker compose up -d db                      # the database (npm run db:up)
 #   docker compose --profile tools up -d pgadmin # optional: pgAdmin in the browser
+#   docker compose --profile tools up -d mailpit # optional: a local inbox for email
 #
 # These passwords are for local development only.
 services:
@@ -39,6 +40,16 @@ services:
         condition: service_healthy
     volumes:
       - dua-pgadmin:/var/lib/pgadmin
+
+  # Catches every email the app sends and shows it at http://localhost:8025,
+  # so you can try email features without sending anything for real.
+  # Use it by setting SMTP_URL=smtp://localhost:1025 in .env.local.
+  mailpit:
+    image: axllent/mailpit:latest
+    profiles: ["tools"]
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   dua-db:

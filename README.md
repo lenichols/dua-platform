@@ -13,7 +13,9 @@ scores are normalized per judge so a harsh judge and a generous one carry the
 same weight, judges can recuse themselves, and the final ranking can be
 reproduced from a logged seed.
 
-All it needs is Node.js and a Postgres database.
+All it needs is Node.js and a Postgres database. Email, file storage and
+judge sign-in work out of the box and can each be switched to a service you
+already use, including Supabase.
 
 > **Status: early.** Dua runs today and ships with a made-up sample event, the
 > Open Build Hackathon. Expect the database schema to change before 1.0; the
@@ -230,10 +232,13 @@ any Docker on your machine. The free tier is enough for one event.
 Your tables then show up in Supabase's **Table Editor**, which does the same
 job as pgAdmin.
 
-Dua uses Supabase as a database only. It signs people in and stores files
-itself, so you don't need Supabase's API keys, Auth or Storage. Supabase also
-publishes every table through an API of its own; Dua switches on row-level
-security for all its tables, so that API returns nothing.
+That is all you need: Dua signs people in and stores files itself. If you'd
+rather Supabase did those too, see [Providers](#providers); both are optional
+and independent of each other.
+
+Supabase publishes every table through an API of its own, readable with the
+project's public key. Dua switches on row-level security for all its tables,
+so that API returns nothing and accepts nothing.
 
 ### A Postgres you already have
 
@@ -249,6 +254,67 @@ DATABASE_URL=postgres://localhost:5432/dua
 
 Hosted providers usually need `?sslmode=require` on the end of the URL.
 
+## Providers
+
+Email, file storage and judge sign-in each have a built-in default and
+alternatives you switch to with a setting. Mix them however you like: for
+example Supabase for the database and sign-in, with email over SMTP.
+
+### Email
+
+Used for campaign emails and for sending teams their private edit link.
+Without it everything else still works, and edit links are shown on screen.
+
+| Provider | Set | Notes |
+| --- | --- | --- |
+| [Resend](https://resend.com) | `RESEND_API_KEY` | Sends in batches of 100. |
+| SMTP | `SMTP_URL` | Any mail server or service, e.g. `smtps://user:password@smtp.example.org:465`. |
+| Console | `EMAIL_PROVIDER=console` | Prints each email to the server log and sends nothing. |
+
+Set `EMAIL_FROM` too, to an address on a domain your provider has verified.
+If both `RESEND_API_KEY` and `SMTP_URL` are set, Resend is used unless you
+set `EMAIL_PROVIDER=smtp`.
+
+To try email locally without sending anything, start the bundled inbox:
+
+```bash
+docker compose --profile tools up -d mailpit
+```
+
+Add `SMTP_URL=smtp://localhost:1025` to `.env.local`, restart `npm run dev`,
+and read what the app sends at <http://localhost:8025>.
+
+### File storage
+
+Used for images in campaign emails. Files are public, because a mail client
+has to load them without signing in.
+
+| Provider | Set | Notes |
+| --- | --- | --- |
+| Database (default) | Nothing | Kept in Postgres, up to 4 MB each. Fine for a handful of images. |
+| S3-compatible | `STORAGE_PROVIDER=s3` and the `S3_*` settings below | AWS S3, Cloudflare R2, Backblaze B2, DigitalOcean Spaces and others. |
+| Supabase Storage | `STORAGE_PROVIDER=supabase`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Creates a public bucket, `dua-uploads`, the first time it's needed. |
+
+For S3, the bucket must already exist and allow public reads, either directly
+or through a CDN. Set `S3_PUBLIC_URL` to wherever its files are served from
+if that isn't the same address they're uploaded to.
+
+### Judge sign-in
+
+| Provider | Set | Notes |
+| --- | --- | --- |
+| Built in (default) | Nothing | Passwords are stored as scrypt hashes in your database. |
+| Supabase Auth | `AUTH_PROVIDER=supabase`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | Each judge becomes a user in your Supabase project when an admin sets their password. |
+
+Only the password check is handed over. The roster in the admin panel still
+decides who is a judge or mentor and who is active, so a Supabase user who
+isn't on the roster can't sign in. Sessions and the lockout after repeated
+failures work the same either way. Admin accounts always use the built-in
+store.
+
+Switching provider doesn't carry passwords across: set the shared judge
+password again from the admin panel afterwards.
+
 ## Configuration
 
 | Variable | Needed | What it's for |
@@ -257,8 +323,20 @@ Hosted providers usually need `?sslmode=require` on the end of the URL.
 | `ADMIN_PASSWORD` | Yes | Break-glass owner password for `/admin`. |
 | `SUBMISSION_EDIT_SECRET` | Yes | 32+ random characters. Signs sessions and private links. |
 | `NEXT_PUBLIC_SITE_URL` | Yes | Public address of your deployment, used in emails. |
-| `RESEND_API_KEY` | For email | [Resend](https://resend.com) API key. |
-| `EMAIL_FROM` | For email | From header on a domain Resend has verified. |
+| `EMAIL_FROM` | For email | From header, on a domain your email provider has verified. |
+| `RESEND_API_KEY` | For email via Resend | Resend API key. |
+| `SMTP_URL` | For email via SMTP | Mail server address with credentials. |
+| `EMAIL_PROVIDER` | No | `resend`, `smtp` or `console`. Worked out from the settings above if unset. |
+| `STORAGE_PROVIDER` | No | `database` (default), `s3` or `supabase`. |
+| `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | For S3 storage | The bucket and credentials that can write to it. |
+| `S3_REGION` | For S3 storage | Defaults to `us-east-1`. Use `auto` for Cloudflare R2. |
+| `S3_ENDPOINT` | For S3 storage outside AWS | The service's address. |
+| `S3_PUBLIC_URL` | No | Where the bucket's files are read from, if different. |
+| `AUTH_PROVIDER` | No | `builtin` (default) or `supabase`, for judges and mentors. |
+| `SUPABASE_URL` | For Supabase Auth or Storage | Your project's URL. |
+| `SUPABASE_PUBLISHABLE_KEY` | For Supabase Auth | The project's publishable (or `anon`) key. |
+| `SUPABASE_SECRET_KEY` | For Supabase Auth or Storage | The project's secret (or `service_role`) key. Never expose it. |
+| `SUPABASE_STORAGE_BUCKET` | No | Defaults to `dua-uploads`. |
 | `DUA_EVENT_SLUG` | No | Which event in the database to serve. Defaults to `default`. |
 
 ## Make it yours
@@ -330,12 +408,10 @@ to `npm run db:migrate && npm run build`.
 
 ## Roadmap
 
-1. **Pluggable providers.** Email over SMTP as well as Resend, and file
-   storage on S3-compatible services as well as in the database.
-2. **Events as data.** Event details, tracks, rubric, form fields and theme
+1. **Events as data.** Event details, tracks, rubric, form fields and theme
    editable in the admin panel instead of in code. More than one event per
    deployment (the database is already built for it).
-3. **One-command setup.** A container image for the app, alongside the
+2. **One-command setup.** A container image for the app, alongside the
    database one.
 
 ## Development
@@ -347,6 +423,7 @@ npm run lint          # ESLint
 npm run typecheck     # TypeScript
 npm run build         # production build
 npm run db:generate   # after editing src/db/schema.ts: write a new migration
+npm run test:live     # optional: check providers against real services
 ```
 
 Tests use their own database, `dua_test`, created automatically on the same
@@ -359,6 +436,7 @@ src/
 ├── db/          # the database schema and connection
 ├── lib/         # event config, rubric, ranking, email, validation
 └── server/      # all database reads and writes, and who may make them
+    └── providers/  # email, file storage and sign-in: one file each
 drizzle/         # SQL migrations, generated from src/db/schema.ts
 scripts/         # command-line helpers: migrate, seed, admins, imports
 test/            # test database setup and fixtures

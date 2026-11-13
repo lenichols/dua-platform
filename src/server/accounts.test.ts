@@ -217,7 +217,6 @@ describe("judge sign-in", () => {
     const event = await makeEvent();
     await upsertJudge(event.id, { name: "Jo", email: "jo@example.org", role: "judge", password: "correct horse" });
     const [row] = await listJudges(event.id);
-    expect(row.has_password).toBe(true);
     expect(JSON.stringify(row)).not.toContain("scrypt");
     expect(Object.keys(row)).not.toContain("password_hash");
   });

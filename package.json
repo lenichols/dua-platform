@@ -18,11 +18,15 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:up": "docker compose up -d db",
-    "db:seed": "node --env-file-if-exists=.env.local scripts/demo-data.mjs"
+    "db:seed": "node --env-file-if-exists=.env.local scripts/demo-data.mjs",
+    "test:live": "vitest run --config vitest.live.config.mts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.4",
     "next": "^16.2.4",
+    "nodemailer": "^10.5.0",
     "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -30,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

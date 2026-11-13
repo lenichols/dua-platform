@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Email the admin team a notice. Reads the roster from admin_users so it can
+// Email the admin team a notice. Sends through Resend (RESEND_API_KEY).
+// Reads the roster from admin_users so it can
 // never drift from who actually has access.
 //
 //   node --env-file=.env.local scripts/notify-admins.mjs --dry-run

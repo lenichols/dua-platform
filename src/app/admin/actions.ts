@@ -36,7 +36,9 @@ import {
 import { deleteRegistration as removeRegistration } from "@/server/registrations";
 import { computeAndLockResults, recordTieBreak as saveTieBreak } from "@/server/results";
 import { setSubmissionHidden } from "@/server/submissions";
-import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/server/uploads";
+import { EMAIL_NOT_CONFIGURED } from "@/server/providers/email";
+import { fileStore } from "@/server/providers/storage";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/server/uploads";
 import {
   countOtherActiveOwners,
   countOtherActiveSuperAdmins,
@@ -58,7 +60,7 @@ import { ADMIN_ROLES, type AdminRole } from "@/lib/admin-roles";
 import {
   htmlToText,
   renderCampaignEmail,
-  resendConfigured,
+  emailConfigured,
   sanitizeCampaignHtml,
   sendBatch,
   sendOne,
@@ -678,8 +680,7 @@ export async function sendCampaignTest(
     return { ok: false, error: "Enter a valid test address." };
   const invalid = validateCampaign(subject, bodyHtml);
   if (invalid) return { ok: false, error: invalid };
-  if (!resendConfigured())
-    return { ok: false, error: "RESEND_API_KEY is not configured on this environment." };
+  if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
 
   const html = renderCampaignEmail({ bodyHtml, unsubscribeUrl: null });
   const res = await sendOne({
@@ -717,8 +718,7 @@ export async function sendCampaign(
   if (invalid) return { ok: false, error: invalid };
   if (confirm !== "SEND")
     return { ok: false, error: 'Type SEND in the confirmation box to send.' };
-  if (!resendConfigured())
-    return { ok: false, error: "RESEND_API_KEY is not configured on this environment." };
+  if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
 
   const event = await getCurrentEvent();
   const loaded = await loadRecipients(event.id, audience);
@@ -791,14 +791,17 @@ export async function uploadCampaignImage(
   const ext = file.type === "image/png" ? "png" : file.type === "image/gif" ? "gif" : "jpg";
   try {
     const event = await getCurrentEvent();
-    const { id } = await saveUpload({
-      eventId: event.id,
-      contentType: file.type,
-      bytes: Buffer.from(await file.arrayBuffer()),
-      createdBy: sessionLabel(guard.session),
-    });
-    // An absolute URL, because the image is loaded from inside an inbox.
-    return { ok: true, url: `${siteUrl()}/uploads/${id}.${ext}` };
+    // Where it's kept (the database, S3, Supabase Storage) is a setting.
+    return {
+      ok: true,
+      ...(await fileStore().put({
+        eventId: event.id,
+        contentType: file.type,
+        bytes: Buffer.from(await file.arrayBuffer()),
+        ext,
+        createdBy: sessionLabel(guard.session),
+      })),
+    };
   } catch (e) {
     return { ok: false, error: errorMessage(e) };
   }

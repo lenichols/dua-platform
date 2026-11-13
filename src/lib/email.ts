@@ -1,14 +1,14 @@
-// Resend transport + the HTML shell every campaign is wrapped in.
+// The HTML shell every email is wrapped in, and the functions that send it.
 // Server-only: never import from a client component.
 
 import { EVENT } from "@/lib/site";
-
-const RESEND_BATCH_ENDPOINT = "https://api.resend.com/emails/batch";
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
-
-/** Resend caps a batch at 100 and the default account rate limit is 2 req/s. */
-const BATCH_SIZE = 100;
-const BATCH_PAUSE_MS = 600;
+import {
+  EMAIL_NOT_CONFIGURED,
+  emailTransport,
+  type OutgoingEmail,
+  type SendOneResult,
+  type SendResult,
+} from "@/server/providers/email";
 
 /**
  * The From header. Set EMAIL_FROM to an address on a domain your email
@@ -17,10 +17,6 @@ const BATCH_PAUSE_MS = 600;
  */
 export const DEFAULT_FROM =
   process.env.EMAIL_FROM?.trim() || `${EVENT.name} <noreply@example.org>`;
-
-export function resendConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY);
-}
 
 /**
  * Base URL for anything that has to resolve from inside someone's inbox:
@@ -212,98 +208,31 @@ export function renderCampaignEmail(opts: {
 </body></html>`;
 }
 
-// ── transport ────────────────────────────────────────────────────
-export type OutgoingEmail = {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-  unsubscribeUrl?: string | null;
-};
+// ── sending ──────────────────────────────────────────────────────
+// The provider (Resend, SMTP…) is chosen in src/server/providers/email.ts.
 
-export type SendResult = { sent: number; failed: number; errors: string[] };
+export type { OutgoingEmail, SendResult } from "@/server/providers/email";
 
-function toResendPayload(m: OutgoingEmail, from: string) {
-  const payload: Record<string, unknown> = {
-    from,
-    to: [m.to],
-    subject: m.subject,
-    html: m.html,
-    text: m.text,
-  };
-  if (m.unsubscribeUrl) {
-    // One-click unsubscribe. Gmail and Yahoo require this on bulk mail, and
-    // without it a blast this size is far likelier to land in spam.
-    payload.headers = {
-      "List-Unsubscribe": `<${m.unsubscribeUrl}>`,
-      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-    };
-  }
-  return payload;
+/** Whether this server can send email at all. */
+export function emailConfigured(): boolean {
+  return emailTransport() !== null;
 }
 
 export async function sendOne(
   message: OutgoingEmail,
   from = DEFAULT_FROM,
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return { ok: false, error: "RESEND_API_KEY is not configured." };
-
-  const res = await fetch(RESEND_ENDPOINT, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify(toResendPayload(message, from)),
-  });
-  const payload = await res.json().catch(() => ({}) as Record<string, unknown>);
-  if (!res.ok)
-    return { ok: false, error: String(payload.message ?? res.statusText) };
-  return { ok: true, id: String(payload.id ?? "") };
+): Promise<SendOneResult> {
+  const transport = emailTransport();
+  if (!transport) return { ok: false, error: EMAIL_NOT_CONFIGURED };
+  return transport.sendOne(message, from);
 }
 
 export async function sendBatch(
   messages: OutgoingEmail[],
   from = DEFAULT_FROM,
 ): Promise<SendResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey)
-    return { sent: 0, failed: messages.length, errors: ["RESEND_API_KEY is not configured."] };
-
-  const result: SendResult = { sent: 0, failed: 0, errors: [] };
-
-  for (let i = 0; i < messages.length; i += BATCH_SIZE) {
-    const chunk = messages.slice(i, i + BATCH_SIZE);
-
-    let res: Response;
-    try {
-      res = await fetch(RESEND_BATCH_ENDPOINT, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(chunk.map((m) => toResendPayload(m, from))),
-      });
-    } catch (e) {
-      result.failed += chunk.length;
-      result.errors.push(
-        `Batch ${i / BATCH_SIZE + 1}: ${e instanceof Error ? e.message : String(e)}`,
-      );
-      continue;
-    }
-
-    const payload = await res.json().catch(() => ({}) as Record<string, unknown>);
-    if (!res.ok) {
-      // A whole chunk failing means those recipients got nothing — count every
-      // one so the campaign record reflects reality rather than optimism.
-      result.failed += chunk.length;
-      result.errors.push(
-        `Batch ${i / BATCH_SIZE + 1} (${chunk.length} recipients): ${payload.message ?? res.statusText}`,
-      );
-    } else {
-      result.sent += chunk.length;
-    }
-
-    if (i + BATCH_SIZE < messages.length) {
-      await new Promise((r) => setTimeout(r, BATCH_PAUSE_MS));
-    }
-  }
-
-  return result;
+  const transport = emailTransport();
+  if (!transport)
+    return { sent: 0, failed: messages.length, errors: [EMAIL_NOT_CONFIGURED] };
+  return transport.sendBatch(messages, from);
 }
