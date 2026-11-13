@@ -1,10 +1,5 @@
 import Link from "next/link";
-import {
-  Breadcrumbs,
-  HeaderBar,
-  PageShell,
-  SectionTitle,
-} from "@/components/shell";
+import { Breadcrumbs, HeaderBar, PageShell } from "@/components/shell";
 import {
   PhaseTrack,
   SignInLayout,
