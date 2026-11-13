@@ -1,0 +1,204 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import {
+  RUBRIC,
+  SCALE_MAX,
+  TIE_BREAKERS,
+  evidenceKey,
+  totalScore,
+  type EvidenceKey,
+  type RubricCategory,
+} from "@/lib/rubric";
+
+export type ExistingScore = Partial<Record<RubricCategory, number | null>> &
+  Partial<Record<EvidenceKey, string | null>>;
+
+type Scores = Record<RubricCategory, number | null>;
+type Evidence = Record<EvidenceKey, string>;
+
+// The rubric asks for one sentence per criterion; this just stops a bare "ok".
+const MIN_EVIDENCE_LENGTH = 15;
+
+const LEVEL_LABELS: Record<number, string> = {
+  1: "Limited",
+  3: "Solid",
+  5: "Exceptional",
+};
+
+export function ScoreForm({
+  submissionId,
+  judgeId,
+  existing,
+}: {
+  submissionId: string;
+  judgeId: string;
+  existing: ExistingScore | null;
+}) {
+  const router = useRouter();
+  // A score saved on an earlier rubric has no sustainability score; start fresh.
+  const prior = existing?.sustainability != null ? existing : null;
+  const [scores, setScores] = useState<Scores>(
+    () =>
+      Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.[c.key] ?? null])) as Scores,
+  );
+  const [evidence, setEvidence] = useState<Evidence>(
+    () =>
+      Object.fromEntries(
+        RUBRIC.map((c) => [evidenceKey(c.key), prior?.[evidenceKey(c.key)] ?? ""]),
+      ) as Evidence,
+  );
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const total = useMemo(() => totalScore(scores), [scores]);
+  const allScored = RUBRIC.every((c) => scores[c.key] !== null);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!allScored) {
+      setErr("Score all five criteria before submitting.");
+      return;
+    }
+    const missing = RUBRIC.filter(
+      (c) => evidence[evidenceKey(c.key)].trim().length < MIN_EVIDENCE_LENGTH,
+    );
+    if (missing.length > 0) {
+      setErr(
+        `Write one sentence of evidence for ${missing.map((c) => c.label).join(", ")}.`,
+      );
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    const row: Record<string, string | number> = {
+      judge_id: judgeId,
+      submission_id: submissionId,
+    };
+    for (const c of RUBRIC) {
+      row[c.key] = scores[c.key]!;
+      row[evidenceKey(c.key)] = evidence[evidenceKey(c.key)].trim();
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("scores")
+      .upsert(row, { onConflict: "judge_id,submission_id" });
+    setSaving(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    router.push("/judge/dashboard");
+    router.refresh();
+  }
+
+  return (
+    <form onSubmit={save} className="card h-fit space-y-4">
+      <div className="flex items-baseline justify-between">
+        <div className="pill-crimson">Your Score</div>
+        <div className="text-right">
+          <div className="font-display text-4xl text-crimson">
+            {allScored ? Math.round(total) : "–"}{" "}
+            <span className="text-base text-dust">/ 100</span>
+          </div>
+          <div className="text-[0.6rem] uppercase tracking-wider text-dust">
+            Weighted total
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        {RUBRIC.map((c) => {
+          const tieRank = TIE_BREAKERS.indexOf(c.key);
+          const ek = evidenceKey(c.key);
+          return (
+            <div key={c.key}>
+              <div className="flex items-baseline justify-between gap-2">
+                <label className="font-cond text-sm font-bold uppercase tracking-[0.15em] text-bone">
+                  {c.label}
+                  <span className="ml-2 text-[0.6rem] text-dust">{c.weight}%</span>
+                  {tieRank >= 0 && (
+                    <span className="ml-2 text-[0.6rem] text-crimson">
+                      TIE-BREAKER {tieRank + 1}
+                    </span>
+                  )}
+                </label>
+                <span className="font-display text-xl text-bone">
+                  {scores[c.key] ?? "–"}
+                </span>
+              </div>
+              <div className="mt-1 grid grid-cols-5 gap-1">
+                {Array.from({ length: SCALE_MAX }, (_, i) => i + 1).map((n) => {
+                  const on = scores[c.key] === n;
+                  return (
+                    <button
+                      type="button"
+                      key={n}
+                      onClick={() => setScores((s) => ({ ...s, [c.key]: n }))}
+                      className={`flex h-11 flex-col items-center justify-center rounded font-cond font-semibold transition ${
+                        on
+                          ? "border border-crimson bg-crimson/20 text-crimson"
+                          : "border border-line bg-ink-4 text-dust hover:border-crimson/60 hover:text-bone"
+                      }`}
+                    >
+                      <span className="text-sm">{n}</span>
+                      {LEVEL_LABELS[n] && (
+                        <span className="text-[0.55rem] uppercase tracking-wider">
+                          {LEVEL_LABELS[n]}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <details className="mt-1 text-[0.68rem] text-dust">
+                <summary className="cursor-pointer select-none hover:text-bone">
+                  Scoring levels
+                </summary>
+                <dl className="mt-1 space-y-0.5">
+                  <div><dt className="inline font-semibold text-bone/80">1 Limited: </dt><dd className="inline">{c.anchors.limited}</dd></div>
+                  <div><dt className="inline font-semibold text-bone/80">3 Solid: </dt><dd className="inline">{c.anchors.solid}</dd></div>
+                  <div><dt className="inline font-semibold text-bone/80">5 Exceptional: </dt><dd className="inline">{c.anchors.exceptional}</dd></div>
+                  <div>2 and 4 sit between the levels.</div>
+                </dl>
+              </details>
+              <label className="sr-only" htmlFor={`evidence-${c.key}`}>
+                {c.label} evidence
+              </label>
+              <textarea
+                id={`evidence-${c.key}`}
+                rows={2}
+                required
+                minLength={MIN_EVIDENCE_LENGTH}
+                className="field-input mt-1.5 text-xs"
+                placeholder={`Evidence: ${c.example}`}
+                value={evidence[ek]}
+                onChange={(e) =>
+                  setEvidence((v) => ({ ...v, [ek]: e.target.value }))
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[0.68rem] text-dust">
+        One sentence of evidence per score: what the team showed, not what they
+        claimed. Evidence appears on the results page as Judge A, Judge B… —
+        never with your name.
+      </p>
+
+      {err && (
+        <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
+          {err}
+        </div>
+      )}
+
+      <button className="btn-crimson w-full" disabled={saving}>
+        {saving ? "Saving…" : prior ? "↻ Update Score" : "✔ Submit Score"}
+      </button>
+    </form>
+  );
+}

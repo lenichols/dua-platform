@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark theme (default). Tokens are space-separated RGB channels so Tailwind
+     can apply alpha modifiers via rgb(var(--x) / <alpha-value>). */
+  :root {
+    --ink: 8 17 36;
+    --ink-2: 12 24 48;
+    --ink-3: 16 31 60;
+    --ink-4: 21 40 76;
+    --ink-5: 27 49 92;
+    --bone: 242 245 251;
+    --dust: 143 160 194;
+    --line: 35 58 99;
+    --hex-from: 255 255 255;
+    --hex-to: 159 178 216;
+    /* "Go" green for live/open states: --go for marks and large type,
+       --go-ink for body text on a green wash. */
+    --go: 74 222 128;
+    --go-ink: 187 247 208;
+    color-scheme: dark;
+  }
+  /* Light theme. White text becomes the dark-navy ink; surfaces go light. */
+  html.light {
+    --ink: 244 246 251;
+    --ink-2: 255 255 255;
+    --ink-3: 255 255 255;
+    --ink-4: 236 240 248;
+    --ink-5: 228 234 244;
+    --bone: 8 17 36;
+    /* Darker secondary text + firmer borders for stronger light-mode contrast. */
+    --dust: 71 85 115;
+    --line: 203 213 225;
+    --hex-from: 12 24 48;
+    --hex-to: 90 104 138;
+    /* Deeper greens so text clears contrast on a pale green wash. */
+    --go: 21 128 61;
+    --go-ink: 20 83 45;
+    color-scheme: light;
+  }
+  /* Force a dark context locally (e.g. over dark hero/CTA images) regardless
+     of the active theme, so light text stays readable on those sections. */
+  .theme-dark {
+    --ink: 8 17 36;
+    --ink-2: 12 24 48;
+    --ink-3: 16 31 60;
+    --ink-4: 21 40 76;
+    --ink-5: 27 49 92;
+    --bone: 242 245 251;
+    --dust: 143 160 194;
+    --line: 35 58 99;
+    --hex-from: 255 255 255;
+    --hex-to: 159 178 216;
+    --go: 74 222 128;
+    --go-ink: 187 247 208;
+  }
+  html, body {
+    background: rgb(var(--ink));
+    color: rgb(var(--bone));
+  }
+  body {
+    background-image:
+      repeating-linear-gradient(45deg, rgba(224,45,60,.03) 0 1px, transparent 1px 16px),
+      repeating-linear-gradient(-45deg, rgb(var(--bone) / 0.015) 0 1px, transparent 1px 16px);
+    min-height: 100vh;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-bebas), Impact, sans-serif;
+    letter-spacing: 0.08em;
+  }
+  /* Focus ring in crimson so it's visible on either background */
+  :focus-visible {
+    outline: 2px solid #E8364A;
+    outline-offset: 2px;
+  }
+  /* Custom scrollbars — webkit */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgb(var(--ink-2)); }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--line)); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: #E02D3C; }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-ink-3 p-5 shadow-card;
+  }
+  .field-label {
+    @apply block text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-dust;
+  }
+  .field-input {
+    @apply w-full rounded-md border border-line bg-ink-5 px-3 py-2.5 text-sm text-bone placeholder:text-dust/70 focus:border-crimson focus:outline-none;
+  }
+  .btn {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-ink-4 px-5 font-cond text-sm font-semibold uppercase tracking-wider text-bone transition hover:border-crimson hover:text-crimson;
+  }
+  .btn-crimson {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-md border-0 bg-gradient-to-br from-crimson-dark to-crimson px-6 font-cond text-sm font-bold uppercase tracking-wider text-white transition hover:brightness-110;
+  }
+  .btn-danger {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-md border border-blood px-5 font-cond text-sm font-semibold uppercase tracking-wider text-blood transition hover:bg-blood hover:text-white;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-ink-4 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-dust;
+  }
+  .pill-crimson {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-crimson/40 bg-crimson/10 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-crimson;
+  }
+  .hex-title {
+    font-family: var(--font-bebas), Impact, sans-serif;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--hex-from)) 0%,
+      rgb(var(--hex-to)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* Campaign composer — the contenteditable emits bare tags with no classes, so
+   it needs element styles to look like the email it will become. */
+.campaign-editor h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+}
+.campaign-editor h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0.875rem 0 0.375rem;
+}
+.campaign-editor p {
+  margin: 0 0 0.75rem;
+}
+.campaign-editor ul,
+.campaign-editor ol {
+  margin: 0 0 0.75rem 1.25rem;
+  list-style-position: outside;
+}
+.campaign-editor ul { list-style-type: disc; }
+.campaign-editor ol { list-style-type: decimal; }
+.campaign-editor li { margin-bottom: 0.25rem; }
+.campaign-editor a { color: var(--crimson, #E02D3C); text-decoration: underline; }
+.campaign-editor blockquote {
+  border-left: 3px solid var(--crimson, #E02D3C);
+  padding-left: 0.875rem;
+  margin: 0 0 0.75rem;
+  opacity: 0.85;
+}
+.campaign-editor hr {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.25;
+  margin: 1rem 0;
+}
+.campaign-editor:empty::before {
+  content: "Write your update…";
+  opacity: 0.45;
+}
+.campaign-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.75rem 0;
+  border-radius: 6px;
+}

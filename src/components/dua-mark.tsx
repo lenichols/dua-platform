@@ -1,0 +1,32 @@
+// The Dua mark, inlined so the code glyph can follow the theme
+// (currentColor): navy on light backgrounds, light on dark ones.
+// Generated from public/dua-logo.svg.
+export function DuaMark({
+  size = 36,
+  className = "",
+  title,
+}: {
+  size?: number;
+  className?: string;
+  /** Accessible name. Omit when the mark sits next to the written name. */
+  title?: string;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="79 451 407 407"
+      width={size}
+      height={size}
+      className={className}
+      role={title ? "img" : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    >
+      <defs><linearGradient id="dua-purple" x1="0" y1="0" x2="1" y2=".7"><stop offset="0" stopColor="#7B2DFF"/><stop offset="0.6" stopColor="#662EFF"/><stop offset="1" stopColor="#1677D5"/></linearGradient><linearGradient id="dua-teal" x1=".2" y1="1" x2=".8" y2=".1"><stop offset="0" stopColor="#0B86C7"/><stop offset="0.45" stopColor="#00BDB3"/><stop offset="1" stopColor="#00D9AA"/></linearGradient><linearGradient id="dua-amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#FFB300"/><stop offset="1" stopColor="#F29B00"/></linearGradient></defs>
+      <path fill="url(#dua-purple)" fillRule="evenodd" d="M258,638 L243,633 L224,630 L197,631 L172,637 L147,649 L132,660 L116,676 L102,696 L95,710 L88,735 L87,757 L89,771 L95,790 L105,808 L124,828 L134,835 L145,841 L166,848 L183,849 L184,850 L206,848 L220,844 L241,834 L255,824 L282,800 L212,800 L211,801 L200,801 L199,800 L184,799 L168,792 L157,783 L149,772 L144,758 L144,736 L150,718 L159,704 L173,691 L188,683 L204,679 L226,679 L254,683 L272,667 L272,645Z M197,541 L181,546 L169,556 L161,570 L159,585 L162,598 L165,604 L172,612 L179,617 L189,621 L207,622 L221,617 L230,610 L235,604 L241,590 L241,573 L236,560 L225,548 L212,542Z"/>
+      <path fill="url(#dua-teal)" fillRule="evenodd" d="M260,639 L257,639 L259,640 L258,643 L259,658 L257,662 L259,672 L258,679 L285,656 L284,654 L272,645Z M414,638 L387,631 L360,631 L346,634 L329,641 L315,650 L279,682 L333,681 L334,680 L373,680 L379,681 L394,687 L400,691 L411,702 L417,712 L421,725 L421,744 L417,759 L411,770 L398,785 L383,794 L365,799 L309,799 L276,828 L280,831 L299,841 L324,848 L344,849 L345,850 L376,848 L399,842 L418,833 L437,819 L454,801 L467,779 L475,755 L477,742 L476,712 L469,690 L464,680 L457,670 L447,659 L436,650Z M383,542 L372,545 L365,549 L355,559 L351,566 L348,576 L348,589 L354,604 L365,615 L378,621 L394,622 L410,616 L421,606 L425,600 L428,592 L429,574 L423,560 L414,550 L399,543Z"/>
+      <path fill="url(#dua-amber)" fillRule="evenodd" d="M310,611 L310,608 L304,607 L280,608 L283,616 L292,622 L298,622 L303,620 L307,617Z M280,518 L273,522 L265,530 L261,537 L259,543 L259,559 L261,565 L266,573 L277,584 L280,596 L311,596 L312,587 L314,583 L324,574 L332,559 L331,540 L324,528 L319,523 L311,518 L300,515 L291,515Z M349,489 L342,490 L326,506 L326,511 L331,515 L335,514 L352,498 L352,493Z M242,487 L240,490 L240,494 L253,509 L258,513 L262,513 L265,511 L266,504 L250,487 L248,486Z M298,459 L294,460 L291,463 L290,468 L290,493 L294,497 L300,497 L303,493 L303,467 L304,466 L302,461Z"/>
+      <path fill="currentColor" fillRule="evenodd" d="M333,707 L329,707 L326,710 L322,719 L327,724 L348,739 L349,742 L318,765 L318,769 L324,778 L327,778 L362,753 L372,744 L372,738 L369,734Z M246,707 L241,707 L200,736 L197,740 L197,746 L199,749 L236,778 L239,778 L242,775 L246,766 L237,757 L227,750 L221,744 L221,742 L251,720 L251,716Z M311,697 L300,696 L295,700 L279,736 L274,744 L272,751 L258,778 L258,783 L260,785 L272,785 L276,781 L290,749 L313,703 L313,700Z"/>
+    </svg>
+  );
+}
