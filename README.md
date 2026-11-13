@@ -8,13 +8,14 @@
 
 <p align="center">
   <a href="https://dua-platform.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-dua--platform.vercel.app-662EFF?style=for-the-badge" alt="Live demo: dua-platform.vercel.app"></a>
+  <a href="#contributors-wanted"><img src="https://img.shields.io/badge/Contributors-wanted-00B8A9?style=for-the-badge" alt="Contributors wanted"></a>
 </p>
 
 <p align="center">
   <a href="https://dua-platform.vercel.app">Live demo</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#guides">Guides</a> ·
-  <a href="#to-do">To do</a>
+  <a href="#contributors-wanted">Contributors wanted</a>
 </p>
 
 # Dua
@@ -169,12 +170,38 @@ you'd like to contribute: open an issue first so we can agree on the approach.
 - [ ] Rework the two effects that set state on mount (theme toggle, admin
       paging), which lint currently reports as warnings.
 
-## Contributing
+## Contributors wanted
 
-Contributions are welcome. Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) first; you'll
-be asked to sign the [contributor license agreement](.github/CLA.md) on your first pull
-request. Please report security problems privately, as described in
-[SECURITY.md](.github/SECURITY.md).
+Dua is new and maintained by a very small team, and it's looking for people
+to help build it. If you've run a hackathon, judged one, or just like working
+on software people use at real events, you'd be welcome.
+
+**Where help is most useful**
+
+- **Front end:** the admin panel needs a screen-by-screen tidy, and every page
+  needs checking on a phone.
+- **Testing:** an end-to-end suite that drives a real browser through signing
+  in, scoring and the event settings.
+- **Deployment:** a container image for the app, and trying the email and
+  storage providers against the real services.
+- **Organizers and judges:** you don't need to write code. Run the
+  [demo](https://dua-platform.vercel.app), tell us what your event would need
+  that isn't there, and what the rubric or the forms get wrong.
+
+The full list is under [To do](#to-do).
+
+**How to start**
+
+1. Get it running: the [quick start](#quick-start) takes about five minutes.
+2. Pick something from the to-do list, or bring your own idea, and
+   [open an issue](https://github.com/lenichols/dua-platform/issues/new/choose) or comment on the [contributors thread](https://github.com/lenichols/dua-platform/issues/1)
+   so we can agree on the approach before you spend time on it.
+3. Read [CONTRIBUTING.md](.github/CONTRIBUTING.md), then send a pull request.
+   Small ones are welcome.
+
+On your first pull request you'll be asked to sign the
+[contributor license agreement](.github/CLA.md). Please report security
+problems privately, as described in [SECURITY.md](.github/SECURITY.md).
 
 ## License
 
