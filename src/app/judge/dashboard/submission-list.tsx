@@ -105,10 +105,10 @@ export function SubmissionList({
               <button
                 key={key}
                 onClick={() => setFilter(key)}
-                className={`rounded-full border px-3 py-1 font-cond text-xs font-semibold uppercase tracking-wider transition ${
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   filter === key
-                    ? "border-crimson bg-crimson/15 text-crimson"
-                    : "border-line bg-ink-4 text-dust hover:border-crimson/50"
+                    ? "border-accent bg-accent/15 text-accent"
+                    : "border-line bg-ink-4 text-dust hover:border-accent/50"
                 }`}
               >
                 {label}
@@ -153,11 +153,11 @@ export function SubmissionList({
                   {/* Main info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="truncate font-cond text-base font-bold uppercase tracking-wider text-bone group-hover:text-crimson">
+                      <span className="truncate text-base font-bold text-bone group-hover:text-accent">
                         {s.project_name}
                       </span>
                       {s.solo_or_team && (
-                        <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+                        <span className="text-[0.65rem] text-dust">
                           {s.solo_or_team}
                           {s.team_name ? ` · ${s.team_name}` : ""}
                         </span>
@@ -179,24 +179,24 @@ export function SubmissionList({
 
                   {/* Status pill */}
                   <span
-                    className={`whitespace-nowrap rounded-full border px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider ${
+                    className={`whitespace-nowrap rounded-full border px-3 py-0.5 text-[0.65rem] font-semibold ${
                       mentorMode || isRecused
                         ? "border-line bg-ink-4 text-dust"
                         : isDone
                           ? "border-jade/60 bg-jade/10 text-jade"
                           : canScore
-                            ? "border-crimson/60 bg-crimson/10 text-crimson"
+                            ? "border-accent/60 bg-accent/10 text-accent"
                             : "border-line bg-ink-4 text-dust"
                     }`}
                   >
                     {mentorMode
-                      ? "View →"
+                      ? "View"
                       : isRecused
                         ? "Recused"
                         : isDone
                           ? "✓ Scored"
                           : canScore
-                            ? "Score →"
+                            ? "Score"
                             : "Pending"}
                   </span>
                 </Link>

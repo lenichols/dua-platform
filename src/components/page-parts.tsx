@@ -26,7 +26,7 @@ export function Breadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-5 flex flex-wrap items-center gap-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-dust"
+      className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-dust"
     >
       {items.map((it, i) => {
         const isLast = i === items.length - 1;
@@ -36,7 +36,7 @@ export function Breadcrumbs({
             {it.href && !isLast ? (
               <Link
                 href={it.href}
-                className="transition hover:text-crimson"
+                className="transition hover:text-accent"
               >
                 {it.label}
               </Link>
@@ -61,24 +61,15 @@ export function SectionTitle({
   subtitle?: string;
   center?: boolean;
 }) {
+  // `eyebrow` says where you are (a phase, an access level). It's shown as
+  // a quiet line above the title, not as decoration.
   return (
-    <div className={`mb-6 animate-fade-up ${center ? "text-center" : ""}`}>
-      {eyebrow && (
-        <div className="mb-2 font-cond text-[0.7rem] uppercase tracking-[0.3em] text-crimson">
-          {eyebrow}
-        </div>
-      )}
-      <h1 className="hex-title text-4xl md:text-5xl">{title}</h1>
+    <div className={`mb-6 ${center ? "text-center" : ""}`}>
+      {eyebrow && <div className="mb-1.5 text-sm font-bold text-accent">{eyebrow}</div>}
+      <h1 className="hex-title text-3xl md:text-4xl">{title}</h1>
       {subtitle && (
-        <p className={`mt-3 max-w-2xl text-dust ${center ? "mx-auto" : ""}`}>
-          {subtitle}
-        </p>
+        <p className={`mt-3 max-w-2xl text-dust ${center ? "mx-auto" : ""}`}>{subtitle}</p>
       )}
-      <div
-        className={`mt-4 h-[2px] w-28 rounded bg-gradient-to-r from-crimson via-bone/80 to-crimson opacity-70 ${
-          center ? "mx-auto" : ""
-        }`}
-      />
     </div>
   );
 }

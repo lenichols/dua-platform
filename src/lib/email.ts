@@ -134,7 +134,7 @@ export function htmlToText(html: string): string {
 // ── the shell ────────────────────────────────────────────────────
 
 /** The default accent colour, used when an email has no event theme to hand. */
-export const CRIMSON = "#E02D3C";
+export const ACCENT = "#662EFF";
 
 /**
  * The site header, rebuilt for email: the logo plus the event name.

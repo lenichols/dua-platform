@@ -74,13 +74,13 @@ export function ScoreForm({
   return (
     <form onSubmit={save} className="card h-fit space-y-4">
       <div className="flex items-baseline justify-between">
-        <div className="pill-crimson">Your Score</div>
+        <div className="pill-accent">Your Score</div>
         <div className="text-right">
-          <div className="font-display text-4xl text-crimson">
+          <div className="font-display text-4xl text-accent">
             {allScored ? Math.round(total) : "–"}{" "}
             <span className="text-base text-dust">/ 100</span>
           </div>
-          <div className="text-[0.6rem] uppercase tracking-wider text-dust">
+          <div className="text-[0.6rem] text-dust">
             Weighted total
           </div>
         </div>
@@ -93,12 +93,12 @@ export function ScoreForm({
           return (
             <div key={c.key}>
               <div className="flex items-baseline justify-between gap-2">
-                <label className="font-cond text-sm font-bold uppercase tracking-[0.15em] text-bone">
+                <label className="text-sm font-bold text-bone">
                   {c.label}
                   <span className="ml-2 text-[0.6rem] text-dust">{c.weight}%</span>
                   {tieRank >= 0 && (
-                    <span className="ml-2 text-[0.6rem] text-crimson">
-                      TIE-BREAKER {tieRank + 1}
+                    <span className="ml-2 text-[0.6rem] text-accent">
+                      Tie-breaker {tieRank + 1}
                     </span>
                   )}
                 </label>
@@ -114,15 +114,15 @@ export function ScoreForm({
                       type="button"
                       key={n}
                       onClick={() => setScores((s) => ({ ...s, [c.key]: n }))}
-                      className={`flex h-11 flex-col items-center justify-center rounded font-cond font-semibold transition ${
+                      className={`flex h-11 flex-col items-center justify-center rounded font-semibold transition ${
                         on
-                          ? "border border-crimson bg-crimson/20 text-crimson"
-                          : "border border-line bg-ink-4 text-dust hover:border-crimson/60 hover:text-bone"
+                          ? "border border-accent bg-accent/20 text-accent"
+                          : "border border-line bg-ink-4 text-dust hover:border-accent/60 hover:text-bone"
                       }`}
                     >
                       <span className="text-sm">{n}</span>
                       {LEVEL_LABELS[n] && (
-                        <span className="text-[0.55rem] uppercase tracking-wider">
+                        <span className="text-[0.55rem]">
                           {LEVEL_LABELS[n]}
                         </span>
                       )}
@@ -173,7 +173,7 @@ export function ScoreForm({
         </div>
       )}
 
-      <button className="btn-crimson w-full" disabled={saving}>
+      <button className="btn-accent w-full" disabled={saving}>
         {saving ? "Saving…" : prior ? "↻ Update Score" : "✔ Submit Score"}
       </button>
     </form>

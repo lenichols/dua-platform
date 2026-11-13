@@ -5,9 +5,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        // The event's accent colour, set in the admin panel. The name is
-        // historical: it's whatever colour the organizer picks.
-        crimson: {
+        // The event's accent colour, set in the admin panel.
+        accent: {
           DEFAULT: "rgb(var(--accent) / <alpha-value>)",
           dark: "rgb(var(--accent-dark) / <alpha-value>)",
           deep: "rgb(var(--accent-deep) / <alpha-value>)",
@@ -32,30 +31,13 @@ export default {
         },
       },
       fontFamily: {
-        display: ["var(--font-bebas)", "Impact", "sans-serif"],
-        cond: ["var(--font-barlow-cond)", "system-ui", "sans-serif"],
-        body: ["var(--font-barlow)", "system-ui", "sans-serif"],
-        serif: [
-          "var(--font-garamond)",
-          "Garamond",
-          "Georgia",
-          "Times New Roman",
-          "Times",
-          "serif",
-        ],
+        // Headings: Jost, whose round geometric letters match the Dua wordmark.
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        // Everything else: Atkinson Hyperlegible, drawn to be easy to read.
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        card: "0 4px 24px rgba(0,0,0,.45)",
-        crimson: "0 0 30px rgb(var(--accent) / 0.3)",
-      },
-      keyframes: {
-        "fade-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-      },
-      animation: {
-        "fade-up": "fade-up .6s cubic-bezier(.16,1,.3,1) both",
+        card: "0 1px 2px rgb(6 21 59 / 0.06)",
       },
     },
   },

@@ -55,7 +55,7 @@ export default async function JudgeDashboard() {
             <span className="hidden text-dust md:inline">
               Signed in as <span className="text-bone">{judge.name}</span>
               {isMentor && (
-                <span className="ml-2 rounded-full border border-line bg-ink-4 px-2 py-0.5 text-[0.65rem] uppercase tracking-wider text-dust">
+                <span className="ml-2 rounded-full border border-line bg-ink-4 px-2 py-0.5 text-[0.65rem] text-dust">
                   Mentor
                 </span>
               )}
@@ -92,27 +92,27 @@ export default async function JudgeDashboard() {
           <div className="card mb-4 flex flex-wrap items-center gap-4">
             <div>
               <div className="field-label">Your Progress</div>
-              <div className="font-display text-3xl text-crimson">
+              <div className="font-display text-3xl text-accent">
                 {done} <span className="text-base text-dust">/ {queueSize}</span>
               </div>
               {recusedIds.length > 0 && (
-                <div className="text-[0.65rem] uppercase tracking-wider text-dust">
+                <div className="text-[0.65rem] text-dust">
                   {recusedIds.length} recused
                 </div>
               )}
             </div>
             <div className="h-3 flex-1 overflow-hidden rounded-full border border-line bg-ink-5">
               <div
-                className="h-full bg-gradient-to-r from-blood via-crimson to-jade transition-all"
+                className="h-full bg-accent transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="font-cond text-sm font-semibold uppercase tracking-wider text-bone">
+            <div className="text-sm font-semibold text-bone">
               {pct}%
             </div>
             {phase === "results" && (
-              <Link href="/results" className="btn-crimson">
-                View Results →
+              <Link href="/results" className="btn-accent">
+                View Results
               </Link>
             )}
           </div>
@@ -124,8 +124,8 @@ export default async function JudgeDashboard() {
               Results are in: the top {event.settings.topN}, the full leaderboard, and every
               judge&apos;s anonymized notes.
             </p>
-            <Link href="/results" className="btn-crimson">
-              View Results →
+            <Link href="/results" className="btn-accent">
+              View Results
             </Link>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import {
-  CRIMSON,
+  ACCENT,
   escapeHtml,
   htmlToText,
   renderCampaignEmail,
@@ -57,7 +57,7 @@ export async function sendEditLinkEmail(opts: {
   const first = (opts.name ?? "").trim().split(/\s+/)[0];
   const bodyHtml = `<p>Hi${first ? ` ${escapeHtml(first)}` : ""},</p>
 ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit your submission. Here it is, and sorry for the wait.</p>\n" : ""}<p>Thanks for submitting <strong>${escapeHtml(opts.project)}</strong> to ${escapeHtml(EVENT.name)}. If you need to change anything, use your private edit link:</p>
-<p><a href="${escapeHtml(opts.url)}" style="display:inline-block;background:${EVENT.theme.accent || CRIMSON};color:#ffffff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600;">Edit your submission</a></p>
+<p><a href="${escapeHtml(opts.url)}" style="display:inline-block;background:${EVENT.theme.accent || ACCENT};color:#ffffff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600;">Edit your submission</a></p>
 <p style="font-size:13px;color:#6b7280;word-break:break-all;">${escapeHtml(opts.url)}</p>
 <p>The link works until submissions close (${escapeHtml(EVENT.submissionDeadline)}). Anyone with it can edit your submission, so share it only with your team.</p>
 <p>The ${escapeHtml(EVENT.name)} team</p>`;

@@ -240,7 +240,7 @@ export function AdminHome({
         items={
           tab === "home"
             ? [{ label: "Admin Home" }]
-            : [{ label: "Admin Home", href: "/admin" }, { label: tab }]
+            : [{ label: "Admin Home", href: "/admin" }, { label: tab.charAt(0).toUpperCase() + tab.slice(1) }]
         }
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -266,7 +266,7 @@ export function AdminHome({
       )}
 
       {session.viaSharedPassword && showTeam && team.length === 0 && !teamError && (
-        <div className="mb-6 rounded-md border border-crimson/40 bg-crimson/10 px-4 py-3 text-sm text-bone">
+        <div className="mb-6 rounded-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-bone">
           You&apos;re signed in with the shared admin password. Create named
           accounts under <span className="font-semibold">Team</span> so
           everyone gets their own login — and read-only teammates only get read
@@ -279,10 +279,10 @@ export function AdminHome({
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-md border px-4 py-2 font-cond text-sm uppercase tracking-wider transition ${
+            className={`rounded-lg border px-4 py-2 text-sm font-bold capitalize transition-colors ${
               tab === t
-                ? "border-crimson bg-crimson/10 text-crimson"
-                : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-line bg-ink-3 text-dust hover:border-accent/60"
             }`}
           >
             {t}
@@ -461,7 +461,7 @@ function AccountPanel({ session }: { session: Session }) {
             </div>
           )}
 
-          <button className="btn-crimson" disabled={pending}>
+          <button className="btn-accent" disabled={pending}>
             {pending ? "Saving…" : "🔑 Change Password"}
           </button>
         </form>
@@ -472,13 +472,13 @@ function AccountPanel({ session }: { session: Session }) {
 
 function RoleChip({ role }: { role: AdminRole }) {
   const styles: Record<AdminRole, string> = {
-    owner: "border-crimson/50 bg-crimson/15 text-crimson",
+    owner: "border-accent/50 bg-accent/15 text-accent",
     admin: "border-blue-600/50 bg-blue-600/15 text-blue-700",
     viewer: "border-line bg-ink-4 text-dust",
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider ${styles[role]}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.62rem] font-bold ${styles[role]}`}
     >
       {ROLE_LABELS[role]}
     </span>
@@ -612,7 +612,7 @@ function HomePanel({
           </div>
         </div>
         {activeJudgeProgress.length > 0 && (
-          <div className="text-[0.65rem] uppercase tracking-wider text-dust">
+          <div className="text-[0.65rem] text-dust">
             Active: {activeJudgeProgress.length}
           </div>
         )}
@@ -647,15 +647,15 @@ function HomePanel({
                         {j.name}
                       </span>
                       {status === "done" && (
-                        <span className="pill-crimson">✓ Done</span>
+                        <span className="pill-accent">✓ Done</span>
                       )}
                       {status === "in_progress" && (
-                        <span className="rounded-full border border-crimson/40 bg-crimson/10 px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-crimson">
+                        <span className="rounded-full border border-accent/40 bg-accent/10 px-3 py-0.5 text-[0.65rem] font-semibold text-accent">
                           In Progress
                         </span>
                       )}
                       {status === "not_started" && (
-                        <span className="rounded-full border border-blood/60 bg-blood/10 px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-blood">
+                        <span className="rounded-full border border-blood/60 bg-blood/10 px-3 py-0.5 text-[0.65rem] font-semibold text-blood">
                           Not Started
                         </span>
                       )}
@@ -687,7 +687,7 @@ function HomePanel({
                             ? "bg-jade"
                             : status === "not_started"
                               ? "bg-blood"
-                              : "bg-crimson"
+                              : "bg-accent"
                         }`}
                         style={{ width: `${pctJ}%` }}
                       />
@@ -718,10 +718,10 @@ function HomePanel({
                 onClick={() => handlePhase(p)}
                 disabled={readOnly || pending || p === phase}
                 title={readOnly ? "Read-only access" : undefined}
-                className={`flex-1 rounded-md border px-3 py-4 font-cond uppercase tracking-wider transition ${
+                className={`flex-1 rounded-lg border px-3 py-4 font-bold capitalize transition-colors ${
                   phase === p
-                    ? "border-crimson bg-crimson/20 text-crimson"
-                    : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                    ? "border-accent bg-accent/20 text-accent"
+                    : "border-line bg-ink-4 text-dust hover:border-accent/60"
                 }`}
               >
                 {p}
@@ -737,14 +737,14 @@ function HomePanel({
             {readOnly ? (
               <>
                 The event is currently in the{" "}
-                <span className="text-crimson">{phase}</span> phase. Only owners
+                <span className="text-accent">{phase}</span> phase. Only owners
                 and admins can change it.
               </>
             ) : (
               <>
-                Changing to <span className="text-crimson">judging</span> locks
+                Changing to <span className="text-accent">judging</span> locks
                 submissions. Changing to{" "}
-                <span className="text-crimson">results</span> reveals aggregated
+                <span className="text-accent">results</span> reveals aggregated
                 scores; if you haven&apos;t computed the final ranking yet, do that from
                 the Results tab first.
               </>
@@ -754,13 +754,13 @@ function HomePanel({
 
         <div className="card">
           <div className="field-label">Voting Progress</div>
-          <div className="mt-2 font-display text-5xl text-crimson">{pct}%</div>
+          <div className="mt-2 font-display text-5xl text-accent">{pct}%</div>
           <div className="mt-1 text-xs text-dust">
             {cast} / {totalPossibleVotes} votes cast
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full border border-line bg-ink-5">
             <div
-              className="h-full bg-gradient-to-r from-blood via-crimson to-jade transition-all"
+              className="h-full bg-accent transition-all"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -785,8 +785,6 @@ function HomePanel({
           live
             ? undefined
             : {
-                backgroundImage:
-                  "repeating-linear-gradient(135deg, rgb(var(--line) / 0.5) 0 1px, transparent 1px 11px)",
               }
         }
       >
@@ -815,7 +813,7 @@ function HomePanel({
                 Submission Form
               </span>
               <div
-                className={`mt-0.5 font-display text-3xl tracking-wider ${
+                className={`mt-0.5 font-display text-3xl ${
                   live ? "text-go" : "text-dust"
                 }`}
               >
@@ -856,7 +854,7 @@ function HomePanel({
                 {submissions.length}
               </div>
               <div
-                className={`mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.15em] ${
+                className={`mt-1 text-[0.62rem] font-semibold ${
                   live ? "text-go-ink/80" : "text-dust"
                 }`}
               >
@@ -867,7 +865,7 @@ function HomePanel({
               <button
                 onClick={handleToggleSubs}
                 disabled={subPending}
-                className={`inline-flex h-11 items-center justify-center gap-2 rounded-md border px-5 font-cond text-sm font-semibold uppercase tracking-wider transition disabled:opacity-60 ${
+                className={`inline-flex h-11 items-center justify-center gap-2 rounded-md border px-5 text-sm font-semibold transition disabled:opacity-60 ${
                   live
                     ? "border-go/50 bg-ink-2/80 text-go-ink hover:border-line hover:bg-ink-5 hover:text-dust"
                     : submissionsOpen
@@ -903,8 +901,6 @@ function HomePanel({
           regLive
             ? undefined
             : {
-                backgroundImage:
-                  "repeating-linear-gradient(135deg, rgb(var(--line) / 0.5) 0 1px, transparent 1px 11px)",
               }
         }
       >
@@ -918,7 +914,7 @@ function HomePanel({
               <span className={`field-label !mb-0 ${regLive ? "text-go-ink/80" : ""}`}>
                 Registration
               </span>
-              <div className={`font-display text-xl tracking-wider ${regLive ? "text-go" : "text-dust"}`}>
+              <div className={`font-display text-xl ${regLive ? "text-go" : "text-dust"}`}>
                 {regLive ? "Open" : "Closed"}
                 <span className="ml-2 font-body text-xs normal-case tracking-normal">
                   {registrationCount} registered
@@ -934,7 +930,7 @@ function HomePanel({
             <button
               onClick={handleToggleReg}
               disabled={regPending}
-              className={`inline-flex h-10 items-center justify-center rounded-md border px-4 font-cond text-sm font-semibold uppercase tracking-wider transition disabled:opacity-60 ${
+              className={`inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition disabled:opacity-60 ${
                 regLive
                   ? "border-go/50 bg-ink-2/80 text-go-ink hover:border-line hover:bg-ink-5 hover:text-dust"
                   : registrationOpen
@@ -983,7 +979,7 @@ function HomePanel({
                   ▶
                 </span>
                 <span>
-                  <span className="block font-cond text-sm font-bold uppercase tracking-wider text-bone">
+                  <span className="block text-sm font-bold text-bone">
                     Submissions ({submissions.length})
                   </span>
                   <span className="mt-0.5 block text-xs text-dust">
@@ -1126,10 +1122,10 @@ function JudgesPanel({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-cond text-sm font-bold uppercase tracking-wider text-bone">
+          <span className="text-sm font-bold text-bone">
             Roster
           </span>
-          <span className="pill-crimson">
+          <span className="pill-accent">
             {filtering ? `${rows.length} / ${judges.length}` : judges.length}
           </span>
           <div className="ml-2 flex gap-1">
@@ -1146,8 +1142,8 @@ function JudgesPanel({
                 aria-pressed={roleFilter === k}
                 className={
                   roleFilter === k
-                    ? "pill-crimson"
-                    : "pill hover:border-crimson hover:text-crimson"
+                    ? "pill-accent"
+                    : "pill hover:border-accent hover:text-accent"
                 }
               >
                 {label}
@@ -1172,7 +1168,7 @@ function JudgesPanel({
         <span className="font-semibold text-bone">
           {activeMentors} mentor{activeMentors === 1 ? "" : "s"}
         </span>{" "}
-        can sign in at <span className="text-crimson">/judge</span> right now.
+        can sign in at <span className="text-accent">/judge</span> right now.
         Inactive people keep their row but lose access.
       </p>
 
@@ -1193,7 +1189,7 @@ function JudgesPanel({
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold uppercase tracking-[0.14em] text-dust">
+                <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold text-dust">
                   <SortableTh
                     label="Name"
                     sortKey="name"
@@ -1249,7 +1245,7 @@ function JudgesPanel({
                         <div className="font-semibold text-bone">{j.name}</div>
                         <a
                           href={`mailto:${j.email}`}
-                          className="block max-w-[240px] truncate text-xs text-dust hover:text-crimson hover:underline"
+                          className="block max-w-[240px] truncate text-xs text-dust hover:text-accent hover:underline"
                         >
                           {j.email}
                         </a>
@@ -1259,7 +1255,7 @@ function JudgesPanel({
                       </td>
                       <td className="py-3 pr-3">
                         {j.is_active ? (
-                          <span className="pill-crimson">Active</span>
+                          <span className="pill-accent">Active</span>
                         ) : (
                           <span className="pill">Inactive</span>
                         )}
@@ -1308,13 +1304,13 @@ function JudgesPanel({
 function PersonRoleBadge({ role }: { role: "judge" | "mentor" }) {
   if (role === "mentor") {
     return (
-      <span className="inline-flex items-center rounded-full border border-blue-600/50 bg-blue-600/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-blue-700">
+      <span className="inline-flex items-center rounded-full border border-blue-600/50 bg-blue-600/15 px-2.5 py-0.5 text-[0.62rem] font-bold text-blue-700">
         Mentor
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-crimson/50 bg-crimson/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-crimson">
+    <span className="inline-flex items-center rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-[0.62rem] font-bold text-accent">
       Judge
     </span>
   );
@@ -1349,8 +1345,8 @@ function AddPersonForm() {
   return (
     <form id="add-person-form" action={onAdd} className="card space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="pill-crimson">Add to roster</div>
-        <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+        <div className="pill-accent">Add to roster</div>
+        <span className="text-[0.65rem] text-dust">
           They sign in at /judge
         </span>
       </div>
@@ -1394,7 +1390,7 @@ function AddPersonForm() {
           </select>
         </div>
         <div className="flex items-end">
-          <button className="btn-crimson w-full md:w-auto" disabled={pending}>
+          <button className="btn-accent w-full md:w-auto" disabled={pending}>
             {pending ? "Adding…" : "+ Add"}
           </button>
         </div>
@@ -1434,7 +1430,7 @@ function SignInTools() {
             ▶
           </span>
           <span>
-            <span className="block font-cond text-sm font-bold uppercase tracking-wider text-bone">
+            <span className="block text-sm font-bold text-bone">
               Sign-in tools
             </span>
             <span className="mt-0.5 block text-xs text-dust">
@@ -1457,10 +1453,10 @@ function SignInTools() {
 function ToolHeading({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h3 className="font-cond text-sm font-bold uppercase tracking-wider text-bone">
+      <h3 className="text-sm font-bold text-bone">
         {title}
       </h3>
-      <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+      <span className="text-[0.65rem] text-dust">
         {hint}
       </span>
     </div>
@@ -1494,7 +1490,7 @@ function SharedPasswordTool() {
       <p className="text-xs text-dust">
         Sets one password on every <strong className="text-bone">active</strong>{" "}
         judge and mentor. They sign in at{" "}
-        <span className="text-crimson">/judge</span> with their email + this
+        <span className="text-accent">/judge</span> with their email + this
         password — no email is sent. Share it directly (Slack/text). Re-run any
         time to rotate it.
       </p>
@@ -1514,8 +1510,8 @@ function SharedPasswordTool() {
             placeholder="e.g. a long passphrase"
           />
         </div>
-        <button className="btn-crimson" disabled={pwdPending}>
-          {pwdPending ? "Applying…" : "🔐 Set & Apply"}
+        <button className="btn-accent" disabled={pwdPending}>
+          {pwdPending ? "Applying…" : "Set & Apply"}
         </button>
       </div>
       {pwdState && pwdState.ok && (
@@ -1561,7 +1557,7 @@ function TestAccountTool() {
       <p className="text-xs text-dust">
         Creates a one-off judge or mentor with a known email + password —
         independent of the shared password above. Use it to walk the{" "}
-        <span className="text-crimson">/judge</span> sign-in flow yourself.
+        <span className="text-accent">/judge</span> sign-in flow yourself.
         Deactivate it from the roster when you&apos;re done.
       </p>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
@@ -1617,7 +1613,7 @@ function TestAccountTool() {
       {testState && testState.ok && (
         <div className="rounded-md border border-jade/60 bg-jade/10 px-3 py-2 text-xs text-jade">
           ✓ Created <span className="font-mono">{testState.email}</span>. Sign
-          in at <span className="text-crimson">/judge</span> with that email +
+          in at <span className="text-accent">/judge</span> with that email +
           the password you just typed.
         </div>
       )}
@@ -1706,7 +1702,7 @@ function DiagnoseTool() {
         </div>
         <div className="flex items-end">
           <button className="btn" disabled={diagPending}>
-            {diagPending ? "Checking…" : "🔎 Diagnose"}
+            {diagPending ? "Checking…" : "Diagnose"}
           </button>
         </div>
       </div>
@@ -1889,10 +1885,10 @@ function RegistrationsPanel({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-cond text-sm font-bold uppercase tracking-wider text-bone">
+          <span className="text-sm font-bold text-bone">
             Registrations
           </span>
-          <span className="pill-crimson">
+          <span className="pill-accent">
             {q || roleFilter !== "all"
               ? `${filtered.length} / ${registrations.length}`
               : registrations.length}
@@ -1910,8 +1906,8 @@ function RegistrationsPanel({
                 onClick={() => setRoleFilter(k)}
                 className={
                   roleFilter === k
-                    ? "pill-crimson"
-                    : "pill hover:border-crimson hover:text-crimson"
+                    ? "pill-accent"
+                    : "pill hover:border-accent hover:text-accent"
                 }
               >
                 {label}
@@ -1931,7 +1927,7 @@ function RegistrationsPanel({
             disabled={filtered.length === 0}
             className="btn shrink-0 disabled:opacity-40"
           >
-            ⬇ CSV
+            Download CSV
           </button>
         </div>
       </div>
@@ -1948,7 +1944,7 @@ function RegistrationsPanel({
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold uppercase tracking-[0.14em] text-dust">
+                <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold text-dust">
                   <th className="w-8 py-3 pl-4" aria-hidden />
                   <SortableTh
                     label="Name"
@@ -2089,7 +2085,7 @@ function RegistrationsPanel({
               >
                 ← Prev
               </button>
-              <span className="font-cond text-sm font-semibold uppercase tracking-wider text-dust">
+              <span className="text-sm font-semibold text-dust">
                 Page {safePage} / {totalPages}
               </span>
               <button
@@ -2100,7 +2096,7 @@ function RegistrationsPanel({
                 disabled={safePage >= totalPages}
                 className="btn h-9 px-4 disabled:opacity-40"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>
@@ -2138,12 +2134,12 @@ function SortableTh<K extends string>({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex cursor-pointer select-none items-center gap-1 tracking-[0.14em] transition hover:text-crimson ${
+        className={`inline-flex cursor-pointer select-none items-center gap-1 transition hover:text-accent ${
           align === "right" ? "flex-row-reverse" : ""
         }`}
       >
         {label}
-        <span className={active ? "text-crimson" : "text-dust/40"}>
+        <span className={active ? "text-accent" : "text-dust/40"}>
           {active ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
         </span>
       </button>
@@ -2160,18 +2156,18 @@ function RoleBadge({
 }) {
   if (isMentor) {
     return (
-      <span className="inline-flex items-center rounded-full border border-crimson/50 bg-crimson/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-crimson">
+      <span className="inline-flex items-center rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-[0.62rem] font-bold text-accent">
         Coach
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="inline-flex items-center rounded-full border border-blue-600/50 bg-blue-600/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-blue-700">
+      <span className="inline-flex items-center rounded-full border border-blue-600/50 bg-blue-600/15 px-2.5 py-0.5 text-[0.62rem] font-bold text-blue-700">
         Innovator
       </span>
       {participatingAs && (
-        <span className="text-[0.6rem] font-semibold uppercase tracking-wider text-dust">
+        <span className="text-[0.6rem] font-semibold text-dust">
           {participatingAs}
         </span>
       )}
@@ -2201,7 +2197,7 @@ function Detail({ label, value }: { label: string; value: ReactNode }) {
   if (value == null || value === "") return null;
   return (
     <div>
-      <div className="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-dust">
+      <div className="mb-0.5 text-[0.6rem] font-semibold text-dust">
         {label}
       </div>
       <div className="break-words text-sm text-bone">{value}</div>
@@ -2247,14 +2243,14 @@ function RegistrationDetail({
   const tel = r.phone ? r.phone.replace(/[^\d+]/g, "") : "";
 
   return (
-    <div className="animate-fade-up p-5">
+    <div className="p-5">
       <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
         <Detail
           label="Email"
           value={
             <a
               href={`mailto:${r.email}`}
-              className="break-all text-crimson hover:underline"
+              className="break-all text-accent hover:underline"
             >
               {r.email}
             </a>
@@ -2264,7 +2260,7 @@ function RegistrationDetail({
           <Detail
             label="Phone"
             value={
-              <a href={`tel:${tel}`} className="text-crimson hover:underline">
+              <a href={`tel:${tel}`} className="text-accent hover:underline">
                 {r.phone}
               </a>
             }
@@ -2284,7 +2280,7 @@ function RegistrationDetail({
             value={
               <div className="flex flex-wrap gap-1.5">
                 {partners.map((p) => (
-                  <span key={p} className="pill-crimson">
+                  <span key={p} className="pill-accent">
                     {p}
                   </span>
                 ))}
@@ -2300,7 +2296,7 @@ function RegistrationDetail({
                 href={safeHref(r.linkedin_url) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-crimson hover:underline"
+                className="break-all text-accent hover:underline"
               >
                 {r.linkedin_url}
               </a>
@@ -2315,7 +2311,7 @@ function RegistrationDetail({
                 href={safeHref(r.website_url) ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-crimson hover:underline"
+                className="break-all text-accent hover:underline"
               >
                 {r.website_url}
               </a>
@@ -2433,7 +2429,7 @@ function SubmissionsTable({
       )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-[0.7rem] uppercase tracking-wider text-crimson">
+          <thead className="text-[0.7rem] text-accent">
             <tr>
               <th className="p-2 text-left">Project</th>
               <th className="p-2 text-left">Team</th>
@@ -2456,7 +2452,7 @@ function SubmissionsTable({
                 <td className="p-2">
                   <button
                     type="button"
-                    className="text-left font-semibold text-bone hover:text-crimson"
+                    className="text-left font-semibold text-bone hover:text-accent"
                   >
                     {s.project_name}
                   </button>
@@ -2487,7 +2483,7 @@ function SubmissionsTable({
                         e.stopPropagation();
                         onToggleHide(s.id, !s.hidden_from_judges);
                       }}
-                      className="pill hover:border-crimson hover:text-crimson"
+                      className="pill hover:border-accent hover:text-accent"
                     >
                       {s.hidden_from_judges ? "Show" : "Hide"}
                     </button>
@@ -2561,7 +2557,7 @@ function SubmissionModal({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="break-all text-crimson hover:underline"
+        className="break-all text-accent hover:underline"
       >
         {label ?? href}
       </a>
@@ -2569,21 +2565,21 @@ function SubmissionModal({
   };
   const mail = (v: string | number | null | undefined) =>
     text(v) && (
-      <a href={`mailto:${v}`} className="break-all text-crimson hover:underline">
+      <a href={`mailto:${v}`} className="break-all text-accent hover:underline">
         {v}
       </a>
     );
   const longText = (label: string, v: string | number | null | undefined) =>
     text(v) && (
       <div>
-        <div className="mb-1 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-dust">
+        <div className="mb-1 text-[0.6rem] font-semibold text-dust">
           {label}
         </div>
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-bone">{v}</p>
       </div>
     );
   const heading = (t: string) => (
-    <div className="mb-3 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+    <div className="mb-3 text-xs font-bold text-accent">
       {t}
     </div>
   );
@@ -2609,7 +2605,7 @@ function SubmissionModal({
       aria-labelledby="submission-modal-title"
     >
       <div
-        className="card mx-auto my-6 w-full max-w-3xl animate-fade-up cursor-auto"
+        className="card mx-auto my-6 w-full max-w-3xl cursor-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-line pb-4">
@@ -2628,7 +2624,7 @@ function SubmissionModal({
               {s.hidden_from_judges && (
                 <span className="pill border-blood/50 text-blood">Hidden from judges</span>
               )}
-              {s.needs_review && <span className="pill-crimson">⚠ Needs review</span>}
+              {s.needs_review && <span className="pill-accent">⚠ Needs review</span>}
               {!s.is_submission_complete && <span className="pill">Incomplete</span>}
               <span className="pill">
                 {votes} judge score{votes === 1 ? "" : "s"}
@@ -2642,7 +2638,7 @@ function SubmissionModal({
 
         <div className="space-y-6 py-5">
           {text(s.review_note) && (
-            <div className="rounded-md border border-crimson/40 bg-crimson/10 px-3 py-2 text-sm text-bone">
+            <div className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-bone">
               <span className="font-semibold">Review note:</span> {s.review_note}
             </div>
           )}
@@ -2661,7 +2657,7 @@ function SubmissionModal({
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pill hover:border-crimson hover:text-crimson"
+                    className="pill hover:border-accent hover:text-accent"
                   >
                     {label} ↗
                   </a>
@@ -2790,12 +2786,12 @@ function ResultsPanel({
     <div className="space-y-4">
       {!readOnly && (
       <form action={compute} className="card space-y-3">
-        <div className="pill-crimson">Compute Top {topN}</div>
+        <div className="pill-accent">Compute Top {topN}</div>
         <p className="text-sm text-dust">
           Runs the Monte Carlo algorithm (1000 trials) on all current scores,
           locks in projects that place in at least 70% of trials, and fills the rest via
           weighted random draw from the bubble. Saves the result and flips the
-          app to <span className="text-crimson">results</span> phase.
+          app to <span className="text-accent">results</span> phase.
         </p>
         <div>
           <label className="field-label">
@@ -2810,8 +2806,8 @@ function ResultsPanel({
             defaultValue={lock?.seed ?? ""}
           />
         </div>
-        <button className="btn-crimson" disabled={pending}>
-          {pending ? "Running 1000 trials…" : "🎲 Compute + Lock"}
+        <button className="btn-accent" disabled={pending}>
+          {pending ? "Running 1000 trials…" : "Compute + Lock"}
         </button>
         {err && (
           <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
@@ -2831,14 +2827,14 @@ function ResultsPanel({
         <div className="card">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="pill-crimson">Locked Top {topN}</div>
+              <div className="pill-accent">Locked Top {topN}</div>
               <div className="mt-1 text-[0.7rem] text-dust">
                 Seed: <span className="font-mono text-bone">{lock.seed}</span> ·
                 Locked: {new Date(lock.locked_at).toLocaleString()}
               </div>
             </div>
             {phase === "results" && (
-              <Link href="/results" className="btn">Public Results →</Link>
+              <Link href="/results" className="btn">Public Results</Link>
             )}
           </div>
           <ol className="mt-4 space-y-2">
@@ -2850,7 +2846,7 @@ function ResultsPanel({
                   className="flex items-center justify-between rounded-md border border-line bg-ink-4 px-4 py-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="font-display text-3xl text-crimson">{t.rank}</span>
+                    <span className="font-display text-3xl text-accent">{t.rank}</span>
                     <span className="font-semibold">{s?.project_name ?? t.submission_id}</span>
                   </div>
                   <span className="pill">
@@ -2923,7 +2919,7 @@ function TeamPanel({
   if (loadError) {
     return (
       <div className="card space-y-2">
-        <div className="pill-crimson">Setup needed</div>
+        <div className="pill-accent">Setup needed</div>
         <p className="text-sm text-bone">{loadError}</p>
       </div>
     );
@@ -2934,11 +2930,11 @@ function TeamPanel({
       <form
         id="team-form"
         action={onAdd}
-        className="card space-y-4 border-l-4 border-l-crimson"
+        className="card space-y-4 border-l-4 border-l-accent"
       >
         <div className="flex items-baseline justify-between">
-          <div className="pill-crimson">Add Admin Account</div>
-          <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+          <div className="pill-accent">Add Admin Account</div>
+          <span className="text-[0.65rem] text-dust">
             They sign in at /admin with their email
           </span>
         </div>
@@ -2985,7 +2981,7 @@ function TeamPanel({
         <ul className="space-y-1 text-[0.7rem] text-dust">
           {ADMIN_ROLES.map((r) => (
             <li key={r}>
-              <span className="font-semibold uppercase tracking-wider text-bone">
+              <span className="font-semibold text-bone">
                 {ROLE_LABELS[r]}
               </span>{" "}
               — {ROLE_DESCRIPTIONS[r]}
@@ -2993,7 +2989,7 @@ function TeamPanel({
           ))}
         </ul>
 
-        <button className="btn-crimson" disabled={addPending}>
+        <button className="btn-accent" disabled={addPending}>
           {addPending ? "Creating…" : "+ Add Account"}
         </button>
 
@@ -3023,7 +3019,7 @@ function TeamPanel({
 
       {newPassword && (
         <div className="card space-y-2 border-l-4 border-l-jade/60">
-          <div className="text-xs font-semibold uppercase tracking-wider text-jade">
+          <div className="text-xs font-semibold text-jade">
             New password for {newPassword.email}
           </div>
           <div className="select-all rounded border border-jade/40 bg-ink-4 px-3 py-2 font-mono text-sm text-bone">
@@ -3046,7 +3042,7 @@ function TeamPanel({
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold uppercase tracking-[0.14em] text-dust">
+              <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold text-dust">
                 <th className="py-3 pl-4 pr-3">Account</th>
                 <th className="py-3 pr-3">Role</th>
                 <th className="py-3 pr-3">Status</th>
@@ -3070,13 +3066,13 @@ function TeamPanel({
                         {m.is_protected && (
                           <span
                             title="Super administrator — can only be changed by another super administrator"
-                            className="inline-flex items-center rounded-full border border-crimson/50 bg-crimson/15 px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-crimson"
+                            className="inline-flex items-center rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-[0.62rem] font-bold text-accent"
                           >
                             ★ Super
                           </span>
                         )}
                         {isSelf && (
-                          <span className="text-[0.6rem] uppercase tracking-wider text-dust">
+                          <span className="text-[0.6rem] text-dust">
                             you
                           </span>
                         )}
@@ -3101,7 +3097,7 @@ function TeamPanel({
                     </td>
                     <td className="py-3 pr-3">
                       {m.is_active ? (
-                        <span className="pill-crimson">Active</span>
+                        <span className="pill-accent">Active</span>
                       ) : (
                         <span className="pill">Disabled</span>
                       )}
@@ -3122,7 +3118,7 @@ function TeamPanel({
                             <button
                               onClick={() => onResetPassword(m)}
                               disabled={pending}
-                              className="pill hover:border-crimson hover:text-crimson disabled:opacity-40"
+                              className="pill hover:border-accent hover:text-accent disabled:opacity-40"
                             >
                               Reset password
                             </button>
@@ -3138,7 +3134,7 @@ function TeamPanel({
                                   ? "Only owners can be made super administrators"
                                   : undefined
                               }
-                              className="pill hover:border-crimson hover:text-crimson disabled:opacity-40"
+                              className="pill hover:border-accent hover:text-accent disabled:opacity-40"
                             >
                               {m.is_protected ? "Revoke super" : "Make super"}
                             </button>
@@ -3147,7 +3143,7 @@ function TeamPanel({
                                 run(() => setAdminUserActive(m.id, !m.is_active))
                               }
                               disabled={isSelf || pending}
-                              className="pill hover:border-crimson hover:text-crimson disabled:opacity-40"
+                              className="pill hover:border-accent hover:text-accent disabled:opacity-40"
                             >
                               {m.is_active ? "Disable" : "Enable"}
                             </button>
@@ -3224,7 +3220,7 @@ function DeleteAccountButton({
 function Stat({ label, v }: { label: string; v: number }) {
   return (
     <div className="rounded border border-line bg-ink-4 px-2 py-1.5">
-      <div className="text-[0.6rem] uppercase tracking-wider text-dust">{label}</div>
+      <div className="text-[0.6rem] text-dust">{label}</div>
       <div className="font-display text-xl text-bone">{v}</div>
     </div>
   );

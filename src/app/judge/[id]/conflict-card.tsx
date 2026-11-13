@@ -49,7 +49,7 @@ export function ConflictCard({
           type="button"
           onClick={() => run(() => withdrawConflict(submissionId))}
           disabled={pending}
-          className="pill mt-3 hover:border-crimson hover:text-crimson"
+          className="pill mt-3 hover:border-accent hover:text-accent"
         >
           {pending ? "Withdrawing…" : "Withdraw — I can judge this after all"}
         </button>

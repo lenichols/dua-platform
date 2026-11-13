@@ -155,8 +155,8 @@ export function SubmitForm({
 
   if (state?.ok) {
     return (
-      <div className="card animate-fade-up">
-        <div className="pill-crimson mb-4">
+      <div className="card">
+        <div className="pill-accent mb-4">
           {state.updated ? "✓ Changes saved" : "✓ Submitted"}
         </div>
         <h2 className="hex-title text-4xl">
@@ -171,9 +171,9 @@ export function SubmitForm({
           submission, so share it only with your team.
         </p>
         <EditLinkBox url={state.editUrl} />
-        <p className="mt-3 text-xs uppercase tracking-wider text-dust">
+        <p className="mt-3 text-xs text-dust">
           Submission ID:{" "}
-          <span className="font-mono text-crimson">{state.id}</span>
+          <span className="font-mono text-accent">{state.id}</span>
         </p>
       </div>
     );
@@ -244,7 +244,7 @@ export function SubmitForm({
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         {/* Contestant */}
         <fieldset className="card space-y-4">
-          <legend className="pill-crimson -mt-2 mb-2">About You</legend>
+          <legend className="pill-accent -mt-2 mb-2">About You</legend>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -383,15 +383,15 @@ export function SubmitForm({
 
         {/* Team */}
         <fieldset className="card space-y-4">
-          <legend className="pill-crimson -mt-2 mb-2">Team</legend>
+          <legend className="pill-accent -mt-2 mb-2">Team</legend>
           <div className="flex gap-2">
             {(["Solo", "Team"] as const).map((opt) => (
               <label
                 key={opt}
-                className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center font-cond text-sm uppercase tracking-wider transition ${
+                className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition ${
                   mode === opt
-                    ? "border-crimson bg-crimson/10 text-crimson"
-                    : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-line bg-ink-4 text-dust hover:border-accent/60"
                 }`}
               >
                 <input
@@ -495,7 +495,7 @@ export function SubmitForm({
         {/* Mentor */}
         {shown("mentor") && (
           <fieldset className="card space-y-4">
-            <legend className="pill-crimson -mt-2 mb-2">Mentor</legend>
+            <legend className="pill-accent -mt-2 mb-2">Mentor</legend>
             <p className="text-xs text-dust">
               If a mentor helped you during the build weekend, tell us who. List
               more than one by separating names with commas.
@@ -527,7 +527,7 @@ export function SubmitForm({
 
         {/* Project */}
         <fieldset className="card space-y-4">
-          <legend className="pill-crimson -mt-2 mb-2">Project</legend>
+          <legend className="pill-accent -mt-2 mb-2">Project</legend>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -754,15 +754,15 @@ export function SubmitForm({
                       key={f}
                       className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-sm transition ${
                         active
-                          ? "border-crimson bg-crimson/10 text-crimson"
-                          : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                          ? "border-accent bg-accent/10 text-accent"
+                          : "border-line bg-ink-4 text-dust hover:border-accent/60"
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={active}
                         onChange={() => toggleImpact(f)}
-                        className="h-4 w-4 accent-crimson"
+                        className="h-4 w-4 accent-accent"
                       />
                       {f}
                     </label>
@@ -868,17 +868,17 @@ export function SubmitForm({
 
         {/* Demo Video — prominent, red-accented */}
         <fieldset className="card space-y-4 border-blood/50 bg-gradient-to-br from-blood/5 to-transparent">
-          <legend className="inline-flex items-center gap-2 rounded-full border border-blood/60 bg-blood/20 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.15em] text-blood">
+          <legend className="inline-flex items-center gap-2 rounded-full border border-blood/60 bg-blood/20 px-3 py-1 text-[0.7rem] font-bold text-blood">
             ▣ Required · Demo Video
           </legend>
 
           <div className="rounded-md border border-blood/40 bg-ink-4/60 p-3 text-sm leading-relaxed">
-            <div className="mb-1 font-cond text-xs font-bold uppercase tracking-wider text-blood">
+            <div className="mb-1 text-xs font-bold text-blood">
               ⚠ Disqualification Notice
             </div>
             <p className="text-bone/90">
               A demonstration video <strong>must</strong> accompany this
-              submission. <span className="text-crimson">3 to 5 minutes.</span>{" "}
+              submission. <span className="text-accent">3 to 5 minutes.</span>{" "}
               Show <strong>all team members at least once</strong> in the video.
               Submissions with no demo video will be{" "}
               <strong className="text-blood">disqualified</strong>.
@@ -913,13 +913,13 @@ export function SubmitForm({
             {err("demo_video_short_url")}
           </div>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-ink-4 p-3 hover:border-crimson/60">
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-ink-4 p-3 hover:border-accent/60">
             <input
               type="checkbox"
               name="all_members_in_video"
               value="checked"
               required
-              className="mt-0.5 h-5 w-5 accent-crimson"
+              className="mt-0.5 h-5 w-5 accent-accent"
             />
             <span className="text-sm">
               <span className="font-semibold text-bone">
@@ -936,7 +936,7 @@ export function SubmitForm({
         {/* Pitch materials + disclosure */}
         {shown("materials") && (
           <fieldset className="card space-y-4">
-            <legend className="pill-crimson -mt-2 mb-2">
+            <legend className="pill-accent -mt-2 mb-2">
               Pitch Deck, Summary &amp; Disclosure
             </legend>
 
@@ -996,12 +996,12 @@ export function SubmitForm({
         {/* LinkedIn Announcement */}
         {shown("announcement") && (
           <fieldset className="card space-y-4">
-            <legend className="pill-crimson -mt-2 mb-2">
+            <legend className="pill-accent -mt-2 mb-2">
               LinkedIn Announcement
             </legend>
 
-            <div className="rounded-md border border-crimson/40 bg-crimson/5 p-3 text-sm">
-              <span className="font-semibold text-crimson">Required.</span> You,
+            <div className="rounded-md border border-accent/40 bg-accent/5 p-3 text-sm">
+              <span className="font-semibold text-accent">Required.</span> You,
               the submitter, must post on LinkedIn announcing your participation
               in
               {EVENT.name}, tagging the host:{" "}
@@ -1009,7 +1009,7 @@ export function SubmitForm({
                 href={EVENT.announceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-bone underline decoration-crimson/60 hover:text-crimson"
+                className="font-semibold text-bone underline decoration-accent/60 hover:text-accent"
               >
                 {EVENT.host.name}
               </a>
@@ -1063,14 +1063,14 @@ export function SubmitForm({
               Reset
             </button>
           )}
-          <button type="submit" className="btn-crimson" disabled={pending}>
+          <button type="submit" className="btn-accent" disabled={pending}>
             {pending
               ? edit
                 ? "Saving…"
                 : "Submitting…"
               : edit
-                ? "Review & Save →"
-                : "Review & Submit →"}
+                ? "Review & Save"
+                : "Review & Submit"}
           </button>
         </div>
       </form>
@@ -1097,13 +1097,13 @@ function EditLinkBox({ url }: { url: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <a
           href={url}
-          className="min-w-0 flex-1 break-all font-mono text-xs text-crimson underline"
+          className="min-w-0 flex-1 break-all font-mono text-xs text-accent underline"
         >
           {url}
         </a>
         <button
           type="button"
-          className="pill shrink-0 hover:border-crimson hover:text-crimson"
+          className="pill shrink-0 hover:border-accent hover:text-accent"
           onClick={() =>
             navigator.clipboard?.writeText(url).then(() => setCopied(true))
           }
@@ -1136,7 +1136,7 @@ function ConfirmModal({
     if (!v || v.trim() === "") return null;
     return (
       <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-        <dt className="text-[0.7rem] uppercase tracking-wider text-dust">
+        <dt className="text-[0.7rem] text-dust">
           {label}
         </dt>
         <dd className="text-sm text-bone break-words">{v}</dd>
@@ -1150,17 +1150,17 @@ function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#081124]/85 p-4 backdrop-blur-sm animate-fade-up"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#081124]/85 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
     >
-      <div className="card w-full max-w-2xl border-crimson/60">
+      <div className="card w-full max-w-2xl border-accent/60">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <div className="pill-crimson">Review Your Submission</div>
+            <div className="pill-accent">Review Your Submission</div>
             <h2 className="hex-title mt-2 text-3xl">One Last Look</h2>
           </div>
-          <div className="font-display text-5xl text-crimson/30">⬡</div>
+          <div className="font-display text-5xl text-accent/30">⬡</div>
         </div>
 
         <p className="mb-4 text-sm text-dust">
@@ -1171,7 +1171,7 @@ function ConfirmModal({
 
         <div className="max-h-[50vh] space-y-4 overflow-y-auto rounded-md border border-line bg-ink-4 p-4">
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               Submitter
             </div>
             <dl className="divide-y divide-line/60">
@@ -1188,7 +1188,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               Team · {mode}
             </div>
             <dl className="divide-y divide-line/60">
@@ -1196,7 +1196,7 @@ function ConfirmModal({
               {row("team_size", "Size")}
               {members.length > 0 && (
                 <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-                  <dt className="text-[0.7rem] uppercase tracking-wider text-dust">
+                  <dt className="text-[0.7rem] text-dust">
                     Members
                   </dt>
                   <dd className="text-sm text-bone">{members.join(", ")}</dd>
@@ -1206,7 +1206,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               Mentor
             </div>
             <dl className="divide-y divide-line/60">
@@ -1216,7 +1216,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               Project
             </div>
             <dl className="divide-y divide-line/60">
@@ -1243,14 +1243,14 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-blood">
+            <div className="mb-2 text-xs font-bold text-blood">
               ▣ Demo Video
             </div>
             <dl className="divide-y divide-line/60">
               {row("demo_video_url", "Video URL")}
               {row("demo_video_short_url", "Pitch Video")}
               <div className="grid grid-cols-[140px_1fr] gap-3 py-1.5">
-                <dt className="text-[0.7rem] uppercase tracking-wider text-dust">
+                <dt className="text-[0.7rem] text-dust">
                   All Members
                 </dt>
                 <dd className="text-sm">
@@ -1267,7 +1267,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               Pitch Deck, Summary &amp; Disclosure
             </div>
             <dl className="divide-y divide-line/60">
@@ -1278,7 +1278,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+            <div className="mb-2 text-xs font-bold text-accent">
               LinkedIn Announcement
             </div>
             <dl className="divide-y divide-line/60">
@@ -1288,7 +1288,7 @@ function ConfirmModal({
 
           {custom.length > 0 && (
             <section>
-              <div className="mb-2 font-cond text-xs font-bold uppercase tracking-wider text-crimson">
+              <div className="mb-2 text-xs font-bold text-accent">
                 More About Your Entry
               </div>
               <dl className="divide-y divide-line/60">
@@ -1313,7 +1313,7 @@ function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="btn-crimson"
+            className="btn-accent"
           >
             {pending
               ? editing

@@ -76,7 +76,7 @@ export default async function JudgeSubmissionPage({
         rightSlot={
           <Link
             href={judge ? "/judge/dashboard" : "/results"}
-            className="pill hover:border-crimson hover:text-crimson"
+            className="pill hover:border-accent hover:text-accent"
           >
             ← Back
           </Link>
@@ -85,7 +85,7 @@ export default async function JudgeSubmissionPage({
       <PageShell>
         <Breadcrumbs items={crumbs} />
 
-        <div className="mb-6 animate-fade-up">
+        <div className="mb-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {sub.solo_or_team && <span className="pill">{sub.solo_or_team}</span>}
             {sub.team_name && <span className="pill">{sub.team_name}</span>}
@@ -97,7 +97,7 @@ export default async function JudgeSubmissionPage({
                 <span className="pill">{sub.project_category}</span>
               )}
             {sub.focus_area && (
-              <span className="pill-crimson">{sub.focus_area}</span>
+              <span className="pill-accent">{sub.focus_area}</span>
             )}
             {sub.solution_stage && (
               <span className="pill">{sub.solution_stage}</span>
@@ -107,64 +107,62 @@ export default async function JudgeSubmissionPage({
               <span className="pill">{sub.area_of_specification}</span>
             )}
             {sub.applies_ai === "Yes" && (
-              <span className="pill-crimson">🤖 Uses AI</span>
+              <span className="pill-accent">🤖 Uses AI</span>
             )}
           </div>
           {sub.problem_brief && (
-            <div className="mb-2 text-sm">
-              <span className="field-label">Problem brief · </span>
-              <span className="font-semibold text-bone">{sub.problem_brief}</span>
-            </div>
+            <p className="mb-2 text-sm text-dust">
+              Problem brief: <span className="font-bold text-bone">{sub.problem_brief}</span>
+            </p>
           )}
-          <h1 className="hex-title text-5xl">{sub.project_name}</h1>
+          <h1 className="hex-title text-4xl md:text-5xl">{sub.project_name}</h1>
           {sub.project_description_summary && (
             <p className="mt-3 text-dust">{sub.project_description_summary}</p>
           )}
-          <div className="mt-4 h-[2px] w-28 rounded bg-gradient-to-r from-crimson via-bone/80 to-crimson opacity-70" />
         </div>
 
         {/* Judge guidance — only shown during judging phase */}
         {isJudge && phase === "judging" && (
-          <div className="card mb-6 border-l-4 border-l-crimson">
+          <div className="card mb-6 border-l-4 border-l-accent">
             <div className="mb-2 flex items-center gap-2">
-              <span className="pill-crimson">How to Score</span>
-              <span className="text-[0.7rem] uppercase tracking-wider text-dust">
+              <span className="pill-accent">How to Score</span>
+              <span className="text-[0.7rem] text-dust">
                 Read this before scoring
               </span>
             </div>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-bone/90">
               <li>
-                <strong className="text-crimson">Read the team&apos;s brief first</strong>
+                <strong className="text-accent">Read the team&apos;s brief first</strong>
                 . Its success metrics define what a 5 looks like.
               </li>
               <li>
-                <strong className="text-crimson">
+                <strong className="text-accent">
                   Watch the demo video, then the pitch video.
                 </strong>{" "}
                 The demo video is the source of truth for what was actually
                 built.
               </li>
               <li>
-                <strong className="text-crimson">
+                <strong className="text-accent">
                   Read the one-page summary and description.
                 </strong>{" "}
                 Gaps between promise and delivery weigh on Feasibility and
                 Impact.
               </li>
               <li>
-                <strong className="text-crimson">Check the disclosure.</strong>{" "}
+                <strong className="text-accent">Check the disclosure.</strong>{" "}
                 Score what was built during the sprint. Flag undisclosed prior
                 work to the organizers rather than marking it down.
               </li>
               <li>
-                <strong className="text-crimson">
+                <strong className="text-accent">
                   Open the build files and pitch deck.
                 </strong>{" "}
                 Look for signs of real work: commits during the sprint,
                 calculations that add up, a cost model that exists.
               </li>
               <li>
-                <strong className="text-crimson">
+                <strong className="text-accent">
                   Score every criterion 1–5 and write one sentence of evidence
                   for each
                 </strong>{" "}
@@ -216,7 +214,7 @@ export default async function JudgeSubmissionPage({
                     href={safeHref(a.value)!}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 block break-all text-sm text-crimson underline"
+                    className="mt-1 block break-all text-sm text-accent underline"
                   >
                     {a.value}
                   </a>
@@ -304,7 +302,7 @@ export default async function JudgeSubmissionPage({
                       href={demoHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-crimson text-xs"
+                      className="btn-accent text-xs"
                     >
                       ▣ Watch Demo Video First
                     </a>
@@ -412,8 +410,8 @@ export default async function JudgeSubmissionPage({
               {judgeNotes.length > 0 && (
                 <div className="card h-fit">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="pill-crimson">✎ Judge Notes</span>
-                    <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+                    <span className="pill-accent">✎ Judge Notes</span>
+                    <span className="text-[0.65rem] text-dust">
                       {judgeNotes.length} note{judgeNotes.length === 1 ? "" : "s"}
                     </span>
                   </div>
@@ -421,9 +419,9 @@ export default async function JudgeSubmissionPage({
                     {judgeNotes.map((n, idx) => (
                       <li
                         key={idx}
-                        className="border-l-2 border-l-crimson/40 bg-ink-4/60 px-3 py-2"
+                        className="border-l-2 border-l-accent/40 bg-ink-4/60 px-3 py-2"
                       >
-                        <div className="mb-1 font-cond text-[0.65rem] font-bold uppercase tracking-[0.2em] text-crimson">
+                        <div className="mb-1 text-[0.65rem] font-bold text-accent">
                           {n.label}
                         </div>
                         <dl className="space-y-1">

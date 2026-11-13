@@ -113,14 +113,19 @@ describe("resolveSettings", () => {
 describe("theme", () => {
   it("turns a hex colour into the accent and two darker shades", async () => {
     const { accentShades } = await import("./event-settings");
-    expect(accentShades("#FF8000")).toEqual({ accent: "255 128 0", dark: "199 100 0", deep: "140 70 0" });
+    expect(accentShades("#FF8000")).toEqual({
+      accent: "255 128 0",
+      dark: "199 100 0",
+      deep: "140 70 0",
+      onDark: "255 179 102",
+    });
     expect(accentShades("#e02d3c").accent).toBe("224 45 60");
   });
 
   it("falls back to the default accent for anything that isn't a hex colour", async () => {
     const { accentShades } = await import("./event-settings");
-    expect(accentShades("red").accent).toBe("224 45 60");
-    expect(accentShades("").accent).toBe("224 45 60");
+    expect(accentShades("red").accent).toBe("102 46 255");
+    expect(accentShades("").accent).toBe("102 46 255");
   });
 
   it("accepts only hex colours and web addresses", () => {

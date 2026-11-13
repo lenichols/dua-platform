@@ -1,33 +1,23 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Barlow, Barlow_Condensed, EB_Garamond } from "next/font/google";
+import { Atkinson_Hyperlegible, Jost } from "next/font/google";
 import "./globals.css";
 import { EventProvider } from "@/components/event-context";
 import { getSettings } from "@/lib/current-settings";
 import { accentShades } from "@/lib/event-settings";
 
-const bebas = Bebas_Neue({
-  weight: "400",
+// Headings. Jost's round, geometric letters sit naturally beside the logo.
+const display = Jost({
+  weight: ["500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-bebas",
+  variable: "--font-display",
   display: "swap",
 });
-const barlow = Barlow({
-  weight: ["400", "500"],
+// Body and forms. Atkinson Hyperlegible was drawn so that similar letters
+// are hard to confuse, which suits pages many different people fill in.
+const body = Atkinson_Hyperlegible({
+  weight: ["400", "700"],
   subsets: ["latin"],
-  variable: "--font-barlow",
-  display: "swap",
-});
-const barlowCond = Barlow_Condensed({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-barlow-cond",
-  display: "swap",
-});
-// Serif for the event name in the hero (a Garamond; Times/Georgia fallback)
-const garamond = EB_Garamond({
-  weight: ["500", "600"],
-  subsets: ["latin"],
-  variable: "--font-garamond",
+  variable: "--font-body",
   display: "swap",
 });
 
@@ -45,28 +35,28 @@ export default async function RootLayout({
   const settings = await getSettings();
   const shades = accentShades(settings.theme.accent);
   return (
-    // suppressHydrationWarning: the inline theme script below adds the "light"
-    // class to <html> before React hydrates, so the class attribute is
-    // expected to differ from the server-rendered HTML. Suppression only
-    // applies to this element's attributes, not its children.
+    // Light is the default. The inline script below switches to dark before
+    // the first paint for visitors who chose it, so the class attribute can
+    // differ from the server's HTML: hence suppressHydrationWarning, which
+    // only applies to this element's attributes.
     <html
       lang="en"
       suppressHydrationWarning
+      className={`light ${display.variable} ${body.variable}`}
       style={
         {
-          "--accent": shades.accent,
-          "--accent-dark": shades.dark,
-          "--accent-deep": shades.deep,
+          "--accent-base": shades.accent,
+          "--accent-base-dark": shades.dark,
+          "--accent-base-deep": shades.deep,
+          "--accent-on-dark": shades.onDark,
         } as React.CSSProperties
       }
-      className={`${bebas.variable} ${barlow.variable} ${barlowCond.variable} ${garamond.variable}`}
     >
       <head>
-        {/* Apply the saved theme before paint to avoid a flash. Default light. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(localStorage.getItem('theme')!=='dark')document.documentElement.classList.add('light')}catch(e){document.documentElement.classList.add('light')}",
+              "try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.remove('light')}catch(e){}",
           }}
         />
       </head>

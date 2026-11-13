@@ -32,8 +32,8 @@ export function RegisterForm() {
 
   if (state?.ok) {
     return (
-      <div className="card animate-fade-up">
-        <div className="pill-crimson mb-4">✓ You&apos;re Registered</div>
+      <div className="card">
+        <div className="pill-accent mb-4">✓ You&apos;re Registered</div>
         <h2 className="hex-title text-4xl">See You There.</h2>
         <p className="mt-3 text-dust">
           Thanks for registering for {EVENT.name}. We&apos;ll email you
@@ -46,7 +46,7 @@ export function RegisterForm() {
             href={EVENT.host.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-bone underline decoration-crimson/60 hover:text-crimson"
+            className="font-semibold text-bone underline decoration-accent/60 hover:text-accent"
           >
             {EVENT.host.name}
           </a>
@@ -63,7 +63,7 @@ export function RegisterForm() {
   return (
     <form action={action} className="space-y-6">
       <fieldset className="card space-y-4">
-        <legend className="pill-crimson -mt-2 mb-2">About You</legend>
+        <legend className="pill-accent -mt-2 mb-2">About You</legend>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -163,7 +163,7 @@ export function RegisterForm() {
       </fieldset>
 
       <fieldset className="card space-y-4">
-        <legend className="pill-crimson -mt-2 mb-2">
+        <legend className="pill-accent -mt-2 mb-2">
           How You&apos;ll Compete
         </legend>
 
@@ -171,10 +171,10 @@ export function RegisterForm() {
           {(["Solo", "Team"] as const).map((opt) => (
             <label
               key={opt}
-              className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center font-cond text-sm uppercase tracking-wider transition ${
+              className={`flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition ${
                 mode === opt
-                  ? "border-crimson bg-crimson/10 text-crimson"
-                  : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-line bg-ink-4 text-dust hover:border-accent/60"
               }`}
             >
               <input
@@ -259,15 +259,15 @@ export function RegisterForm() {
                     key={o}
                     className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition ${
                       active
-                        ? "border-crimson bg-crimson/10 text-crimson"
-                        : "border-line bg-ink-4 text-dust hover:border-crimson/60"
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-line bg-ink-4 text-dust hover:border-accent/60"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={active}
                       onChange={() => togglePartner(o)}
-                      className="h-4 w-4 accent-crimson"
+                      className="h-4 w-4 accent-accent"
                     />
                     {o}
                   </label>
@@ -333,10 +333,10 @@ export function RegisterForm() {
       <div className="flex justify-end">
         <button
           type="submit"
-          className="btn-crimson h-12 px-8"
+          className="btn-accent h-12 px-8"
           disabled={pending}
         >
-          {pending ? "Registering…" : "Complete Registration →"}
+          {pending ? "Registering…" : "Complete Registration"}
         </button>
       </div>
     </form>

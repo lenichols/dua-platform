@@ -20,7 +20,7 @@ export default async function MentorPage() {
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }
@@ -46,20 +46,19 @@ export default async function MentorPage() {
           </div>
         ) : (
           <>
-            <div className="mb-8 animate-fade-up">
-              <div className="pill-crimson mb-3">Volunteer · 100% Virtual</div>
+            <div className="mb-8">
+              <div className="pill-accent mb-3">Volunteer · 100% Virtual</div>
               <h1 className="hex-title text-4xl md:text-5xl">
                 Mentor at {EVENT.name}
               </h1>
-              <div className="mt-4 h-[2px] w-28 rounded bg-gradient-to-r from-crimson via-bone/80 to-crimson opacity-70" />
             </div>
 
-            <div className="card mb-6 space-y-3 border-l-4 border-l-crimson">
+            <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="pill-crimson">
-                  🌍 {EVENT.dates}
+                <span className="pill-accent">
+                  {EVENT.dates}
                 </span>
-                <span className="font-cond text-base font-semibold uppercase tracking-wider text-bone">
+                <span className="text-base font-semibold text-bone">
                   Help a team ship something real
                 </span>
               </div>

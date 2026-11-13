@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const [light, setLight] = useState(false);
+  const [light, setLight] = useState(true);
 
   useEffect(() => {
     setLight(document.documentElement.classList.contains("light"));
@@ -26,9 +26,9 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={light ? "Switch to dark mode" : "Switch to light mode"}
       title={light ? "Switch to dark mode" : "Switch to light mode"}
-      className="pill hover:border-crimson hover:text-crimson"
+      className="pill hover:border-accent hover:text-accent"
     >
-      {light ? "☾ Dark" : "☀ Light"}
+      {light ? "Dark mode" : "Light mode"}
     </button>
   );
 }

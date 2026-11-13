@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Breadcrumbs, HeaderBar, PageShell, SectionTitle, Wordmark } from "@/components/shell";
+import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { getPhase } from "@/lib/phase";
 import { getJudgeSession } from "./auth";
 import { JudgingNotOpen } from "./judging-not-open";
@@ -18,7 +18,7 @@ export default async function JudgePage() {
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }
@@ -34,9 +34,6 @@ export default async function JudgePage() {
           <JudgingNotOpen />
         ) : (
           <>
-            <div className="mb-4 flex justify-center">
-              <Wordmark className="text-3xl md:text-4xl" />
-            </div>
             <SectionTitle
               center
               eyebrow={phase === "judging" ? "Phase 2 · Judging Open" : `Phase: ${phase}`}

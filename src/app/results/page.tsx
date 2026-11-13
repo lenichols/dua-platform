@@ -23,7 +23,7 @@ export default async function ResultsPage() {
       <>
         <HeaderBar
           rightSlot={
-            <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+            <Link href="/" className="pill hover:border-accent hover:text-accent">
               ← Home
             </Link>
           }
@@ -36,7 +36,7 @@ export default async function ResultsPage() {
             subtitle="Results are only visible to judges, mentors, and event organizers."
           />
           <div className="flex gap-3">
-            <Link href="/judge" className="btn-crimson">Judge Sign In →</Link>
+            <Link href="/judge" className="btn-accent">Judge Sign In</Link>
             <Link href="/admin" className="btn">Admin</Link>
           </div>
         </PageShell>
@@ -50,7 +50,7 @@ export default async function ResultsPage() {
       <>
         <HeaderBar
           rightSlot={
-            <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+            <Link href="/" className="pill hover:border-accent hover:text-accent">
               ← Home
             </Link>
           }
@@ -111,7 +111,7 @@ export default async function ResultsPage() {
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }
@@ -134,25 +134,25 @@ export default async function ResultsPage() {
                 if (!r) return null;
                 const rankColor =
                   t.rank === 1
-                    ? "border-crimson shadow-crimson"
+                    ? "border-accent "
                     : t.rank === 2
                       ? "border-bone/40"
                       : t.rank === 3
-                        ? "border-crimson-dark/60"
+                        ? "border-accent-dark/60"
                         : "border-line";
                 return (
                   <Link
                     key={t.submission_id}
                     href={`/judge/${t.submission_id}`}
-                    className={`card group relative block overflow-hidden transition hover:-translate-y-0.5 hover:shadow-crimson ${rankColor}`}
+                    className={`card group relative block overflow-hidden transition hover:-translate-y-0.5 ${rankColor}`}
                   >
-                    <div className="absolute -right-3 -top-3 font-display text-8xl leading-none text-crimson/10">
+                    <div className="absolute -right-3 -top-3 font-display text-8xl leading-none text-accent/10">
                       {t.rank}
                     </div>
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="pill-crimson">Rank #{t.rank}</span>
-                      <span className="text-[0.65rem] uppercase tracking-wider text-dust transition group-hover:text-crimson">
-                        Review →
+                      <span className="pill-accent">Rank #{t.rank}</span>
+                      <span className="text-[0.65rem] text-dust transition group-hover:text-accent">
+                        Review
                       </span>
                     </div>
                     <h3 className="hex-title text-3xl">{r.project_name}</h3>
@@ -175,7 +175,7 @@ export default async function ResultsPage() {
         <h2 className="hex-title mb-4 text-2xl">Full Leaderboard</h2>
         <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full text-sm">
-            <thead className="bg-ink-4 text-[0.7rem] uppercase tracking-wider text-crimson">
+            <thead className="bg-ink-4 text-[0.7rem] text-accent">
               <tr>
                 <th className="p-3 text-left">#</th>
                 <th className="p-3 text-left">Project</th>
@@ -201,7 +201,7 @@ export default async function ResultsPage() {
                   key={r.submission_id}
                   className="cursor-pointer border-t border-line transition hover:bg-ink-4"
                 >
-                  <td className="p-3 font-display text-lg text-crimson">
+                  <td className="p-3 font-display text-lg text-accent">
                     <Link href={`/judge/${r.submission_id}`} className="block">
                       {i + 1}
                     </Link>
@@ -209,7 +209,7 @@ export default async function ResultsPage() {
                   <td className="p-3">
                     <Link
                       href={`/judge/${r.submission_id}`}
-                      className="block transition hover:text-crimson"
+                      className="block transition hover:text-accent"
                     >
                       {r.project_name}
                     </Link>
@@ -249,7 +249,7 @@ function Stat({
 }) {
   return (
     <div className="rounded border border-line bg-ink-4 px-2 py-1.5">
-      <div className="text-[0.6rem] uppercase tracking-wider text-dust">{label}</div>
+      <div className="text-[0.6rem] text-dust">{label}</div>
       <div className="font-display text-base text-bone">
         {num(value ?? null)}
         {!plain && max ? <span className="text-xs text-dust"> /{max}</span> : null}

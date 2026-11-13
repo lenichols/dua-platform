@@ -32,7 +32,7 @@ export function ShareButton() {
       onClick={share}
       aria-label="Share this page"
       title="Share this page"
-      className="pill hover:border-crimson hover:text-crimson"
+      className="pill hover:border-accent hover:text-accent"
     >
       {copied ? "✓ Copied" : "↗ Share"}
     </button>

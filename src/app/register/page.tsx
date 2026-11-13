@@ -20,7 +20,7 @@ export default async function RegisterPage() {
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }
@@ -43,7 +43,7 @@ export default async function RegisterPage() {
                 ← Home
               </Link>
               {phase === "results" && (
-                <Link href="/results" className="btn-crimson">
+                <Link href="/results" className="btn-accent">
                   View Results
                 </Link>
               )}
@@ -51,18 +51,17 @@ export default async function RegisterPage() {
           </div>
         ) : (
           <>
-            <div className="mb-8 animate-fade-up">
-              <div className="pill-crimson mb-3">Free · 100% Virtual</div>
+            <div className="mb-8">
+              <div className="pill-accent mb-3">Free · 100% Virtual</div>
               <h1 className="hex-title text-4xl md:text-5xl">
                 Register for {EVENT.name}
               </h1>
-              <div className="mt-4 h-[2px] w-28 rounded bg-gradient-to-r from-crimson via-bone/80 to-crimson opacity-70" />
             </div>
 
-            <div className="card mb-6 space-y-3 border-l-4 border-l-crimson">
+            <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="pill-crimson">🌍 {EVENT.dates}</span>
-                <span className="font-cond text-base font-semibold uppercase tracking-wider text-bone">
+                <span className="pill-accent">{EVENT.dates}</span>
+                <span className="text-base font-semibold text-bone">
                   Powering the world&apos;s next breakthrough
                 </span>
               </div>
@@ -70,9 +69,9 @@ export default async function RegisterPage() {
                 Reserve your spot now — it&apos;s free. Registration takes a
                 minute, and we&apos;ll send you everything you need before the
                 event, including your{" "}
-                <strong className="text-crimson">project submission link</strong>
+                <strong className="text-accent">project submission link</strong>
                 . Compete solo or as a team for{" "}
-                <strong className="text-crimson">{EVENT.prizes}</strong>.
+                <strong className="text-accent">{EVENT.prizes}</strong>.
               </p>
             </div>
 

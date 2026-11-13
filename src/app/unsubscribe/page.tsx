@@ -47,7 +47,7 @@ export default async function UnsubscribePage({
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }

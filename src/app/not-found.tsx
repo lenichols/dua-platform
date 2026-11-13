@@ -9,7 +9,7 @@ export default function NotFound() {
         <div className="py-20 text-center">
           <div className="hex-title text-9xl">404</div>
           <p className="mt-4 text-dust">That page isn't on the board.</p>
-          <Link href="/" className="btn-crimson mt-8">
+          <Link href="/" className="btn-accent mt-8">
             ← Home
           </Link>
         </div>

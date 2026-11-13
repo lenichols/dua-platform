@@ -15,13 +15,13 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-ink-4 text-lg text-bone transition hover:border-crimson hover:text-crimson"
+        className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-ink-4 text-lg text-bone transition hover:border-accent hover:text-accent"
       >
         {open ? "✕" : "☰"}
       </button>
       {open && (
         <nav
-          className="absolute left-0 right-0 top-full flex flex-col items-start gap-2.5 border-b border-line bg-ink/95 px-5 py-4 text-[0.7rem] font-semibold uppercase tracking-wider backdrop-blur animate-fade-up"
+          className="absolute left-0 right-0 top-full flex flex-col items-start gap-2.5 border-b border-line bg-ink/95 px-5 py-4 text-[0.7rem] font-semibold backdrop-blur"
           onClick={(e) => {
             // Close after navigating; keep open for in-place buttons like
             // the theme toggle and share.

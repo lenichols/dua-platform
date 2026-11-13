@@ -212,7 +212,7 @@ export function EventPanel({
               <input
                 type="color"
                 className="h-11 w-14 cursor-pointer rounded-md border border-line bg-ink-5 p-1"
-                value={/^#[0-9a-fA-F]{6}$/.test(draft.theme.accent) ? draft.theme.accent : "#E02D3C"}
+                value={/^#[0-9a-fA-F]{6}$/.test(draft.theme.accent) ? draft.theme.accent : "#662EFF"}
                 disabled={disabled}
                 onChange={(e) => set("theme", { ...draft.theme, accent: e.target.value })}
               />
@@ -570,7 +570,7 @@ export function EventPanel({
 
       {!readOnly && (
         <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-ink-3 p-3 shadow-card">
-          <button className="btn-crimson" onClick={save} disabled={pending || !dirty} data-save-settings>
+          <button className="btn-accent" onClick={save} disabled={pending || !dirty} data-save-settings>
             {pending ? "Saving…" : "Save changes"}
           </button>
           <button className="btn" onClick={() => { setDraft(saved); setResult(null); }} disabled={pending || !dirty}>
@@ -619,8 +619,8 @@ function Section({
   return (
     <details className="card group" open={open} data-section={title}>
       <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 [&::-webkit-details-marker]:hidden">
-        <span className="font-cond text-base font-bold uppercase tracking-wide text-bone">
-          <span className="mr-2 inline-block text-crimson transition group-open:rotate-90">▸</span>
+        <span className="text-base font-bold text-bone">
+          <span className="mr-2 inline-block text-accent transition group-open:rotate-90">▸</span>
           {title}
         </span>
         <span className="text-xs text-dust">{hint}</span>

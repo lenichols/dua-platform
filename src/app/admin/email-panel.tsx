@@ -212,8 +212,8 @@ export function EmailPanel({
     <div className="space-y-4">
       <div className="card space-y-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="pill-crimson">Compose</div>
-          <span className="text-[0.65rem] uppercase tracking-wider text-dust">
+          <div className="pill-accent">Compose</div>
+          <span className="text-[0.65rem] text-dust">
             Sent via Resend
           </span>
         </div>
@@ -247,7 +247,7 @@ export function EmailPanel({
                     e.preventDefault();
                     c.run();
                   }}
-                  className={`rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-crimson hover:text-crimson ${c.className ?? ""}`}
+                  className={`rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-accent hover:text-accent ${c.className ?? ""}`}
                 >
                   {c.label}
                 </button>
@@ -259,7 +259,7 @@ export function EmailPanel({
                   e.preventDefault();
                   addLink();
                 }}
-                className="rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-crimson hover:text-crimson"
+                className="rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-accent hover:text-accent"
               >
                 🔗 Link
               </button>
@@ -272,7 +272,7 @@ export function EmailPanel({
                   saveCaret();
                   fileRef.current?.click();
                 }}
-                className="rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-crimson hover:text-crimson disabled:opacity-40"
+                className="rounded border border-line bg-ink-5 px-2.5 py-1 text-xs text-bone transition hover:border-accent hover:text-accent disabled:opacity-40"
               >
                 {uploading ? "Uploading…" : "🖼 Image"}
               </button>
@@ -303,7 +303,7 @@ export function EmailPanel({
               aria-multiline="true"
               aria-label="Message body"
               onPaste={onPaste}
-              className="campaign-editor min-h-[240px] bg-ink-5 px-4 py-3 text-sm leading-relaxed text-bone outline-none focus:ring-1 focus:ring-crimson"
+              className="campaign-editor min-h-[240px] bg-ink-5 px-4 py-3 text-sm leading-relaxed text-bone outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
           {uploadErr && (
@@ -431,7 +431,7 @@ export function EmailPanel({
             onClick={onSend}
             disabled={sendPending || confirm.trim().toUpperCase() !== "SEND"}
             className={`disabled:opacity-40 ${
-              isAdminAudience(audience) ? "btn-crimson" : "btn-danger"
+              isAdminAudience(audience) ? "btn-accent" : "btn-danger"
             }`}
           >
             {sendPending

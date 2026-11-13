@@ -54,8 +54,8 @@ export function JudgeSignIn() {
           {errMsg}
         </div>
       )}
-      <button className="btn-crimson w-full" disabled={status === "signing"}>
-        {status === "signing" ? "Signing in…" : "→ Sign In"}
+      <button className="btn-accent w-full" disabled={status === "signing"}>
+        {status === "signing" ? "Signing in…" : "Sign in"}
       </button>
       <p className="text-[0.7rem] text-dust">
         Don't have a password? Ask the organizers — they'll share the shared

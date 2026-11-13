@@ -19,7 +19,7 @@ export default async function SubmitPage() {
     <>
       <HeaderBar
         rightSlot={
-          <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+          <Link href="/" className="pill hover:border-accent hover:text-accent">
             ← Home
           </Link>
         }
@@ -48,11 +48,11 @@ export default async function SubmitPage() {
                 ← Home
               </Link>
               {notYet ? (
-                <Link href="/register" className="btn-crimson">
+                <Link href="/register" className="btn-accent">
                   Register
                 </Link>
               ) : (
-                <Link href="/judge" className="btn-crimson">
+                <Link href="/judge" className="btn-accent">
                   Judge Sign In
                 </Link>
               )}
@@ -60,24 +60,23 @@ export default async function SubmitPage() {
           </div>
         ) : (
           <>
-            <div className="mb-8 animate-fade-up">
-              <div className="pill-crimson mb-3">Phase 1 · Submissions Open</div>
+            <div className="mb-8">
+              <div className="pill-accent mb-3">Phase 1 · Submissions Open</div>
               <h1 className="hex-title text-4xl md:text-5xl">
                 {EVENT.name} Submission Form
               </h1>
-              <div className="mt-4 h-[2px] w-28 rounded bg-gradient-to-r from-crimson via-bone/80 to-crimson opacity-70" />
             </div>
 
-            <div className="card mb-6 space-y-3 border-l-4 border-l-crimson">
+            <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="pill-crimson">⏰ Deadline</span>
-                <span className="font-cond text-base font-semibold uppercase tracking-wider text-bone">
+                <span className="pill-accent">Deadline</span>
+                <span className="text-base font-semibold text-bone">
                   Submissions close {EVENT.submissionDeadline}
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-bone/90">
                 All required fields must be complete for your entry to be
-                reviewed. <strong className="text-crimson">One submission per team
+                reviewed. <strong className="text-accent">One submission per team
                 or solo participant.</strong> Please ensure all participant, team,
                 project demo, and LinkedIn post details are included.
               </p>
@@ -85,7 +84,7 @@ export default async function SubmitPage() {
                 Need help? Email{" "}
                 <a
                   href={`mailto:${EVENT.contactEmail}`}
-                  className="text-crimson underline"
+                  className="text-accent underline"
                 >
                   {EVENT.contactEmail}
                 </a>

@@ -91,7 +91,7 @@ function htmlBody(name, password) {
     ? `<p style="margin:0 0 8px;font-size:15px;line-height:1.6;">Your new password is:</p>
     <p style="margin:0 0 16px;padding:14px 16px;background:#f4f5f7;border:1px solid #e3e5ea;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:17px;letter-spacing:0.02em;">${esc(password)}</p>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
-      Sign in at <a href="${SITE}/admin" style="color:#E02D3C;">${SITE}/admin</a> —
+      Sign in at <a href="${SITE}/admin" style="color:#662EFF;">${SITE}/admin</a> —
       your username is this email address.
     </p>`
     : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
@@ -99,7 +99,7 @@ function htmlBody(name, password) {
       to you directly over Slack or text — no second email is coming, so don't wait for one.
     </p>
     <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
-      Sign in at <a href="${SITE}/admin" style="color:#E02D3C;">${SITE}/admin</a>.
+      Sign in at <a href="${SITE}/admin" style="color:#662EFF;">${SITE}/admin</a>.
     </p>`;
 
   return `<!doctype html>
@@ -126,7 +126,7 @@ function htmlBody(name, password) {
       <strong>Your previous password no longer works.</strong>
     </p>
     ${credential}
-    <p style="margin:0 0 16px;padding:12px 14px;background:#fdf2f4;border-left:3px solid #E02D3C;font-size:14px;line-height:1.6;">
+    <p style="margin:0 0 16px;padding:12px 14px;background:#f3efff;border-left:3px solid #662EFF;font-size:14px;line-height:1.6;">
       <strong>Please change it once you're in.</strong> Open the <strong>Account</strong> tab and set a
       password only you know. Until you do, this password has sat in an inbox and was seen by
       whoever set it up. The Account tab is available to every role, including read-only.

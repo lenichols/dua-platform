@@ -348,7 +348,7 @@ edited there and takes effect when you press Save:
 | Section | What you can change |
 | --- | --- |
 | Basics | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size. |
-| Look | The accent colour used across the site, and your own logo in place of the Dua mark. |
+| Look | The accent colour used across the site (violet by default, lightened automatically in dark mode), and your own logo in place of the Dua mark. |
 | Judging | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. |
 | Questions | Switch off built-in questions your event doesn't need, and add your own to the registration and submission forms: short or long text, pick one, pick any, or a link. Choose which answers judges see. |
 | Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on. |
@@ -359,10 +359,12 @@ are fixed, because changing them would change what existing scores mean.
 Names and guidance can still be edited.
 
 A new event starts with the sample content in
-[`src/lib/event-settings.ts`](src/lib/event-settings.ts). Fonts and the
-dark and light background colours are still set in code:
-[`tailwind.config.ts`](tailwind.config.ts) and
-[`src/app/globals.css`](src/app/globals.css).
+[`src/lib/event-settings.ts`](src/lib/event-settings.ts).
+
+The site opens in a light theme; visitors can switch to dark from the header.
+Fonts (Jost for headings, Atkinson Hyperlegible for everything else) and the
+page background colours are set in code: [`src/app/layout.tsx`](src/app/layout.tsx)
+and [`src/app/globals.css`](src/app/globals.css).
 
 ## How judging works
 

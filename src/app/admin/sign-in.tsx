@@ -33,7 +33,7 @@ export function AdminSignIn() {
           {state.error}
         </div>
       )}
-      <button className="btn-crimson w-full" disabled={pending}>
+      <button className="btn-accent w-full" disabled={pending}>
         {pending ? "Signing in…" : "🔓 Unlock Admin"}
       </button>
       <p className="text-[0.7rem] text-dust">

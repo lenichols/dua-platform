@@ -16,8 +16,8 @@ export function MentorForm() {
 
   if (state?.ok) {
     return (
-      <div className="card animate-fade-up">
-        <div className="pill-crimson mb-4">✓ You&apos;re In</div>
+      <div className="card">
+        <div className="pill-accent mb-4">✓ You&apos;re In</div>
         <h2 className="hex-title text-4xl">Thank You for Stepping Up.</h2>
         <p className="mt-3 text-dust">
           Thanks for signing up to mentor at {EVENT.name}.
@@ -35,7 +35,7 @@ export function MentorForm() {
   return (
     <form action={action} className="space-y-6">
       <fieldset className="card space-y-4">
-        <legend className="pill-crimson -mt-2 mb-2">1. About You</legend>
+        <legend className="pill-accent -mt-2 mb-2">1. About You</legend>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -142,7 +142,7 @@ export function MentorForm() {
       </fieldset>
 
       <fieldset className="card space-y-4">
-        <legend className="pill-crimson -mt-2 mb-2">
+        <legend className="pill-accent -mt-2 mb-2">
           2. How You&apos;ll Mentor
         </legend>
 
@@ -222,8 +222,8 @@ export function MentorForm() {
       )}
 
       <div className="flex justify-end">
-        <button type="submit" className="btn-crimson h-12 px-8" disabled={pending}>
-          {pending ? "Signing up…" : "Sign Up to Mentor →"}
+        <button type="submit" className="btn-accent h-12 px-8" disabled={pending}>
+          {pending ? "Signing up…" : "Sign Up to Mentor"}
         </button>
       </div>
     </form>

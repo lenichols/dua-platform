@@ -22,7 +22,7 @@ export function CustomFields({
   if (fields.length === 0) return null;
   return (
     <fieldset className="card space-y-4" data-custom-fields>
-      <legend className="pill-crimson -mt-2 mb-2">{legend}</legend>
+      <legend className="pill-accent -mt-2 mb-2">{legend}</legend>
       {fields.map((f) => {
         const name = customFieldName(f.key);
         const saved = initial?.[f.key] ?? "";

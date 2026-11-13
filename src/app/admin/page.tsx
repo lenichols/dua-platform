@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Breadcrumbs, HeaderBar, PageShell, SectionTitle, Wordmark } from "@/components/shell";
+import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { getAdminSession, type AdminSession } from "./auth";
 import { AdminSignIn } from "./sign-in";
 import { AdminHome } from "./admin-home";
@@ -32,11 +32,11 @@ export default async function AdminPage() {
       <HeaderBar
         rightSlot={
           session ? (
-            <Link href="/admin" className="pill hover:border-crimson hover:text-crimson">
+            <Link href="/admin" className="pill hover:border-accent hover:text-accent">
               ← Admin Home
             </Link>
           ) : (
-            <Link href="/" className="pill hover:border-crimson hover:text-crimson">
+            <Link href="/" className="pill hover:border-accent hover:text-accent">
               ← Home
             </Link>
           )
@@ -51,9 +51,6 @@ export default async function AdminPage() {
                 { label: "Admin" },
               ]}
             />
-            <div className="mb-4 flex justify-center">
-              <Wordmark className="text-3xl md:text-4xl" />
-            </div>
             <SectionTitle
               center
               eyebrow="Restricted"
