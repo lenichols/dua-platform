@@ -7,6 +7,16 @@ import { DuaMark } from "./dua-mark";
 import { getSettings } from "@/lib/current-settings";
 import { PLATFORM } from "@/lib/site";
 
+/** The event's own logo if one is set, otherwise the Dua mark. */
+function EventLogo({ url, size, className }: { url: string; size: number; className: string }) {
+  if (!url) return <DuaMark size={size} className={className} />;
+  return (
+    // A plain <img>: the logo can be hosted anywhere, and may be an SVG.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="" width={size} height={size} className={`${className} object-contain`} />
+  );
+}
+
 export async function Wordmark({
   className = "",
   serif = true,
@@ -45,7 +55,7 @@ export async function Footer() {
     <footer className="mt-16 border-t border-line bg-ink/60">
       <div className="flex w-full flex-col gap-5 px-5 py-8 text-sm text-dust md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <DuaMark size={28} className="h-7 w-7 text-bone" />
+          <EventLogo url={EVENT.theme.logoUrl} className="h-7 w-7 text-bone" size={28} />
           <div>
             <div className="font-serif text-bone">{EVENT.name}</div>
             <div className="text-xs">
@@ -100,7 +110,8 @@ export async function HeaderBar({ rightSlot }: { rightSlot?: ReactNode }) {
         className="group flex items-center gap-2.5 text-bone transition hover:opacity-90 sm:gap-3"
         aria-label={`${EVENT.name} — Home`}
       >
-        <DuaMark
+        <EventLogo
+          url={EVENT.theme.logoUrl}
           size={36}
           className="h-8 w-8 transition group-hover:scale-105 md:h-9 md:w-9"
         />

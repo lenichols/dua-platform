@@ -51,13 +51,13 @@ export async function sendEditLinkEmail(opts: {
   url: string;
   late?: boolean;
   /** The event's name and when submissions close, as shown to participants. */
-  event: { name: string; submissionDeadline: string };
+  event: { name: string; submissionDeadline: string; theme: { accent: string; logoUrl: string } };
 }) {
   const EVENT = opts.event;
   const first = (opts.name ?? "").trim().split(/\s+/)[0];
   const bodyHtml = `<p>Hi${first ? ` ${escapeHtml(first)}` : ""},</p>
 ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit your submission. Here it is, and sorry for the wait.</p>\n" : ""}<p>Thanks for submitting <strong>${escapeHtml(opts.project)}</strong> to ${escapeHtml(EVENT.name)}. If you need to change anything, use your private edit link:</p>
-<p><a href="${escapeHtml(opts.url)}" style="display:inline-block;background:${CRIMSON};color:#ffffff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600;">Edit your submission</a></p>
+<p><a href="${escapeHtml(opts.url)}" style="display:inline-block;background:${EVENT.theme.accent || CRIMSON};color:#ffffff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600;">Edit your submission</a></p>
 <p style="font-size:13px;color:#6b7280;word-break:break-all;">${escapeHtml(opts.url)}</p>
 <p>The link works until submissions close (${escapeHtml(EVENT.submissionDeadline)}). Anyone with it can edit your submission, so share it only with your team.</p>
 <p>The ${escapeHtml(EVENT.name)} team</p>`;
@@ -66,6 +66,7 @@ ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit you
     subject: `Your edit link for ${opts.project}`,
     html: renderCampaignEmail({
       eventName: EVENT.name,
+      logoUrl: EVENT.theme.logoUrl,
       bodyHtml,
       unsubscribeUrl: null,
       footerNote:

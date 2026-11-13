@@ -8,7 +8,7 @@ import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/components/event-context";
 import { type Criterion, type EventSettings } from "@/lib/event-settings";
-import { saveSettings } from "./actions";
+import { saveSettings, uploadCampaignImage } from "./actions";
 
 type ListKey = {
   [K in keyof EventSettings]: EventSettings[K] extends string[] ? K : never;
@@ -93,6 +93,18 @@ export function EventPanel({
       { key, label: "", weight: 0, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
     ]);
   };
+
+  const [uploading, setUploading] = useState(false);
+  async function uploadLogo(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    const form = new FormData();
+    form.set("file", file);
+    const r = await uploadCampaignImage(form);
+    setUploading(false);
+    if (r.ok) set("theme", { ...draft.theme, logoUrl: r.url });
+    else setResult({ ok: false, message: r.error });
+  }
 
   function save() {
     start(async () => {
@@ -182,6 +194,52 @@ export function EventPanel({
         </div>
         <div className="mt-4">
           {text("Description for search engines and link previews", draft.description, (v) => set("description", v), { area: 2 })}
+        </div>
+      </Section>
+
+      <Section title="Look" hint="Accent colour and logo">
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="field-label">Accent colour</span>
+            <span className="mt-1 flex items-center gap-2">
+              <input
+                type="color"
+                className="h-11 w-14 cursor-pointer rounded-md border border-line bg-ink-5 p-1"
+                value={/^#[0-9a-fA-F]{6}$/.test(draft.theme.accent) ? draft.theme.accent : "#E02D3C"}
+                disabled={disabled}
+                onChange={(e) => set("theme", { ...draft.theme, accent: e.target.value })}
+              />
+              <input
+                className="field-input"
+                data-accent
+                value={draft.theme.accent}
+                disabled={disabled}
+                onChange={(e) => set("theme", { ...draft.theme, accent: e.target.value })}
+              />
+            </span>
+            <span className="mt-1 block text-[0.7rem] text-dust">
+              Used for buttons, links and highlights. Pick one that reads well on both a dark and
+              a light background.
+            </span>
+          </label>
+          <div>
+            {text("Logo address", draft.theme.logoUrl, (v) => set("theme", { ...draft.theme, logoUrl: v }), {
+              placeholder: "https://…",
+              hint: "A square image works best. Leave empty to show the Dua mark. Use PNG or JPEG if you send email: Gmail won't show SVG.",
+            })}
+            {!readOnly && (
+              <label className="btn mt-2 cursor-pointer">
+                {uploading ? "Uploading…" : "Upload an image"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif"
+                  className="hidden"
+                  disabled={disabled || uploading}
+                  onChange={(e) => uploadLogo(e.target.files?.[0])}
+                />
+              </label>
+            )}
+          </div>
         </div>
       </Section>
 

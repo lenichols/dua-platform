@@ -30,6 +30,7 @@ const LABELS: Record<string, string> = {
   announceUrl: "Page teams tag when announcing",
   topN: "Places in the final ranking",
   rubric: "Rubric",
+  theme: "Look",
   tracks: "Challenge tracks",
   problemBriefs: "Problem briefs",
   home: "Homepage",

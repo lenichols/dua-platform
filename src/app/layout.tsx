@@ -3,6 +3,7 @@ import { Bebas_Neue, Barlow, Barlow_Condensed, EB_Garamond } from "next/font/goo
 import "./globals.css";
 import { EventProvider } from "@/components/event-context";
 import { getSettings } from "@/lib/current-settings";
+import { accentShades } from "@/lib/event-settings";
 
 const bebas = Bebas_Neue({
   weight: "400",
@@ -42,6 +43,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const settings = await getSettings();
+  const shades = accentShades(settings.theme.accent);
   return (
     // suppressHydrationWarning: the inline theme script below adds the "light"
     // class to <html> before React hydrates, so the class attribute is
@@ -50,6 +52,13 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      style={
+        {
+          "--accent": shades.accent,
+          "--accent-dark": shades.dark,
+          "--accent-deep": shades.deep,
+        } as React.CSSProperties
+      }
       className={`${bebas.variable} ${barlow.variable} ${barlowCond.variable} ${garamond.variable}`}
     >
       <head>

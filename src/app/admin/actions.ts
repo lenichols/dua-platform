@@ -783,6 +783,7 @@ export async function sendCampaign(
       subject,
       html: renderCampaignEmail({
         eventName: event.settings.name,
+        logoUrl: event.settings.theme.logoUrl,
         bodyHtml,
         unsubscribeUrl: unsub,
         recipientName: r.full_name,

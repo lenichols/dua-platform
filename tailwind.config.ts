@@ -5,10 +5,12 @@ export default {
   theme: {
     extend: {
       colors: {
+        // The event's accent colour, set in the admin panel. The name is
+        // historical: it's whatever colour the organizer picks.
         crimson: {
-          DEFAULT: "#E02D3C",
-          dark: "#B01E2B",
-          deep: "#7E1119",
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
+          dark: "rgb(var(--accent-dark) / <alpha-value>)",
+          deep: "rgb(var(--accent-deep) / <alpha-value>)",
         },
         blood: "#E74C3C",
         jade: "#27AE60",
@@ -44,7 +46,7 @@ export default {
       },
       boxShadow: {
         card: "0 4px 24px rgba(0,0,0,.45)",
-        crimson: "0 0 30px rgba(224,45,60,.3)",
+        crimson: "0 0 30px rgb(var(--accent) / 0.3)",
       },
       keyframes: {
         "fade-up": {

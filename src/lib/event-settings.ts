@@ -96,6 +96,21 @@ export const settingsSchema = z.object({
   /** The page or profile teams tag when they announce their project. */
   announceUrl: line(300),
 
+  // Look
+  theme: z.object({
+    /** The accent colour, as a hex code such as #E02D3C. */
+    accent: z
+      .string()
+      .trim()
+      .regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex colour such as #E02D3C"),
+    /** Address of a logo image. Empty shows the Dua mark. */
+    logoUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .refine((v) => v === "" || /^https?:\/\//i.test(v), "Use a full address starting with https://"),
+  }),
+
   // Judging
   /** How many places the final ranking locks. */
   topN: z.coerce.number().int().min(1).max(20),
@@ -220,6 +235,8 @@ export const DEFAULT_SETTINGS: EventSettings = {
   host: { name: "Example Org", url: "https://example.org" },
   contactEmail: "hello@example.org",
   announceUrl: "https://example.org/hackathon",
+
+  theme: { accent: "#E02D3C", logoUrl: "" },
 
   topN: 6,
   rubric: DEFAULT_RUBRIC,
@@ -378,4 +395,15 @@ export function resolveSettings(stored: unknown): EventSettings {
     if (parsed.success) merged[key] = parsed.data;
   }
   return merged as EventSettings;
+}
+
+/**
+ * The accent colour and two darker shades of it, as "r g b" triplets for the
+ * CSS variables the stylesheet reads.
+ */
+export function accentShades(hex: string): { accent: string; dark: string; deep: string } {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+  const rgb = m ? [m[1], m[2], m[3]].map((h) => parseInt(h, 16)) : [224, 45, 60];
+  const shade = (by: number) => rgb.map((c) => Math.round(c * by)).join(" ");
+  return { accent: rgb.join(" "), dark: shade(0.78), deep: shade(0.55) };
 }

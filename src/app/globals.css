@@ -6,6 +6,10 @@
   /* Dark theme (default). Tokens are space-separated RGB channels so Tailwind
      can apply alpha modifiers via rgb(var(--x) / <alpha-value>). */
   :root {
+    /* Accent colour. Overridden per event from the admin panel (see layout.tsx). */
+    --accent: 224 45 60;
+    --accent-dark: 175 35 47;
+    --accent-deep: 123 25 33;
     --ink: 8 17 36;
     --ink-2: 12 24 48;
     --ink-3: 16 31 60;
@@ -62,7 +66,7 @@
   }
   body {
     background-image:
-      repeating-linear-gradient(45deg, rgba(224,45,60,.03) 0 1px, transparent 1px 16px),
+      repeating-linear-gradient(45deg, rgb(var(--accent) / 0.03) 0 1px, transparent 1px 16px),
       repeating-linear-gradient(-45deg, rgb(var(--bone) / 0.015) 0 1px, transparent 1px 16px);
     min-height: 100vh;
   }
@@ -79,7 +83,7 @@
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: rgb(var(--ink-2)); }
   ::-webkit-scrollbar-thumb { background: rgb(var(--line)); border-radius: 6px; }
-  ::-webkit-scrollbar-thumb:hover { background: #E02D3C; }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent)); }
 }
 
 @layer components {
@@ -144,9 +148,9 @@
 .campaign-editor ul { list-style-type: disc; }
 .campaign-editor ol { list-style-type: decimal; }
 .campaign-editor li { margin-bottom: 0.25rem; }
-.campaign-editor a { color: var(--crimson, #E02D3C); text-decoration: underline; }
+.campaign-editor a { color: rgb(var(--accent)); text-decoration: underline; }
 .campaign-editor blockquote {
-  border-left: 3px solid var(--crimson, #E02D3C);
+  border-left: 3px solid rgb(var(--accent));
   padding-left: 0.875rem;
   margin: 0 0 0.75rem;
   opacity: 0.85;

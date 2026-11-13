@@ -109,3 +109,26 @@ describe("resolveSettings", () => {
     expect(resolveSettings({ tracks: ["A", "B", "A"] }).tracks).toEqual(["A", "B"]);
   });
 });
+
+describe("theme", () => {
+  it("turns a hex colour into the accent and two darker shades", async () => {
+    const { accentShades } = await import("./event-settings");
+    expect(accentShades("#FF8000")).toEqual({ accent: "255 128 0", dark: "199 100 0", deep: "140 70 0" });
+    expect(accentShades("#e02d3c").accent).toBe("224 45 60");
+  });
+
+  it("falls back to the default accent for anything that isn't a hex colour", async () => {
+    const { accentShades } = await import("./event-settings");
+    expect(accentShades("red").accent).toBe("224 45 60");
+    expect(accentShades("").accent).toBe("224 45 60");
+  });
+
+  it("accepts only hex colours and web addresses", () => {
+    const theme = settingsSchema.shape.theme;
+    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "" }).success).toBe(true);
+    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "https://example.org/logo.png" }).success).toBe(true);
+    expect(theme.safeParse({ accent: "purple", logoUrl: "" }).success).toBe(false);
+    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "javascript:alert(1)" }).success).toBe(false);
+    expect(theme.safeParse({ accent: "#7B2DFF;background:url(x)", logoUrl: "" }).success).toBe(false);
+  });
+});

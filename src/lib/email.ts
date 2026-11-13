@@ -133,7 +133,7 @@ export function htmlToText(html: string): string {
 
 // ── the shell ────────────────────────────────────────────────────
 
-/** Brand crimson — matches `crimson.DEFAULT` in tailwind.config.ts. */
+/** The default accent colour, used when an email has no event theme to hand. */
 export const CRIMSON = "#E02D3C";
 
 /**
@@ -145,12 +145,12 @@ export const CRIMSON = "#E02D3C";
  * so recipients land on Garamond/Georgia, which is the same fallback most
  * visitors see on the site anyway.
  */
-function renderWordmark(site: string, eventName: string): string {
+function renderWordmark(site: string, eventName: string, logoUrl?: string): string {
   // align="center" is for Outlook, which ignores `margin:0 auto` on tables.
   return `<a href="${escapeAttr(site)}" style="text-decoration:none;color:#1a1d24;">
     <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
       <td style="padding-right:12px;vertical-align:middle;">
-        <img src="${escapeAttr(site)}/email-logo.png" width="34" height="34" alt=""
+        <img src="${escapeAttr(logoUrl || `${site}/email-logo.png`)}" width="34" height="34" alt=""
              style="display:block;border:0;outline:none;text-decoration:none;" />
       </td>
       <td style="vertical-align:middle;">
@@ -164,6 +164,8 @@ function renderWordmark(site: string, eventName: string): string {
 export function renderCampaignEmail(opts: {
   /** The event's name, for the header and the footer. */
   eventName: string;
+  /** The event's logo, if it has its own. Use a PNG or JPEG: Gmail won't show SVG. */
+  logoUrl?: string;
   bodyHtml: string;
   unsubscribeUrl: string | null;
   recipientName?: string | null;
@@ -172,7 +174,7 @@ export function renderCampaignEmail(opts: {
   /** Transactional mail about something the recipient did, e.g. submitting. */
   footerNote?: string;
 }): string {
-  const { eventName, bodyHtml, unsubscribeUrl, internal, footerNote } = opts;
+  const { eventName, logoUrl, bodyHtml, unsubscribeUrl, internal, footerNote } = opts;
   const site = siteUrl();
 
   const footer = footerNote
@@ -196,7 +198,7 @@ export function renderCampaignEmail(opts: {
 <html><body style="margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1d24;">
   <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #e3e5ea;border-radius:10px;overflow:hidden;">
     <div style="padding:18px 32px;border-bottom:1px solid #e3e5ea;text-align:center;">
-      ${renderWordmark(site, eventName)}
+      ${renderWordmark(site, eventName, logoUrl)}
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.65;">
       ${bodyHtml}

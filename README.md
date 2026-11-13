@@ -348,6 +348,7 @@ edited there and takes effect when you press Save:
 | Section | What you can change |
 | --- | --- |
 | Basics | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size. |
+| Look | The accent colour used across the site, and your own logo in place of the Dua mark. |
 | Judging | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. |
 | Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on. |
 | Homepage | The introduction, highlight cards, an example problem per track, and the questions and answers. |
@@ -357,10 +358,10 @@ are fixed, because changing them would change what existing scores mean.
 Names and guidance can still be edited.
 
 A new event starts with the sample content in
-[`src/lib/event-settings.ts`](src/lib/event-settings.ts). Colours, fonts and
-the logo are still set in code: [`tailwind.config.ts`](tailwind.config.ts),
-[`src/app/globals.css`](src/app/globals.css) and
-[`src/components/dua-mark.tsx`](src/components/dua-mark.tsx).
+[`src/lib/event-settings.ts`](src/lib/event-settings.ts). Fonts and the
+dark and light background colours are still set in code:
+[`tailwind.config.ts`](tailwind.config.ts) and
+[`src/app/globals.css`](src/app/globals.css).
 
 ## How judging works
 
@@ -415,8 +416,8 @@ to `npm run db:migrate && npm run build`.
 
 ## Roadmap
 
-1. **More in the admin panel.** Custom form fields, colours and logo, and
-   more than one event per deployment (the database is already built for it).
+1. **More in the admin panel.** Custom form fields, and more than one event
+   per deployment (the database is already built for it).
 2. **One-command setup.** A container image for the app, alongside the
    database one.
 
