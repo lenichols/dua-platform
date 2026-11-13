@@ -2,6 +2,8 @@
 
 Everything about your event is set in the admin panel. Nothing here needs code.
 
+![The admin panel's home tab](images/admin-home.png)
+
 ## First steps
 
 1. Go to `/admin`, leave the email blank and sign in with `ADMIN_PASSWORD`.

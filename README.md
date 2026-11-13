@@ -2,24 +2,54 @@
   <img src="public/dua-logo.svg" alt="Dua" width="320">
 </p>
 
+<p align="center">
+  <strong>The open source hackathon platform with judging you can defend.</strong>
+</p>
+
+<p align="center">
+  <a href="https://dua-platform.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-dua--platform.vercel.app-662EFF?style=for-the-badge" alt="Live demo: dua-platform.vercel.app"></a>
+</p>
+
+<p align="center">
+  <a href="https://dua-platform.vercel.app">Live demo</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#guides">Guides</a> ·
+  <a href="#to-do">To do</a>
+</p>
+
 # Dua
 
 Dua is an open source platform for running a hackathon from first sign-up to
 final results: registration, mentor sign-up, project submission, judging and a
 leaderboard, in one app you host yourself.
 
-What sets it apart is the judging. Every score needs a sentence of evidence,
-scores are normalized per judge so a harsh judge and a generous one carry the
-same weight, judges can recuse themselves, and the final ranking can be
-reproduced from a logged seed.
+What sets it apart is the judging. Every score comes with a sentence of
+evidence, scores are evened out per judge so a harsh judge and a generous one
+carry the same weight, judges can step back from projects they're connected
+to, and the final ranking can be reproduced from a logged seed.
 
 All it needs is Node.js and a Postgres database. Email, file storage and
 judge sign-in work out of the box and can each be switched to a service you
 already use, including Supabase.
 
-**[Try the live demo](https://dua-platform.vercel.app)**: a sample event you
-can sign in to as a judge, a mentor or a read-only admin. The logins are on
-its sign-in pages, and it resets every hour.
+## Live demo
+
+**<https://dua-platform.vercel.app>**
+
+A sample event, the Open Build Hackathon, with five projects waiting to be
+judged. No sign-up needed: the logins are on the sign-in pages, and clicking
+one fills in the form.
+
+| Try this | Where | Sign in as |
+| --- | --- | --- |
+| Score a project against the rubric | [/judge](https://dua-platform.vercel.app/judge) | Judge |
+| See what a mentor can and can't do | [/judge](https://dua-platform.vercel.app/judge) | Mentor |
+| Look around the organizer's panel, including the event settings | [/admin](https://dua-platform.vercel.app/admin) | Admin (read-only) |
+| See what participants see | [the homepage](https://dua-platform.vercel.app) | Nobody |
+
+Go ahead and change things: the demo puts itself back every hour.
+
+<a href="https://dua-platform.vercel.app"><img src="docs/images/judge-scoring.png" alt="Scoring a project in the live demo"></a>
 
 > **Status: early.** Dua runs today and ships with a made-up sample event, the
 > Open Build Hackathon. Expect the database schema to change before 1.0; the
@@ -49,15 +79,11 @@ on, the colours and logo.
 <table>
   <tr>
     <td width="50%"><img src="docs/images/home.png" alt="The event homepage"><br><sub>The event's homepage</sub></td>
-    <td width="50%"><img src="docs/images/judge-scoring.png" alt="A judge scoring a project"><br><sub>Scoring a project: a mark and a sentence of evidence per criterion</sub></td>
+    <td width="50%"><img src="docs/images/judge-sign-in.png" alt="The judge sign-in page"><br><sub>Judge sign-in, showing how projects are scored</sub></td>
   </tr>
   <tr>
     <td><img src="docs/images/results.png" alt="The results leaderboard"><br><sub>Results: panel averages, never one judge's scores</sub></td>
     <td><img src="docs/images/admin-event.png" alt="Editing the rubric in the admin panel"><br><sub>Setting the rubric in the admin panel</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/admin-home.png" alt="The admin panel's home tab"><br><sub>Running the event: phases, forms and judging progress</sub></td>
-    <td><img src="docs/images/judge-sign-in.png" alt="The judge sign-in page"><br><sub>Judge sign-in, showing how projects are scored</sub></td>
   </tr>
 </table>
 
