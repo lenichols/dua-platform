@@ -140,10 +140,9 @@ export const ACCENT = "#662EFF";
  * The site header, rebuilt for email: the logo plus the event name.
  *
  * Laid out with a table because flexbox doesn't work in Outlook, and the logo
- * is a PNG because Gmail refuses to render SVG. The font stack mirrors
- * `fontFamily.serif` minus the webfont variable — email can't load EB Garamond,
- * so recipients land on Garamond/Georgia, which is the same fallback most
- * visitors see on the site anyway.
+ * is a PNG because Gmail refuses to render SVG. Email can't load the site's
+ * heading font, so the name uses the nearest geometric faces a mail client
+ * is likely to have.
  */
 function renderWordmark(site: string, eventName: string, logoUrl?: string): string {
   // align="center" is for Outlook, which ignores `margin:0 auto` on tables.
@@ -154,7 +153,7 @@ function renderWordmark(site: string, eventName: string, logoUrl?: string): stri
              style="display:block;border:0;outline:none;text-decoration:none;" />
       </td>
       <td style="vertical-align:middle;">
-        <span style="font-family:Garamond,Georgia,'Times New Roman',Times,serif;font-size:25px;font-weight:500;letter-spacing:-0.01em;line-height:1;color:#1a1d24;white-space:nowrap;">
+        <span style="font-family:'Avenir Next','Century Gothic',Futura,'Segoe UI',Helvetica,Arial,sans-serif;font-size:21px;font-weight:600;letter-spacing:-0.01em;line-height:1;color:#06153B;white-space:nowrap;">
           ${escapeHtml(eventName)}
         </span>
       </td>

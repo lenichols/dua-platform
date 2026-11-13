@@ -112,7 +112,7 @@ function htmlBody(name, password) {
           <img src="${SITE}/email-logo.png" width="34" height="34" alt="" style="display:block;border:0;" />
         </td>
         <td style="vertical-align:middle;">
-          <span style="font-family:Garamond,Georgia,'Times New Roman',Times,serif;font-size:25px;font-weight:500;letter-spacing:-0.01em;line-height:1;color:#1a1d24;white-space:nowrap;">
+          <span style="font-family:'Avenir Next','Century Gothic',Futura,'Segoe UI',Helvetica,Arial,sans-serif;font-size:21px;font-weight:600;letter-spacing:-0.01em;line-height:1;color:#06153B;white-space:nowrap;">
             ${esc(EVENT_NAME)}
           </span>
         </td>
