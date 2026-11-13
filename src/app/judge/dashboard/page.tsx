@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
-import { getJudgeByAuthUser } from "@/lib/judge-lookup";
 import { getPhase } from "@/lib/phase";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentEvent } from "@/server/event";
+import { getOwnProgress, listSubmissionsForJudging } from "@/server/judging";
+import { getJudgeSession } from "../auth";
 import { shuffleForUser } from "@/lib/shuffle";
 import { JudgingNotOpen } from "../judging-not-open";
 import { SignOutButton } from "./sign-out";
@@ -13,14 +14,10 @@ export const dynamic = "force-dynamic";
 
 export default async function JudgeDashboard() {
   const phase = await getPhase();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/judge");
-
-  const judge = await getJudgeByAuthUser(supabase, user.id);
-  if (!judge?.is_active) redirect("/judge");
+  const judge = await getJudgeSession();
+  if (!judge) redirect("/judge");
+  const event = await getCurrentEvent();
+  const viewer = { kind: "judge", judgeId: judge.id, role: judge.role } as const;
 
   const isMentor = judge.role === "mentor";
 
@@ -35,35 +32,16 @@ export default async function JudgeDashboard() {
     );
   }
 
-  const { data: subs } = await supabase
-    .from("submissions_public")
-    .select(
-      "id, project_name, team_name, solo_or_team, challenge_track, project_description_summary",
-    );
-
   // Per-user randomized order so the bottom of the queue gets attention even
   // if a judge runs out of time. Stable across refreshes for the same user.
-  const rawRows = (subs as SubRow[] | null) ?? [];
+  const rawRows: SubRow[] = await listSubmissionsForJudging(event, viewer);
   const rows = shuffleForUser(rawRows, judge.id, (s) => s.id);
 
-  const { data: myScores } = isMentor
-    ? { data: [] as { submission_id: string }[] }
-    : await supabase
-        .from("scores")
-        .select("submission_id")
-        .eq("judge_id", judge.id);
   // Recused projects stay listed but leave the judge's queue and progress.
-  const { data: myRecusals } = isMentor
-    ? { data: [] as { submission_id: string }[] }
-    : await supabase
-        .from("recusals")
-        .select("submission_id")
-        .eq("judge_id", judge.id);
-  const recusedIds = (myRecusals ?? []).map((r) => r.submission_id);
+  const progress = await getOwnProgress(event, viewer);
+  const recusedIds = progress.recusedIds;
   const recused = new Set(recusedIds);
-  const scoredIds = (myScores ?? [])
-    .map((s) => s.submission_id)
-    .filter((id) => !recused.has(id));
+  const scoredIds = progress.scoredIds.filter((id) => !recused.has(id));
 
   const queueSize = rows.filter((r) => !recused.has(r.id)).length;
   const done = scoredIds.length;

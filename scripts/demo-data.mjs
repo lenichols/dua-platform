@@ -1,361 +1,250 @@
 #!/usr/bin/env node
-// Seed (or remove) demo data for recording the judge & mentor walkthrough.
+// Seed (or remove) sample data so you can try judging without real entries.
 //
-//   node --env-file=.env.local scripts/demo-data.mjs            # seed
-//   node --env-file=.env.local scripts/demo-data.mjs --cleanup  # remove it all
+//   npm run db:seed                 # add the samples
+//   npm run db:seed -- --cleanup    # remove them again
 //
 // Seeding creates:
-//   - a test judge and a test mentor (email + password sign-in at /judge)
-//   - six sample submissions, one per track plus a second Track 5 entry, with
-//     real public YouTube videos as the demo links and placeholder deck,
-//     summary and build links
-//   - one score from the test judge on the current rubric (0020), so the
-//     dashboard shows both states
+//   - a test judge and a test mentor (sign in at /judge)
+//   - five sample submissions, one per track
+//   - one score from the test judge, so the dashboard shows both states
+//   - the event moved to the judging phase, so the judge can sign in
+//     (pass --keep-phase to leave the phase alone)
 //
 // Everything it writes is findable again: submissions carry review_note =
-// DEMO_TAG (an admin-only column) and both accounts use @example.com
-// addresses. Re-running --seed replaces the sample submissions and gives each
-// account a fresh password (or the one passed with --judge-password /
-// --mentor-password). Run --cleanup before real submissions open — sample
-// rows count toward every judge's queue and the top-6 maths.
-//
-// Uses the same steps as Admin → Judges → Test account (createTestJudge in
-// src/app/admin/actions.ts). Note that Admin → Judges → Shared sign-in
-// password also resets these two accounts, like every other active judge.
+// DEMO_TAG (an admin-only column) and both accounts use @example.org
+// addresses. Re-running replaces the samples and gives each account a fresh
+// password (or the one passed with --judge-password / --mentor-password).
+// Run --cleanup before real submissions open: sample rows count toward every
+// judge's queue and the final ranking.
 
-import { createClient } from "@supabase/supabase-js";
-import { die, generatePassword, parseArgs } from "./_password.mjs";
+import { connect, currentEventId, insertRow } from "./_db.mjs";
+import { die, generatePassword, hashPassword, parseArgs } from "./_password.mjs";
 
-const DEMO_TAG = "demo-seed: judge walkthrough sample";
+const DEMO_TAG = "demo-seed: sample submission";
 
 const ACCOUNTS = [
-  { key: "judge", name: "Demo Judge (Test)", email: "demo.judge@example.com", role: "judge" },
-  { key: "mentor", name: "Demo Mentor (Test)", email: "demo.mentor@example.com", role: "mentor" },
+  { key: "judge", name: "Demo Judge (Test)", email: "demo.judge@example.org", role: "judge" },
+  { key: "mentor", name: "Demo Mentor (Test)", email: "demo.mentor@example.org", role: "mentor" },
 ];
 
-const yt = (id) => `https://www.youtube.com/watch?v=${id}`;
-
-// Demo videos are real public videos about each theme, standing in for a
-// team's pitch. Deck, summary, build, live-demo and announcement links are
-// placeholders.
-const drive = (slug) => ({
-  pitch_deck_url: `https://drive.google.com/file/d/dua-sample-${slug}-deck`,
-  summary_url: `https://drive.google.com/file/d/dua-sample-${slug}-summary`,
+// Every link is a placeholder on example.org.
+const links = (slug) => ({
+  demo_video_url: `https://example.org/samples/${slug}/demo`,
+  pitch_deck_url: `https://example.org/samples/${slug}/deck.pdf`,
+  summary_url: `https://example.org/samples/${slug}/summary.pdf`,
+  github_url: `https://example.org/samples/${slug}/code`,
+  linkedin_post_url: `https://example.org/samples/${slug}/announcement`,
 });
+
+const OWN = "Own problem (not one of the briefs)";
+
+// Keep track, brief and option values in step with src/lib/hackathon.ts and
+// the lists in src/app/submit/submit-form.tsx.
 const SAMPLES = [
   {
-    project_name: "SunCold Hub (Sample)",
-    team_name: "Owerri Cold Crew",
+    project_name: "ShiftBoard (Sample)",
+    team_name: "Tuesday Crew",
     solo_or_team: "Team",
     team_size: 3,
-    challenge_track: "New Technologies & Hardware Innovations",
-    project_category: "Solar cold storage",
-    customer_type: "Non-residential",
-    region: "Africa",
-    country: "Nigeria",
-    energy_sector: "Solar",
-    impact_focus: "Energy Access, Affordability",
+    challenge_track: "Web & Mobile Apps",
+    problem_brief: "1 · Help a small nonprofit schedule its volunteers",
+    project_category: "Volunteer scheduling",
+    customer_type: "Organizations",
+    region: "North America",
+    country: "Canada",
+    focus_area: "Civic & Community",
+    impact_focus: "Saves time, Builds community",
     solution_stage: "Prototype",
-    area_of_specification: "Technology",
+    area_of_specification: "Design & Usability",
     applies_ai: "No",
-    target_region: "Produce and fish markets in southeast Nigeria",
-    core_energy_problem:
-      "Traders lose perishable stock within days because markets have no reliable power for refrigeration",
+    target_region: "Food banks and community kitchens",
+    core_problem: "Volunteer shifts go unfilled because nobody can see the gaps",
     problem_statement:
-      "Smallholder farmers and fish traders in Imo State lose up to 40% of what they bring to market because nothing stays cold. Diesel-powered cold rooms cost more to run than the traders earn per crate, and the grid is off for most of the day.",
+      "A neighbourhood food bank coordinates about forty volunteers through a group chat. Messages scroll past, people assume someone else has taken a shift, and the organizer only finds out a shift is empty when nobody turns up.",
     project_description_summary:
-      "A walk-in solar cold room that traders rent by the crate per day, booked and paid for from any phone.",
+      "A shared shift board that texts the organizer each morning with the shifts still empty.",
     project_description:
-      "SunCold Hub is a 10 m³ walk-in cold room powered by 3 kWp of rooftop solar and a LiFePO4 battery bank, with a DC inverter compressor that holds 4–8 °C through the night.\n\nTraders rent space by the crate per day (target ₦150 per crate), booking and paying by USSD so a feature phone is enough. A temperature logger sends alerts to the market's hub attendant.\n\nDuring the sprint we built: the load and sizing calculation, a bill of materials with unit cost (~US$9,800 per hub installed), the USSD booking flow mock-up, and an 18-month plan for three pilot hubs run by a market cooperative, which also employs and trains the attendant who handles maintenance.",
+      "ShiftBoard is a single page listing the week's shifts. Volunteers tap a shift to take it, with no account needed: they confirm by text message.\n\nEach morning the organizer gets one text listing only the shifts that are still empty, with a link to nudge people who covered that shift before.",
     disclosure_statement:
-      "Before the event: a load-sizing spreadsheet template from an earlier solar project. Built during the sprint: this hub's sizing, the bill of materials, the USSD booking mock-up and the 18-month pilot plan. Tools: Africa's Talking USSD sandbox; ChatGPT to draft the trader survey questions.",
-    technologies_used:
-      "3 kWp PV, LiFePO4 storage, DC inverter compressor, IoT temperature logger, USSD (Africa's Talking sandbox)",
-    member1_name: "Chiamaka Eze",
-    member2_name: "Tunde Bakare",
-    member3_name: "Ifeoma Nwosu",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("suncold-hub"),
-    demo_video_url: yt("VnIV65l0K0c"),
-    demo_video_short_url: yt("SOJelbXta_A"),
-    github_url: "https://github.com/dua-sample/suncold-hub",
-    live_demo_url: null,
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-suncold-hub",
+      "Before the event: nothing. Built during the event: the shift board, the text confirmation flow and the morning summary. We tested it with six volunteers from one food bank.",
+    technologies_used: "Next.js, Postgres, an SMS gateway",
+    member1_name: "Maya Example",
+    member2_name: "Tom Example",
+    member3_name: "Priya Example",
+    live_demo_url: "https://example.org/samples/shiftboard/live",
   },
   {
-    project_name: "GridSense (Sample)",
-    team_name: "Lakeside Labs",
+    project_name: "NextBus Voice (Sample)",
+    team_name: "Stop Request",
     solo_or_team: "Team",
-    team_size: 4,
-    challenge_track: "Digital Solutions, Apps & AI/ML Tools",
-    project_category: "AI demand forecasting for mini-grids",
-    customer_type: "Non-residential",
-    region: "Africa",
-    country: "Kenya",
-    energy_sector: "Grid, Transmission & Distribution",
-    impact_focus: "Availability, Affordability",
-    solution_stage: "MVP / Pilot",
+    team_size: 2,
+    challenge_track: "AI & Data",
+    problem_brief: "2 · Make local transit times easier to check",
+    project_category: "Voice transit times",
+    customer_type: "Individuals",
+    region: "Europe",
+    country: "Ireland",
+    focus_area: "Accessibility",
+    impact_focus: "Improves access, Saves time",
+    solution_stage: "Prototype",
     area_of_specification: "Technology",
     applies_ai: "Yes",
-    target_region: "Solar mini-grid operators in East Africa",
-    core_energy_problem:
-      "Mini-grid operators oversize diesel backup because they can't predict evening demand",
+    target_region: "Cities that publish open transit feeds",
+    core_problem: "Transit apps assume the rider can read a small, busy screen",
     problem_statement:
-      "Rural mini-grids run diesel backup every evening because operators can't forecast demand, which pushes tariffs up for the households they serve. Customers report outages by walking to the operator's office.",
+      "Riders with low vision, and anyone with their hands full, struggle with transit apps built around maps and long lists. What they want is one fact: when the next bus leaves from the stop they're standing at.",
     project_description_summary:
-      "Demand forecasting plus feature-phone outage reporting that helps mini-grid operators cut diesel runtime.",
+      "Ask out loud when the next bus leaves and hear one short answer.",
     project_description:
-      "GridSense forecasts next-day load for a solar mini-grid from smart-meter history and weather, and tells the operator when the battery will run short so they can shift productive-use loads instead of starting the generator.\n\nCustomers report outages by USSD (*384*22#) from any phone; reports cluster on a map for the field technician.\n\nWe claim GridSense can cut diesel runtime by 30% across an operator's 40 sites. During the sprint we trained the model on six months of anonymized meter data from one site and built the operator dashboard; the USSD flow is a clickable mock-up.",
+      "NextBus Voice works out the nearest stop from the phone's location and reads the next two departures aloud from the city's open transit feed.\n\nThere is no screen to navigate. A single large button repeats the answer. Speech recognition is used only to let the rider name a different stop.",
     disclosure_statement:
-      "Before the event: nothing; the team met at kickoff. Built during the sprint: the forecasting model, the operator dashboard and the USSD mock-up. Open source: LightGBM, FastAPI, Next.js. Data: six months of anonymized smart-meter readings from one partner mini-grid, shared under a data agreement, plus an open weather API. AI tools: GitHub Copilot.",
-    technologies_used: "Python, LightGBM, FastAPI, Next.js, USSD gateway sandbox, open weather API",
-    member1_name: "Wanjiru Kamau",
-    member2_name: "Otieno Odhiambo",
-    member3_name: "Aisha Mohamed",
-    member4_name: "Brian Kiprop",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("gridsense"),
-    demo_video_url: yt("emygVKnVjwA"),
-    demo_video_short_url: null,
-    github_url: "https://github.com/dua-sample/gridsense",
-    live_demo_url: "https://example.com/gridsense-demo",
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-gridsense",
+      "Before the event: nothing. Built during the event: the feed reader, the nearest-stop lookup and the voice interface. Speech recognition and speech output use the phone's built-in services.",
+    technologies_used: "TypeScript, open transit feeds, on-device speech",
+    member1_name: "Aoife Example",
+    member2_name: "Daniel Example",
   },
   {
-    project_name: "PayDay Power (Sample)",
-    team_name: "Harvest Pay",
-    solo_or_team: "Team",
-    team_size: 3,
-    challenge_track: "Business Models & Financing Approaches",
-    project_category: "Pay-as-you-go solar financing",
-    customer_type: "Residential",
-    region: "Africa",
-    country: "Kenya",
-    energy_sector: "Energy Access / Off-Grid",
-    impact_focus: "Energy Access, Affordability",
-    solution_stage: "Idea / Concept",
-    area_of_specification: "Affordability",
-    applies_ai: "No",
-    target_region: "Smallholder farming households in western Kenya",
-    core_energy_problem:
-      "Daily pay-as-you-go plans don't match farmers who earn most of their income at harvest",
-    problem_statement:
-      "Pay-as-you-go solar assumes steady daily income. Farming households earn most of their money twice a year, fall behind in the lean months, and get locked out, so defaults rise and families go back to kerosene.",
-    project_description_summary:
-      "Harvest-aligned payment schedules for solar home systems, collected through farmer savings groups.",
-    project_description:
-      "PayDay Power lets a household pay less in the lean season and more after harvest, with the schedule set from the crop calendar. Payments are collected by the farmer's SACCO (savings and credit co-operative) through mobile money, and the SACCO guarantees part of the loan.\n\nUnit economics from our tariff model: a US$180 solar home system, 10% deposit, 24-month term, 12% assumed default rate, break-even at month 19.\n\nThere is no code: during the sprint we built the tariff model, a customer journey map, and a term sheet for a SACCO partner. The financing assumes a first-loss guarantee from a development partner that hasn't been approached yet.",
-    disclosure_statement:
-      "Before the event: research notes on SACCO lending from a university project. Built during the sprint: the tariff model, the customer journey map and the SACCO term sheet. Data: public FAO crop calendars. AI tools: Claude to edit the term sheet.",
-    technologies_used: "Spreadsheet tariff model, mobile money (M-Pesa) collection, SACCO partnership",
-    member1_name: "Achieng Ouma",
-    member2_name: "Samuel Mutua",
-    member3_name: "Grace Njeri",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("payday-power"),
-    demo_video_url: yt("LTRaqeo_9i8"),
-    demo_video_short_url: yt("r5e5DM3RMPM"),
-    github_url: null,
-    live_demo_url: "https://docs.google.com/spreadsheets/d/dua-sample-payday-power-model",
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-payday-power",
-  },
-  {
-    project_name: "ClinicLight (Sample)",
-    team_name: "Midwife Power Collective",
-    solo_or_team: "Team",
-    team_size: 3,
-    challenge_track: "Clean Energy & Sustainability Solutions",
-    project_category: "Solar for health facilities",
-    customer_type: "Non-residential",
-    region: "Africa",
-    country: "Nigeria",
-    energy_sector: "Solar",
-    impact_focus: "Availability, Energy Access",
-    solution_stage: "Prototype",
-    area_of_specification: "Environmental Friendliness",
-    applies_ai: "No",
-    target_region: "Primary health centres in northern Nigeria",
-    core_energy_problem:
-      "Night-time deliveries happen by phone torchlight because clinics can't afford diesel",
-    problem_statement:
-      "Many primary health centres have no reliable power after dark. Midwives deliver babies by phone torchlight, and vaccine fridges fail when the generator runs out of diesel.",
-    project_description_summary:
-      "A 1.2 kWp solar-and-battery kit that powers lights, a fetal Doppler and a vaccine fridge through the night, replacing a diesel generator.",
-    project_description:
-      "ClinicLight sizes a solar-plus-storage kit to a clinic's night-time loads: LED lighting for the delivery room, a fetal Doppler, phone charging and a solar direct-drive vaccine fridge.\n\nOur levelized cost comparison shows ~US$0.31/kWh against ~US$0.62/kWh for the clinic's current diesel generator, and the kit displaces about 1,100 litres of diesel a year.\n\nDuring the sprint we built the load profile, the sizing calculation and a bill of materials (US$3,400 per clinic). The state health ministry would pay for installation. We have not yet decided who maintains the batteries and inverter after installation.",
-    disclosure_statement:
-      "Before the event: nothing. Built during the sprint: the load profile, the sizing calculation, the bill of materials and the levelized-cost comparison. Data: NASA POWER solar irradiance; diesel prices from a 2025 market survey. No AI tools.",
-    technologies_used: "1.2 kWp PV, 5 kWh LiFePO4, MPPT charge controller, solar direct-drive fridge",
-    member1_name: "Halima Bello",
-    member2_name: "Emeka Obi",
-    member3_name: "Zainab Yusuf",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("cliniclight"),
-    demo_video_url: yt("AaSaVlGHrmQ"),
-    demo_video_short_url: null,
-    github_url: "https://github.com/dua-sample/cliniclight-sizing",
-    live_demo_url: null,
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-cliniclight",
-  },
-  {
-    project_name: "FairShare Bills (Sample)",
-    team_name: null,
-    solo_or_team: "Solo",
-    team_size: 1,
-    challenge_track: "Policy, Systems & Community-Based Solutions",
-    project_category: "Utility affordability policy",
-    customer_type: "Residential",
-    region: "North America",
-    country: "United States",
-    energy_sector: "Energy Efficiency",
-    impact_focus: "Affordability",
-    solution_stage: "Idea / Concept",
-    area_of_specification: "Policy and Regulation",
-    applies_ai: "No",
-    target_region: "Detroit, Michigan",
-    core_energy_problem:
-      "Low-income Detroit households spend more than 10% of their income on energy bills",
-    problem_statement:
-      "Two in five low-income U.S. households have a severe energy burden, spending more than 10% of income on energy. In Detroit, many fall behind every winter, face shutoffs, and never hear about weatherization help they qualify for.",
-    project_description_summary:
-      "A percentage-of-income payment plan that caps bills at 6% of income, with automatic enrolment and weatherization referrals.",
-    project_description:
-      "FairShare Bills proposes a percentage-of-income payment plan (PIPP) that caps energy bills at 6% of household income for households at or below 200% of the federal poverty level.\n\nThe mechanism: the utility files the program in its next rate case before the Michigan Public Service Commission; enrolment happens automatically through data-sharing with the state's SNAP and LIHEAP rolls, and every enrolled household gets a weatherization referral. Block clubs nominate residents to a community advisory board that reviews outcomes every quarter.\n\nDuring the sprint I drafted the program design, a cost estimate for 20,000 households, and a one-page brief for commissioners.",
-    disclosure_statement:
-      "Before the event: a 2025 blog post I wrote on Detroit utility shutoffs. Built during the sprint: the program design, the cost model and the commissioner brief. Data: ACS income data, LIHEAP enrolment figures and ACEEE energy-burden research. No AI tools.",
-    technologies_used: "Policy design, program cost model, public data (ACS, LIHEAP)",
-    member1_name: "Danielle Brooks",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("fairshare-bills"),
-    demo_video_url: yt("d1HRPdbRrrQ"),
-    demo_video_short_url: yt("WC7eFVIxMWY"),
-    github_url: null,
-    live_demo_url: null,
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-fairshare-bills",
-  },
-  {
-    project_name: "VillageVolt Co-op (Sample)",
-    team_name: "Chikwawa Commons",
+    project_name: "RoomSense (Sample)",
+    team_name: "Solder & Co",
     solo_or_team: "Team",
     team_size: 4,
-    challenge_track: "Policy, Systems & Community-Based Solutions",
-    project_category: "Community-owned mini-grid",
-    customer_type: "Residential",
-    region: "Africa",
-    country: "Malawi",
-    energy_sector: "Energy Access / Off-Grid",
-    impact_focus: "Energy Access, Affordability, Availability",
-    solution_stage: "Idea / Concept",
-    area_of_specification: "Policy and Regulation",
+    challenge_track: "Hardware & Devices",
+    problem_brief: OWN,
+    project_category: "Classroom air quality monitor",
+    customer_type: "Organizations",
+    region: "Asia",
+    country: "India",
+    focus_area: "Health & Wellbeing",
+    impact_focus: "Improves safety",
+    solution_stage: "Prototype",
+    area_of_specification: "Technology",
     applies_ai: "No",
-    target_region: "Rural villages in southern Malawi",
-    core_energy_problem:
-      "Villages beyond the grid rely on kerosene and phone-charging kiosks, and private mini-grids stall on tariff approval",
+    target_region: "Schools without building management systems",
+    core_problem: "Nobody in a stuffy classroom knows when to open a window",
     problem_statement:
-      "Most rural Malawians have no electricity. Private mini-grid developers struggle to get tariffs approved and to keep community trust, so projects stall after the pilot.",
+      "Carbon dioxide builds up quickly in a full classroom and makes it harder to concentrate, but there is no sign of it until people feel tired. Commercial monitors cost more than most schools will pay per room.",
     project_description_summary:
-      "A co-operative ownership and tariff-setting model that lets a village own its solar mini-grid.",
+      "A $25 box with one light that turns amber when the room needs fresh air.",
     project_description:
-      "VillageVolt is a governance model for community ownership: villagers buy shares in a co-operative that owns the mini-grid, an elected tariff committee proposes tariffs to the regulator, and a local technician is trained and paid from tariff revenue.\n\nDuring the sprint we drafted the co-op by-laws, a tariff-committee charter, and a role-play of a village meeting voting on a tariff. We haven't estimated the cost of the mini-grid itself or how share purchases would be financed.",
+      "RoomSense is a small sensor board in a printed case with a single light: green, amber or red. It needs no network and no app.\n\nA teacher sees amber and opens a window. An optional memory card logs readings so a school can compare rooms over a term.",
     disclosure_statement:
-      "Before the event: a by-law template from a farming co-operative one of us belongs to. Built during the sprint: the adapted by-laws, the tariff-committee charter and the village-meeting role-play. No AI tools or datasets.",
-    technologies_used: "Governance design, community role-play, tariff framework",
-    member1_name: "Chisomo Banda",
-    member2_name: "Tiwonge Phiri",
-    member3_name: "Kondwani Mwale",
-    member4_name: "Mercy Chirwa",
-    mentor_name: "Demo Mentor (Test)",
-    ...drive("villagevolt"),
-    demo_video_url: yt("ngk7VVyveu8"),
-    demo_video_short_url: null,
-    github_url: null,
-    live_demo_url: null,
-    linkedin_post_url: "https://www.linkedin.com/posts/dua-sample-villagevolt",
+      "Before the event: one team member owned the sensor. Built during the event: the firmware, the case design, the logging and a parts list priced from two suppliers.",
+    technologies_used: "Microcontroller, CO2 sensor, 3D-printed case, C++",
+    member1_name: "Arjun Example",
+    member2_name: "Sara Example",
+    member3_name: "Kenji Example",
+    member4_name: "Lucia Example",
+  },
+  {
+    project_name: "Repro (Sample)",
+    team_name: "Works On My Machine",
+    solo_or_team: "Solo",
+    team_size: 1,
+    challenge_track: "Developer Tools",
+    problem_brief: "4 · Cut the time it takes to report a bug well",
+    project_category: "Bug report recorder",
+    customer_type: "Organizations",
+    region: "South America",
+    country: "Brazil",
+    focus_area: "Developer Experience",
+    impact_focus: "Saves time",
+    solution_stage: "MVP / Pilot",
+    area_of_specification: "Technology",
+    applies_ai: "No",
+    target_region: "Small web teams",
+    core_problem: "Bug reports arrive without the steps needed to reproduce them",
+    problem_statement:
+      "A tester writes \"checkout is broken\" and a developer spends an hour finding out how. The details that matter, such as what was clicked, what the page requested and what failed, are gone by the time anyone asks.",
+    project_description_summary:
+      "A browser extension that turns the last sixty seconds into a ready-to-file bug report.",
+    project_description:
+      "Repro keeps a rolling record of clicks, page changes and failed requests in the browser. When something breaks, one button produces a report with numbered steps and the failing request.\n\nNothing leaves the browser until the tester presses the button, and form values are left out of the record.",
+    disclosure_statement:
+      "Before the event: nothing. Built during the event: the extension, the recorder and the report format. Tried on two open source web apps.",
+    technologies_used: "TypeScript, browser extension APIs",
+    member1_name: "Rafael Example",
+    live_demo_url: "https://example.org/samples/repro/live",
+  },
+  {
+    project_name: "Pocket Tutor (Sample)",
+    team_name: "Offline First",
+    solo_or_team: "Team",
+    team_size: 3,
+    challenge_track: "Social Good",
+    problem_brief: "3 · A study tool that still works offline",
+    project_category: "Offline revision cards",
+    customer_type: "Individuals",
+    region: "Africa",
+    country: "Kenya",
+    focus_area: "Education",
+    impact_focus: "Improves access, Saves money",
+    solution_stage: "Prototype",
+    area_of_specification: "Design & Usability",
+    applies_ai: "No",
+    target_region: "Students with shared or occasional internet access",
+    core_problem: "Revision apps stop working the moment the connection drops",
+    problem_statement:
+      "Many students share a phone or have data for only part of the week. Most study apps load their content from a server every time, so a lost connection means a lost evening of revision.",
+    project_description_summary:
+      "Revision cards that download once and work for the rest of the term without a connection.",
+    project_description:
+      "Pocket Tutor packs a term of revision cards into one small download. After that it runs entirely on the phone and schedules cards so the ones a student gets wrong come back sooner.\n\nTeachers write card sets in a spreadsheet and share them as a single file, which can be passed from phone to phone.",
+    disclosure_statement:
+      "Before the event: the spaced-repetition schedule is a published method. Built during the event: the app, the card format and a sample set of forty cards.",
+    technologies_used: "Progressive web app, local storage, TypeScript",
+    member1_name: "Wanjiru Example",
+    member2_name: "Samuel Example",
+    member3_name: "Grace Example",
   },
 ];
 
 // The one pre-filled score, so the dashboard shows a "Scored" row and the
-// submission page shows Update Score. 1–5 per criterion with one sentence of
-// evidence each (Judge Handbook §8, §13); totals 70 out of 100.
+// submission page shows Update Score. Totals 70 out of 100.
 const SAMPLE_SCORE = {
-  project_name: "FairShare Bills (Sample)",
+  project_name: "ShiftBoard (Sample)",
   impact: 4,
   impact_evidence:
-    "Impact (4): estimates 20,000 Detroit households capped at 6% of income, from ACS and LIHEAP data.",
+    "Impact (4): tested with six volunteers at one food bank; unfilled shifts fell from nine a week to two.",
   innovation: 3,
   innovation_evidence:
-    "Innovation (3): PIPPs exist elsewhere; auto-enrolment through SNAP and LIHEAP data is the new combination.",
+    "Innovation (3): shift boards exist; confirming by text with no account is the new part.",
   sustainability: 4,
   sustainability_evidence:
-    "Sustainability (4): funded through the rate case rather than a grant, with weatherization lowering bills over time.",
+    "Sustainability (4): text messages are the only running cost and the organizer can maintain it alone.",
   feasibility: 3,
   feasibility_evidence:
-    "Feasibility (3): names the decision-maker (Michigan PSC) and a cost model, but the data-sharing agreement is untested.",
+    "Feasibility (3): the demo ran end to end, but the reminder texts were sent by hand.",
   scalability: 3,
   scalability_evidence:
-    "Scalability (3): could extend to other states with PIPP rules, but no plan beyond Detroit.",
-};
-
-// Which problem brief each sample worked on (0020). Keep these in step with
-// PROBLEM_BRIEFS in src/lib/hackathon.ts.
-const OWN = "Own problem (not one of the briefs)";
-const BRIEFS = {
-  "SunCold Hub (Sample)": "1 · Cold storage for clinics without reliable power",
-  "GridSense (Sample)": "2 · Forecast demand before building a mini-grid",
-  "PayDay Power (Sample)": OWN,
-  "ClinicLight (Sample)": "4 · Keep a neighbourhood running through an outage",
-  "FairShare Bills (Sample)": "3 · Lower energy bills for renters",
-  "VillageVolt Co-op (Sample)": OWN,
+    "Scalability (3): could serve other food banks, but each one needs manual setup.",
 };
 
 const args = parseArgs(process.argv.slice(2));
 const cleanup = args.cleanup === true;
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key)
-  die("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY — pass --env-file=.env.local");
+const pool = connect();
+const eventId = await currentEventId(pool);
 
-const supabase = createClient(url, key, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-// Paginated, like findAuthUserIdByEmail in src/app/admin/actions.ts.
-async function findAuthUserId(email) {
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) die(`listUsers: ${error.message}`);
-    const hit = data.users.find((u) => u.email?.toLowerCase() === email);
-    if (hit) return hit.id;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
-
-async function removeSampleSubmissions() {
-  // Scores on these rows go with them (on delete cascade).
-  const { data, error } = await supabase
-    .from("submissions")
-    .delete()
-    .eq("review_note", DEMO_TAG)
-    .select("project_name");
-  if (error) die(`delete submissions: ${error.message}`);
-  return data ?? [];
+async function removeSamples() {
+  // Scores and recusals on these rows go with them (on delete cascade).
+  const { rowCount } = await pool.query(
+    "delete from submissions where event_id = $1 and review_note = $2",
+    [eventId, DEMO_TAG],
+  );
+  return rowCount ?? 0;
 }
 
 if (cleanup) {
-  const removed = await removeSampleSubmissions();
-  console.log(`✓ Removed ${removed.length} sample submission(s)`);
+  console.log(`✓ Removed ${await removeSamples()} sample submission(s)`);
   for (const a of ACCOUNTS) {
-    const id = await findAuthUserId(a.email);
-    // Deleting the auth user cascades to the judges row and its scores.
-    if (id) {
-      const { error } = await supabase.auth.admin.deleteUser(id);
-      if (error) die(`delete ${a.email}: ${error.message}`);
-    }
-    await supabase.from("judges").delete().eq("email", a.email);
-    console.log(id ? `✓ Removed ${a.email}` : `· ${a.email} wasn't there`);
+    const { rowCount } = await pool.query(
+      "delete from judges where event_id = $1 and lower(email) = $2",
+      [eventId, a.email],
+    );
+    console.log(rowCount ? `✓ Removed ${a.email}` : `· ${a.email} wasn't there`);
   }
+  await pool.end();
   process.exit(0);
 }
 
@@ -363,70 +252,69 @@ if (cleanup) {
 const created = [];
 for (const a of ACCOUNTS) {
   const password = String(args[`${a.key}-password`] ?? "") || generatePassword();
-  if (password.length < 6) die(`--${a.key}-password must be at least 6 characters`);
-
-  let authUserId = await findAuthUserId(a.email);
-  if (!authUserId) {
-    const { data, error } = await supabase.auth.admin.createUser({
-      email: a.email,
-      email_confirm: true,
-    });
-    if (error || !data?.user?.id) die(`create ${a.email}: ${error?.message ?? "unknown"}`);
-    authUserId = data.user.id;
-  }
-  const { error: pwdErr } = await supabase.auth.admin.updateUserById(authUserId, {
-    password,
-    email_confirm: true,
-  });
-  if (pwdErr) die(`set password for ${a.email}: ${pwdErr.message}`);
-
-  const { data: judge, error } = await supabase
-    .from("judges")
-    .upsert(
-      { auth_user_id: authUserId, name: a.name, email: a.email, role: a.role, is_active: true },
-      { onConflict: "email" },
-    )
-    .select("id")
-    .single();
-  if (error) die(`roster ${a.email}: ${error.message}`);
-  created.push({ ...a, password, judgeId: judge.id });
+  if (password.length < 8) die(`--${a.key}-password must be at least 8 characters`);
+  const { rows } = await pool.query(
+    `insert into judges (event_id, name, email, role, is_active, password_hash)
+     values ($1, $2, $3, $4, true, $5)
+     on conflict (event_id, lower(email))
+     do update set name = excluded.name, role = excluded.role, is_active = true,
+                   password_hash = excluded.password_hash
+     returning id`,
+    [eventId, a.name, a.email, a.role, await hashPassword(password)],
+  );
+  created.push({ ...a, password, judgeId: rows[0].id });
 }
 
 // ── submissions ──────────────────────────────────────────────────
-await removeSampleSubmissions();
-const rows = SAMPLES.map((s, i) => ({
-  ...s,
-  member1_email: `sample.team${i + 1}@example.com`,
-  problem_brief: BRIEFS[s.project_name],
-  is_submission_complete: true,
-  needs_review: false,
-  hidden_from_judges: false,
-  review_note: DEMO_TAG,
-}));
-const { data: inserted, error: insErr } = await supabase
-  .from("submissions")
-  .insert(rows)
-  .select("id, project_name");
-if (insErr) {
-  if (insErr.code === "23505")
-    die(`a submission with one of these names already exists and isn't a sample: ${insErr.message}`);
-  die(`insert submissions: ${insErr.message}`);
+await removeSamples();
+const inserted = [];
+for (const [i, s] of SAMPLES.entries()) {
+  const slug = s.project_name.replace(/ \(Sample\)$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  try {
+    const row = await insertRow(
+      pool,
+      "submissions",
+      {
+        ...links(slug),
+        ...s,
+        event_id: eventId,
+        member1_email: `sample.team${i + 1}@example.org`,
+        mentor_name: "Demo Mentor (Test)",
+        is_submission_complete: true,
+        needs_review: false,
+        hidden_from_judges: false,
+        review_note: DEMO_TAG,
+      },
+      "id, project_name",
+    );
+    inserted.push(row);
+  } catch (e) {
+    if (e.code === "23505")
+      die(`"${s.project_name}" already exists and isn't a sample — rename or remove it first`);
+    throw e;
+  }
 }
 console.log(`✓ Seeded ${inserted.length} sample submissions`);
 
 // ── one pre-filled score ─────────────────────────────────────────
 const judge = created.find((c) => c.key === "judge");
 const target = inserted.find((s) => s.project_name === SAMPLE_SCORE.project_name);
-const { project_name: _, ...scoreValues } = SAMPLE_SCORE;
-const { error: scoreErr } = await supabase
-  .from("scores")
-  .upsert(
-    { judge_id: judge.judgeId, submission_id: target.id, ...scoreValues },
-    { onConflict: "judge_id,submission_id" },
-  );
-if (scoreErr) die(`seed score: ${scoreErr.message}`);
+const { project_name: _name, ...scoreValues } = SAMPLE_SCORE;
+await insertRow(pool, "scores", {
+  event_id: eventId,
+  judge_id: judge.judgeId,
+  submission_id: target.id,
+  ...scoreValues,
+});
 console.log(`✓ Scored "${SAMPLE_SCORE.project_name}" as ${judge.name}`);
+
+if (args["keep-phase"] !== true) {
+  await pool.query("update events set phase = 'judging', updated_at = now() where id = $1", [eventId]);
+  console.log("✓ Event moved to the judging phase");
+}
+
+await pool.end();
 
 console.log("\nSign in at /judge (passwords shown once):");
 for (const c of created) console.log(`  ${c.role.padEnd(6)}  ${c.email}  ${c.password}`);
-console.log("\nRemove it all with: node --env-file=.env.local scripts/demo-data.mjs --cleanup");
+console.log("\nRemove it all with: npm run db:seed -- --cleanup");

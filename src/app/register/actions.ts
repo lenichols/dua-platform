@@ -1,7 +1,13 @@
 "use server";
 
 import { registrationSchema } from "@/lib/registration-schema";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentEvent } from "@/server/event";
+import { registrationAccepting } from "@/server/policy";
+import { createRegistration } from "@/server/registrations";
+
+const CLOSED = "Registration is closed — the hackathon is already underway.";
+const DUPLICATE =
+  "You're already registered with that email — see you at the hackathon!";
 
 export type RegisterResult =
   | { ok: true; id: string }
@@ -11,22 +17,10 @@ export async function registerParticipant(
   _prev: RegisterResult | null,
   form: FormData,
 ): Promise<RegisterResult> {
-  const admin = createAdminClient();
-
   // Registration needs the admin switch on, and closes outright once the
   // event moves into judging/results.
-  const { data: state } = await admin
-    .from("event_state")
-    .select("phase, registration_open")
-    .eq("id", 1)
-    .maybeSingle();
-  const phase = (state?.phase ?? "submissions").toString().trim().toLowerCase();
-  if (phase === "judging" || phase === "results" || state?.registration_open !== true) {
-    return {
-      ok: false,
-      error: "Registration is closed — the hackathon is already underway.",
-    };
-  }
+  const event = await getCurrentEvent();
+  if (!registrationAccepting(event)) return { ok: false, error: CLOSED };
 
   const raw = Object.fromEntries(form.entries());
   const parsed = registrationSchema.safeParse(raw);
@@ -41,24 +35,8 @@ export async function registerParticipant(
     };
   }
 
-  // Service-role insert — RLS denies all direct public access to registrations,
-  // so PII stays admin-only.
-  const { data, error } = await admin
-    .from("registrations")
-    .insert({ ...parsed.data })
-    .select("id")
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        ok: false,
-        error:
-          "You're already registered with that email — see you at the hackathon!",
-      };
-    }
-    return { ok: false, error: error.message };
-  }
-
-  return { ok: true, id: data.id };
+  // Personal details: only admins can read these back.
+  const result = await createRegistration(event, "participant", parsed.data);
+  if (result.ok) return { ok: true, id: result.id };
+  return { ok: false, error: result.reason === "duplicate" ? DUPLICATE : CLOSED };
 }

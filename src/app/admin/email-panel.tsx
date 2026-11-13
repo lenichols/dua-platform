@@ -12,7 +12,7 @@ import {
   AUDIENCES,
   isAdminAudience,
   type Audience,
-} from "@/lib/campaigns";
+} from "@/lib/campaign-audiences";
 
 export type CampaignRow = {
   id: string;

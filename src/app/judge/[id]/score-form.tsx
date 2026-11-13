@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { saveScore } from "../actions";
 import {
   RUBRIC,
   SCALE_MAX,
@@ -30,16 +30,13 @@ const LEVEL_LABELS: Record<number, string> = {
 
 export function ScoreForm({
   submissionId,
-  judgeId,
   existing,
 }: {
   submissionId: string;
-  judgeId: string;
   existing: ExistingScore | null;
 }) {
   const router = useRouter();
-  // A score saved on an earlier rubric has no sustainability score; start fresh.
-  const prior = existing?.sustainability != null ? existing : null;
+  const prior = existing;
   const [scores, setScores] = useState<Scores>(
     () =>
       Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.[c.key] ?? null])) as Scores,
@@ -73,21 +70,17 @@ export function ScoreForm({
     }
     setSaving(true);
     setErr(null);
-    const row: Record<string, string | number> = {
-      judge_id: judgeId,
-      submission_id: submissionId,
-    };
+    const row: Record<string, string | number> = {};
     for (const c of RUBRIC) {
       row[c.key] = scores[c.key]!;
       row[evidenceKey(c.key)] = evidence[evidenceKey(c.key)].trim();
     }
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("scores")
-      .upsert(row, { onConflict: "judge_id,submission_id" });
+    // The server works out who the judge is from the session and re-checks
+    // every rule; nothing here is trusted.
+    const result = await saveScore(submissionId, row);
     setSaving(false);
-    if (error) {
-      setErr(error.message);
+    if (!result.ok) {
+      setErr(result.error);
       return;
     }
     router.push("/judge/dashboard");

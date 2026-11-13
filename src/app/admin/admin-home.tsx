@@ -94,8 +94,8 @@ type Submission = {
 type SubmissionDetailField =
   | "review_note" | "project_category" | "problem_brief"
   | "project_description_summary" | "project_description"
-  | "problem_statement" | "core_energy_problem" | "disclosure_statement"
-  | "technologies_used" | "energy_sector" | "impact_focus" | "solution_stage"
+  | "problem_statement" | "core_problem" | "disclosure_statement"
+  | "technologies_used" | "focus_area" | "impact_focus" | "solution_stage"
   | "customer_type" | "region" | "target_region" | "area_of_specification"
   | "applies_ai" | "team_size" | "github_url" | "live_demo_url"
   | "demo_video_url" | "demo_video_short_url" | "pitch_deck_url" | "summary_url"
@@ -576,7 +576,7 @@ function HomePanel({
         }
         if (r.persisted !== p) {
           setPhaseErr(
-            `DB returned phase="${r.persisted}" after writing "${p}" (rows affected: ${r.rowsAffected}). Use Supabase SQL editor: UPDATE public.event_state SET phase='${p}' WHERE id=1;`,
+            `The database shows phase "${r.persisted}" after writing "${p}" (rows changed: ${r.rowsAffected}). Reload and try again.`,
           );
           return;
         }
@@ -1459,7 +1459,7 @@ function ToolHeading({ title, hint }: { title: string; hint: string }) {
 
 function SharedPasswordTool() {
   const [pwdState, setPwdState] = useState<
-    | { ok: true; updated: number; failed: number; details: string[] }
+    | { ok: true; updated: number }
     | { ok: false; error: string }
     | null
   >(null);
@@ -1479,7 +1479,7 @@ function SharedPasswordTool() {
     <form id="pwd-form" action={onSetPassword} className="space-y-3">
       <ToolHeading
         title="Shared sign-in password"
-        hint="Bypasses magic-link emails"
+        hint="One password for the whole panel"
       />
       <p className="text-xs text-dust">
         Sets one password on every <strong className="text-bone">active</strong>{" "}
@@ -1491,7 +1491,7 @@ function SharedPasswordTool() {
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[220px] flex-1">
           <label className="field-label" htmlFor="pwd-password">
-            Password (min 6 chars)
+            Password (min 8 chars)
           </label>
           <input
             id="pwd-password"
@@ -1511,27 +1511,9 @@ function SharedPasswordTool() {
       {pwdState && pwdState.ok && (
         <div className="space-y-2">
           <div className="rounded-md border border-jade/60 bg-jade/10 px-3 py-2 text-xs text-jade">
-            ✓ Updated {pwdState.updated} user{pwdState.updated === 1 ? "" : "s"}
-            {pwdState.failed > 0 && ` · ${pwdState.failed} failed`}. Share the
-            password now — it&apos;s set.
+            ✓ Updated {pwdState.updated} user{pwdState.updated === 1 ? "" : "s"}.
+            Share the password now — it&apos;s set.
           </div>
-          {pwdState.failed > 0 && pwdState.details.length > 0 && (
-            <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-[0.7rem] text-blood">
-              <div className="mb-1 font-semibold uppercase tracking-wider">
-                Failures:
-              </div>
-              <ul className="list-disc space-y-0.5 pl-4">
-                {pwdState.details.map((d, i) => (
-                  <li key={i}>{d}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-      {pwdState && !pwdState.ok && (
-        <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
-          {pwdState.error}
         </div>
       )}
     </form>
@@ -1640,14 +1622,21 @@ function TestAccountTool() {
 
 type DiagOk = {
   ok: true;
-  authUserExists: boolean;
-  authUserId: string | null;
-  emailConfirmedAt: string | null;
-  hasJudgeRow: boolean;
+  onRoster: boolean;
   isActive: boolean | null;
-  signInResult: "success" | "failed";
-  signInError: string | null;
+  hasPassword: boolean;
+  passwordMatches: boolean;
+  lockedOut: boolean;
+  wouldSignIn: boolean;
 };
+
+function DiagLine({ label, good, value }: { label: string; good: boolean; value: string }) {
+  return (
+    <div>
+      {label}: <span className={good ? "text-jade" : "text-blood"}>{value}</span>
+    </div>
+  );
+}
 
 function DiagnoseTool() {
   const [diagState, setDiagState] = useState<
@@ -1673,10 +1662,9 @@ function DiagnoseTool() {
         hint={"For debugging “wrong email or password”"}
       />
       <p className="text-xs text-dust">
-        Enter a judge&apos;s email + the password you expect. Returns whether
-        the auth user exists, whether their email is confirmed, whether
-        they&apos;re on the roster, and the exact Supabase error from a real
-        sign-in attempt.
+        Enter a judge&apos;s email + the password you expect. Shows whether
+        they&apos;re on the roster, whether they&apos;re active, whether a
+        password has been set, and whether this one matches.
       </p>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
         <div>
@@ -1689,7 +1677,7 @@ function DiagnoseTool() {
             type="email"
             required
             className="field-input mt-1"
-            placeholder="esco@algorythm.org"
+            placeholder="judge@example.org"
           />
         </div>
         <div>
@@ -1714,47 +1702,24 @@ function DiagnoseTool() {
       </div>
       {diagState && diagState.ok && (
         <div className="rounded-md border border-line bg-ink-4 px-3 py-2 font-mono text-[0.7rem] text-bone">
-          <div>
-            auth user exists:{" "}
-            <span
-              className={diagState.authUserExists ? "text-jade" : "text-blood"}
-            >
-              {String(diagState.authUserExists)}
-            </span>
-          </div>
-          <div>auth user id: {diagState.authUserId ?? "—"}</div>
-          <div>
-            email_confirmed_at:{" "}
-            <span
-              className={
-                diagState.emailConfirmedAt ? "text-jade" : "text-blood"
-              }
-            >
-              {diagState.emailConfirmedAt ?? "(null — NOT confirmed)"}
-            </span>
-          </div>
-          <div>
-            judge row exists:{" "}
-            <span className={diagState.hasJudgeRow ? "text-jade" : "text-blood"}>
-              {String(diagState.hasJudgeRow)}
-            </span>{" "}
-            · is_active: {String(diagState.isActive)}
-          </div>
-          <div>
-            sign-in result:{" "}
-            <span
-              className={
-                diagState.signInResult === "success"
-                  ? "text-jade"
-                  : "text-blood"
-              }
-            >
-              {diagState.signInResult}
-            </span>
-          </div>
-          {diagState.signInError && (
-            <div className="text-blood">error: {diagState.signInError}</div>
-          )}
+          <DiagLine label="on the roster" good={diagState.onRoster} value={String(diagState.onRoster)} />
+          <DiagLine
+            label="active"
+            good={diagState.isActive === true}
+            value={diagState.isActive === null ? "—" : String(diagState.isActive)}
+          />
+          <DiagLine label="password set" good={diagState.hasPassword} value={String(diagState.hasPassword)} />
+          <DiagLine label="password matches" good={diagState.passwordMatches} value={String(diagState.passwordMatches)} />
+          <DiagLine
+            label="locked out after failed attempts"
+            good={!diagState.lockedOut}
+            value={String(diagState.lockedOut)}
+          />
+          <DiagLine
+            label="sign-in result"
+            good={diagState.wouldSignIn}
+            value={diagState.wouldSignIn ? "success" : "failed"}
+          />
         </div>
       )}
       {diagState && !diagState.ok && (
@@ -2681,10 +2646,10 @@ function SubmissionModal({
               <Detail label="Problem brief" value={text(s.problem_brief)} />
               <Detail label="Track" value={text(s.challenge_track)} />
               <Detail label="Category" value={text(s.project_category)} />
-              <Detail label="Energy sector" value={text(s.energy_sector)} />
+              <Detail label="Focus area" value={text(s.focus_area)} />
               <Detail label="Impact focus" value={text(s.impact_focus)} />
               <Detail label="Solution stage" value={text(s.solution_stage)} />
-              <Detail label="Customer type" value={text(s.customer_type)} />
+              <Detail label="Who it's for" value={text(s.customer_type)} />
               <Detail label="Region" value={text(s.region)} />
               <Detail label="Target region" value={text(s.target_region)} />
               <Detail label="Area of specification" value={text(s.area_of_specification)} />
@@ -2693,7 +2658,7 @@ function SubmissionModal({
             </div>
           </section>
 
-          {longText("Core energy problem", s.core_energy_problem)}
+          {longText("Core problem", s.core_problem)}
           {longText("Problem statement", s.problem_statement)}
           {longText("Description", s.project_description)}
           {longText("Disclosure: before vs. during the event", s.disclosure_statement)}

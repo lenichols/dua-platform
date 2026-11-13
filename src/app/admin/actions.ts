@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -14,7 +13,30 @@ import {
   requireWriteAccess,
   sessionLabel,
 } from "./auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  getCurrentEvent,
+  setEventPhase,
+  setRegistrationOpen as setRegOpen,
+  setSubmissionsOpen as setSubsOpen,
+} from "@/server/event";
+import {
+  MIN_JUDGE_PASSWORD_LENGTH,
+  checkJudgeSignIn,
+  deactivateJudge,
+  setSharedJudgePassword as setSharedPassword,
+  upsertJudge,
+} from "@/server/judges";
+import {
+  LOCKED_OUT_MESSAGE,
+  clearFailures,
+  isLockedOut,
+  recordFailure,
+  signInKey,
+} from "@/server/rate-limit";
+import { deleteRegistration as removeRegistration } from "@/server/registrations";
+import { computeAndLockResults, recordTieBreak as saveTieBreak } from "@/server/results";
+import { setSubmissionHidden } from "@/server/submissions";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES, saveUpload } from "@/server/uploads";
 import {
   countOtherActiveOwners,
   countOtherActiveSuperAdmins,
@@ -51,17 +73,14 @@ import {
   parseAudience,
 } from "@/lib/campaigns";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
-import {
-  drawBubble,
-  monteCarloTop,
-  type ScoreRow,
-  type SubmissionMeta,
-} from "@/lib/monte-carlo";
 
 // ── sign in / out ────────────────────────────────────────────────
 export async function signInAdmin(_: unknown, form: FormData) {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const pw = String(form.get("password") ?? "");
+
+  const key = signInKey("admin", email);
+  if (await isLockedOut(key)) return { ok: false as const, error: LOCKED_OUT_MESSAGE };
 
   // Individual accounts first, so a teammate's own role is what they get.
   if (email) {
@@ -75,6 +94,7 @@ export async function signInAdmin(_: unknown, form: FormData) {
             error: "That account has been deactivated. Ask an owner to re-enable it.",
           };
         }
+        await clearFailures(key);
         await touchAdminLastLogin(user.id);
         await issueAdminCookieForUser(user.id);
         redirect("/admin");
@@ -87,13 +107,14 @@ export async function signInAdmin(_: unknown, form: FormData) {
   }
 
   // Fall back to the shared ADMIN_PASSWORD (owner-level break-glass). This is
-  // how the first account gets created, and how you get in if the
-  // admin_users migration hasn't been run yet.
+  // how the first account gets created.
   if (checkAdminPassword(pw)) {
+    await clearFailures(key);
     await issueAdminCookie();
     redirect("/admin");
   }
 
+  await recordFailure(key);
   return { ok: false as const, error: "Wrong email or password." };
 }
 
@@ -111,60 +132,37 @@ export async function setPhase(
 > {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
 
-  // Update + return the affected row(s) so we can verify the write actually
-  // persisted (not silently no-op'd by RLS or row mismatch).
-  const { data: updated, error } = await admin
-    .from("event_state")
-    .update({
-      phase,
-      closed_at: phase === "results" ? new Date().toISOString() : null,
-    })
-    .eq("id", 1)
-    .select("phase");
-
-  if (error) {
-    console.error("setPhase: update failed", error);
-    return { ok: false, error: `DB error: ${error.message}` };
+  try {
+    const event = await getCurrentEvent();
+    // The returned row is what's in the database now, so the panel can confirm
+    // the change took.
+    const updated = await setEventPhase(event.id, phase);
+    revalidatePath("/", "layout");
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      persisted: updated?.phase ?? "(unknown)",
+      rowsAffected: updated ? 1 : 0,
+    };
+  } catch (e) {
+    console.error("setPhase failed", e);
+    return { ok: false, error: `Database error: ${errorMessage(e)}` };
   }
+}
 
-  const rowsAffected = updated?.length ?? 0;
-  if (rowsAffected === 0) {
-    // No row with id=1 — try to insert one. The schema has `default 1` and
-    // a check constraint, so this single-row table may need bootstrapping
-    // in some environments.
-    const { error: insErr } = await admin.from("event_state").upsert(
-      {
-        id: 1,
-        phase,
-        closed_at: phase === "results" ? new Date().toISOString() : null,
-      },
-      { onConflict: "id" },
-    );
-    if (insErr) {
-      console.error("setPhase: upsert failed", insErr);
-      return {
-        ok: false,
-        error: `Update affected 0 rows; upsert also failed: ${insErr.message}`,
-      };
-    }
+const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** Runs a write and reports a failure as a message instead of throwing. */
+async function attempt(
+  work: () => Promise<void>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await work();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: errorMessage(e) };
   }
-
-  // Read back to confirm what's actually in the DB now.
-  const { data: after } = await admin
-    .from("event_state")
-    .select("phase")
-    .eq("id", 1)
-    .maybeSingle();
-
-  revalidatePath("/", "layout");
-  revalidatePath("/admin");
-  return {
-    ok: true,
-    persisted: String(after?.phase ?? "(unknown)"),
-    rowsAffected,
-  };
 }
 
 // ── judge / mentor roster ────────────────────────────────────────
@@ -177,60 +175,12 @@ export async function addJudge(_: unknown, form: FormData) {
   const role = roleRaw === "mentor" ? "mentor" : "judge";
   if (!name || !email) return { ok: false as const, error: "Name and email required" };
 
-  const admin = createAdminClient();
-
-  // Create auth user (passwordless — magic links only)
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email,
-    email_confirm: true,
+  // No password yet: they can't sign in until the shared password is set.
+  const event = await getCurrentEvent();
+  const res = await attempt(async () => {
+    await upsertJudge(event.id, { name, email, role });
   });
-  let authUserId = created?.user?.id;
-  if (createErr && !authUserId) {
-    // Maybe already exists — look them up
-    const { data: found } = await admin.auth.admin.listUsers();
-    authUserId = found?.users.find((u) => u.email?.toLowerCase() === email)?.id;
-    if (!authUserId)
-      return { ok: false as const, error: `Couldn't create ${role}: ${createErr.message}` };
-  }
-
-  const { error } = await admin.from("judges").upsert(
-    {
-      auth_user_id: authUserId!,
-      name,
-      email,
-      role,
-      is_active: true,
-    },
-    { onConflict: "email" },
-  );
-  if (error) {
-    // Likely cause: 0002_mentors migration not applied yet, so `role` column
-    // doesn't exist. Fall back to inserting without `role` — but only if
-    // we're trying to add a regular judge. Mentors require the migration.
-    const isMissingColumn = /column .*role.* does not exist/i.test(error.message);
-    if (isMissingColumn && role === "judge") {
-      const retry = await admin.from("judges").upsert(
-        {
-          auth_user_id: authUserId!,
-          name,
-          email,
-          is_active: true,
-        },
-        { onConflict: "email" },
-      );
-      if (retry.error) return { ok: false as const, error: retry.error.message };
-      revalidatePath("/admin");
-      return { ok: true as const };
-    }
-    if (isMissingColumn && role === "mentor") {
-      return {
-        ok: false as const,
-        error:
-          "Mentors require the 0002_mentors migration. Run supabase/migrations/0002_mentors.sql in the Supabase SQL Editor first.",
-      };
-    }
-    return { ok: false as const, error: error.message };
-  }
+  if (!res.ok) return { ok: false as const, error: res.error };
   revalidatePath("/admin");
   return { ok: true as const };
 }
@@ -240,14 +190,10 @@ export async function removeJudge(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("judges")
-    .update({ is_active: false })
-    .eq("id", judgeId);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() => deactivateJudge(event.id, judgeId));
+  if (res.ok) revalidatePath("/admin");
+  return res;
 }
 
 // ── registrations ────────────────────────────────────────────────
@@ -256,11 +202,10 @@ export async function deleteRegistration(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin.from("registrations").delete().eq("id", id);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() => removeRegistration(event.id, id));
+  if (res.ok) revalidatePath("/admin");
+  return res;
 }
 
 // ── registration open/close (participants + mentors) ────────────
@@ -269,15 +214,13 @@ export async function setRegistrationOpen(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("event_state")
-    .update({ registration_open: open })
-    .eq("id", 1);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/", "layout");
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() => setRegOpen(event.id, open));
+  if (res.ok) {
+    revalidatePath("/", "layout");
+    revalidatePath("/admin");
+  }
+  return res;
 }
 
 // ── submission form open/close ──────────────────────────────────
@@ -286,92 +229,37 @@ export async function setSubmissionsOpen(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("event_state")
-    .update({ submissions_open: open })
-    .eq("id", 1);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/", "layout");
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() => setSubsOpen(event.id, open));
+  if (res.ok) {
+    revalidatePath("/", "layout");
+    revalidatePath("/admin");
+  }
+  return res;
 }
 
-// ── shared password for all judges (bypasses email rate limits) ──
+// ── shared password for all judges ───────────────────────────────
 export async function setSharedJudgePassword(
   _: unknown,
   form: FormData,
-): Promise<
-  | { ok: true; updated: number; failed: number; details: string[] }
-  | { ok: false; error: string }
-> {
+): Promise<{ ok: true; updated: number } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
   const password = String(form.get("password") ?? "").trim();
-  if (password.length < 6) {
-    return { ok: false, error: "Password must be at least 6 characters" };
+  if (password.length < MIN_JUDGE_PASSWORD_LENGTH) {
+    return {
+      ok: false,
+      error: `Password must be at least ${MIN_JUDGE_PASSWORD_LENGTH} characters`,
+    };
   }
-  const admin = createAdminClient();
-  const { data: judges, error } = await admin
-    .from("judges")
-    .select("id, auth_user_id, email")
-    .eq("is_active", true);
-  if (error) return { ok: false, error: error.message };
-
-  let updated = 0;
-  let failed = 0;
-  const details: string[] = [];
-
-  for (const j of judges ?? []) {
-    const email = String(j.email ?? "").toLowerCase();
-    if (!email) {
-      failed++;
-      details.push(`(no email on judge ${j.id})`);
-      continue;
-    }
-
-    // Look up auth user by email — more reliable than the stored
-    // auth_user_id, which can be null or stale.
-    let authId = await findAuthUserIdByEmail(admin, email);
-
-    // If still no auth user, create one
-    if (!authId) {
-      const { data: created, error: createErr } =
-        await admin.auth.admin.createUser({
-          email,
-          email_confirm: true,
-          password,
-        });
-      if (createErr || !created?.user?.id) {
-        failed++;
-        details.push(`${email}: couldn't create auth user (${createErr?.message ?? "unknown"})`);
-        continue;
-      }
-      authId = created.user.id;
-    } else {
-      // Existing auth user — explicitly set password AND re-confirm email
-      const { error: updErr } = await admin.auth.admin.updateUserById(authId, {
-        password,
-        email_confirm: true,
-      });
-      if (updErr) {
-        failed++;
-        details.push(`${email}: ${updErr.message}`);
-        continue;
-      }
-    }
-
-    // Make sure judges.auth_user_id matches what's in auth.users
-    if (j.auth_user_id !== authId) {
-      await admin
-        .from("judges")
-        .update({ auth_user_id: authId })
-        .eq("id", j.id);
-    }
-    updated++;
+  try {
+    const event = await getCurrentEvent();
+    const { updated } = await setSharedPassword(event.id, password);
+    revalidatePath("/admin");
+    return { ok: true, updated };
+  } catch (e) {
+    return { ok: false, error: errorMessage(e) };
   }
-  revalidatePath("/admin");
-  return { ok: true, updated, failed, details };
 }
 
 // ── diagnose sign-in — pinpoints exactly why a judge can't log in ──
@@ -381,13 +269,12 @@ export async function diagnoseJudgeSignIn(
 ): Promise<
   | {
       ok: true;
-      authUserExists: boolean;
-      authUserId: string | null;
-      emailConfirmedAt: string | null;
-      hasJudgeRow: boolean;
+      onRoster: boolean;
       isActive: boolean | null;
-      signInResult: "success" | "failed";
-      signInError: string | null;
+      hasPassword: boolean;
+      passwordMatches: boolean;
+      lockedOut: boolean;
+      wouldSignIn: boolean;
     }
   | { ok: false; error: string }
 > {
@@ -397,81 +284,22 @@ export async function diagnoseJudgeSignIn(
   const password = String(form.get("password") ?? "");
   if (!email || !password) return { ok: false, error: "Email + password required" };
 
-  const admin = createAdminClient();
-
-  // 1. Find auth user
-  let authUserExists = false;
-  let authUserId: string | null = null;
-  let emailConfirmedAt: string | null = null;
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error || !data) break;
-    const hit = data.users.find((u) => u.email?.toLowerCase() === email);
-    if (hit) {
-      authUserExists = true;
-      authUserId = hit.id;
-      emailConfirmedAt = hit.email_confirmed_at ?? null;
-      break;
-    }
-    if (data.users.length < 200) break;
-  }
-
-  // 2. Find judges row
-  const { data: judgeRow } = await admin
-    .from("judges")
-    .select("id, is_active")
-    .eq("email", email)
-    .maybeSingle();
-  const hasJudgeRow = !!judgeRow;
-  const isActive = judgeRow?.is_active ?? null;
-
-  // 3. Attempt actual sign-in via the public anon client (the same path the
-  //    browser uses). This tells us exactly what Supabase says.
-  const anonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const { createClient: createAnonClient } = await import("@supabase/supabase-js");
-  const anon = createAnonClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, anonKey!);
-  const { data: signed, error: signErr } = await anon.auth.signInWithPassword({
-    email,
-    password,
-  });
-  const signInResult: "success" | "failed" = signed?.user ? "success" : "failed";
-
+  // The same check the sign-in page runs, with each step reported.
+  const event = await getCurrentEvent();
+  const check = await checkJudgeSignIn(event.id, email, password);
+  const lockedOut = await isLockedOut(signInKey("judge", email));
   return {
     ok: true,
-    authUserExists,
-    authUserId,
-    emailConfirmedAt,
-    hasJudgeRow,
-    isActive,
-    signInResult,
-    signInError: signErr?.message ?? null,
+    onRoster: check.onRoster,
+    isActive: check.isActive,
+    hasPassword: check.hasPassword,
+    passwordMatches: check.passwordMatches,
+    lockedOut,
+    wouldSignIn: !!check.judge && !lockedOut,
   };
 }
 
 // ── one-off test account with a known password ──────────────────
-
-// Paginated lookup — auth.admin.listUsers only returns 50/page, so a single
-// call misses users on later pages.
-async function findAuthUserIdByEmail(
-  admin: ReturnType<typeof createAdminClient>,
-  email: string,
-): Promise<string | null> {
-  const target = email.toLowerCase();
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({
-      page,
-      perPage: 200,
-    });
-    if (error || !data) return null;
-    const hit = data.users.find((u) => u.email?.toLowerCase() === target);
-    if (hit) return hit.id;
-    if (data.users.length < 200) return null; // last page
-  }
-  return null;
-}
-
 export async function createTestJudge(
   _: unknown,
   form: FormData,
@@ -485,62 +313,17 @@ export async function createTestJudge(
   const role = roleRaw === "mentor" ? "mentor" : "judge";
 
   if (!email) return { ok: false, error: "Email required" };
-  if (password.length < 6)
-    return { ok: false, error: "Password must be at least 6 characters" };
+  if (password.length < MIN_JUDGE_PASSWORD_LENGTH)
+    return {
+      ok: false,
+      error: `Password must be at least ${MIN_JUDGE_PASSWORD_LENGTH} characters`,
+    };
 
-  const admin = createAdminClient();
-
-  // Two-step: ensure auth user exists, then explicitly set password +
-  // email_confirm via updateUserById. More reliable than passing the password
-  // to createUser (which can silently no-op in some edge cases).
-  let authUserId = await findAuthUserIdByEmail(admin, email);
-  if (!authUserId) {
-    const { data: created, error: createErr } =
-      await admin.auth.admin.createUser({
-        email,
-        email_confirm: true,
-      });
-    if (createErr || !created?.user?.id) {
-      // Race: maybe it was created concurrently — retry lookup
-      const retryId = await findAuthUserIdByEmail(admin, email);
-      if (!retryId) {
-        console.error("createTestJudge: createUser failed", createErr);
-        return {
-          ok: false,
-          error: `Couldn't create auth user: ${createErr?.message ?? "unknown"}`,
-        };
-      }
-      authUserId = retryId;
-    } else {
-      authUserId = created.user.id;
-    }
-  }
-
-  const { error: pwdErr } = await admin.auth.admin.updateUserById(authUserId, {
-    password,
-    email_confirm: true,
+  const event = await getCurrentEvent();
+  const res = await attempt(async () => {
+    await upsertJudge(event.id, { name, email, role, password });
   });
-  if (pwdErr) {
-    console.error("createTestJudge: updateUserById failed", pwdErr);
-    return { ok: false, error: `Couldn't set password: ${pwdErr.message}` };
-  }
-
-  // Upsert into judges table (try with role; fall back if column missing)
-  const { error } = await admin.from("judges").upsert(
-    { auth_user_id: authUserId, name, email, role, is_active: true },
-    { onConflict: "email" },
-  );
-  if (error) {
-    if (/column .*role.* does not exist/i.test(error.message) && role === "judge") {
-      const retry = await admin.from("judges").upsert(
-        { auth_user_id: authUserId, name, email, is_active: true },
-        { onConflict: "email" },
-      );
-      if (retry.error) return { ok: false, error: retry.error.message };
-    } else {
-      return { ok: false, error: error.message };
-    }
-  }
+  if (!res.ok) return res;
   revalidatePath("/admin");
   return { ok: true, email };
 }
@@ -551,14 +334,10 @@ export async function toggleHideSubmission(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("submissions")
-    .update({ hidden_from_judges: hidden })
-    .eq("id", id);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() => setSubmissionHidden(event.id, id, hidden));
+  if (res.ok) revalidatePath("/admin");
+  return res;
 }
 
 // ── top-6 compute + lock ─────────────────────────────────────────
@@ -567,56 +346,16 @@ export async function computeAndLockTop6(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
 
-  const seedInput = formData.get("seed");
-  const seed =
-    seedInput && String(seedInput).length > 0
-      ? Number.parseInt(String(seedInput), 10)
-      : Date.now();
+  const seedInput = String(formData.get("seed") ?? "").trim();
+  const seed = seedInput ? Number.parseInt(seedInput, 10) : Date.now();
+  if (!Number.isSafeInteger(seed)) return { ok: false, error: "The seed must be a whole number." };
 
-  // Only scores on the current rubric (0020); rows from earlier
-  // rubrics have no sustainability score and are on a different scale.
-  const { data: scores } = await admin
-    .from("scores")
-    .select("judge_id, submission_id, impact, innovation, sustainability, feasibility, scalability")
-    .not("sustainability", "is", null);
-  const { data: subs } = await admin
-    .from("submissions")
-    .select("id, project_name")
-    .eq("hidden_from_judges", false)
-    .eq("is_submission_complete", true);
-
-  if (!scores || !subs)
-    return { ok: false, error: "Couldn't load scores/submissions" };
-
-  const mc = monteCarloTop(scores as ScoreRow[], subs as SubmissionMeta[], {
-    seed,
-    trials: 1000,
-    topN: 6,
+  const event = await getCurrentEvent();
+  const res = await attempt(async () => {
+    await computeAndLockResults(event.id, seed);
   });
-
-  const slotsLeft = 6 - mc.autoLocked.length;
-  const drawn = drawBubble(mc.bubble, mc.rankings, slotsLeft, seed);
-
-  const chosen = [...mc.autoLocked, ...drawn].slice(0, 6);
-  const top6 = chosen.map((sid, i) => {
-    const r = mc.rankings.find((r) => r.submission_id === sid);
-    return {
-      submission_id: sid,
-      rank: i + 1,
-      probability: r?.p_top_n ?? 0,
-    };
-  });
-
-  await admin.from("results_lock").upsert(
-    { id: 1, seed, top6 },
-    { onConflict: "id" },
-  );
-  await admin
-    .from("event_state")
-    .update({ phase: "results", closed_at: new Date().toISOString() })
-    .eq("id", 1);
+  if (!res.ok) return res;
 
   revalidatePath("/admin");
   revalidatePath("/results", "layout");
@@ -632,16 +371,12 @@ export async function recordTieBreak(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const admin = createAdminClient();
-  const { error } = await admin.from("tie_breaks").insert({
-    winning_submission_id: winnerId,
-    losing_submission_id: loserId,
-    reason,
-    decided_by: decidedBy,
-  });
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/admin");
-  return { ok: true };
+  const event = await getCurrentEvent();
+  const res = await attempt(() =>
+    saveTieBreak(event.id, { winnerId, loserId, reason, decidedBy }),
+  );
+  if (res.ok) revalidatePath("/admin");
+  return res;
 }
 
 // ── admin team (owner only) ──────────────────────────────────────
@@ -920,7 +655,7 @@ export async function previewAudience(
   if (!guard.ok) return { ok: false, error: guard.error };
   const audience = parseAudience(audienceRaw);
   if (!audience) return { ok: false, error: "Pick an audience." };
-  const counts = await countAudience(audience);
+  const counts = await countAudience((await getCurrentEvent()).id, audience);
   return { ok: true, ...counts };
 }
 
@@ -985,12 +720,14 @@ export async function sendCampaign(
   if (!resendConfigured())
     return { ok: false, error: "RESEND_API_KEY is not configured on this environment." };
 
-  const loaded = await loadRecipients(audience);
+  const event = await getCurrentEvent();
+  const loaded = await loadRecipients(event.id, audience);
   if (!loaded.ok) return { ok: false, error: loaded.error };
   if (loaded.recipients.length === 0)
     return { ok: false, error: "No subscribed recipients in that audience." };
 
   const created = await createCampaign({
+    eventId: event.id,
     subject,
     bodyHtml,
     audience,
@@ -1034,12 +771,6 @@ export async function sendCampaign(
 
 // ── campaign image upload ────────────────────────────────────────
 
-const IMAGE_BUCKET = "campaign-images";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-// No WebP or AVIF: Outlook and several older clients render them as a broken
-// image, and a blast is the wrong place to discover that.
-const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/gif"]);
-
 export async function uploadCampaignImage(
   form: FormData,
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
@@ -1051,32 +782,24 @@ export async function uploadCampaignImage(
     return { ok: false, error: "Pick an image to upload." };
   if (!ALLOWED_IMAGE_TYPES.has(file.type))
     return { ok: false, error: "Use a PNG, JPEG, or GIF — other formats don't render in every email client." };
-  if (file.size > MAX_IMAGE_BYTES)
-    return { ok: false, error: `That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Keep it under 5 MB.` };
+  if (file.size > MAX_UPLOAD_BYTES)
+    return {
+      ok: false,
+      error: `That image is ${(file.size / 1024 / 1024).toFixed(1)} MB. Keep it under ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
+    };
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/gif" ? "gif" : "jpg";
-  const key = `${Date.now()}-${randomUUID()}.${ext}`;
-
-  const admin = createAdminClient();
-  const { error } = await admin.storage
-    .from(IMAGE_BUCKET)
-    .upload(key, await file.arrayBuffer(), {
+  try {
+    const event = await getCurrentEvent();
+    const { id } = await saveUpload({
+      eventId: event.id,
       contentType: file.type,
-      // Emails live a long time and the URL is unique per upload, so the file
-      // never changes underneath a message that already went out.
-      cacheControl: "31536000",
-      upsert: false,
+      bytes: Buffer.from(await file.arrayBuffer()),
+      createdBy: sessionLabel(guard.session),
     });
-
-  if (error) {
-    if (/bucket not found/i.test(error.message))
-      return {
-        ok: false,
-        error: "Storage bucket missing — run supabase/migrations/0016_campaign_images.sql in the Supabase SQL Editor.",
-      };
-    return { ok: false, error: error.message };
+    // An absolute URL, because the image is loaded from inside an inbox.
+    return { ok: true, url: `${siteUrl()}/uploads/${id}.${ext}` };
+  } catch (e) {
+    return { ok: false, error: errorMessage(e) };
   }
-
-  const { data } = admin.storage.from(IMAGE_BUCKET).getPublicUrl(key);
-  return { ok: true, url: data.publicUrl };
 }

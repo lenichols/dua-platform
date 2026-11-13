@@ -6,11 +6,11 @@
 
 export const EVENT = {
   /** Full event name, used in page titles, headings and email. */
-  name: "Demo Energy Hackathon",
+  name: "Open Build Hackathon",
   /** One word of `name` drawn in the accent colour in the wordmark. Optional. */
-  accentWord: "Energy",
+  accentWord: "Build",
   /** Short line under the name on the homepage. */
-  tagline: "Build something that keeps the lights on.",
+  tagline: "One weekend. One idea. Ship it.",
   /** One or two sentences for search engines and link previews. */
   description:
     "A sample event running on Dua, the open source hackathon platform: registration, project submission, judging and results in one place.",

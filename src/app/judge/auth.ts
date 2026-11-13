@@ -1,8 +1,11 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { createHmac, timingSafeEqual } from "crypto";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentEvent } from "@/server/event";
+import { getActiveJudge, type JudgeSession } from "@/server/judges";
 
 const COOKIE = "dua_judge";
+const MAX_AGE_SECONDS = 60 * 60 * 24; // 24h
 
 function secret() {
   const s = process.env.SUBMISSION_EDIT_SECRET || process.env.ADMIN_PASSWORD;
@@ -36,7 +39,7 @@ export async function issueJudgeCookie(judgeId: string) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24, // 24h
+    maxAge: MAX_AGE_SECONDS,
   });
 }
 
@@ -45,54 +48,22 @@ export async function clearJudgeCookie() {
   store.delete(COOKIE);
 }
 
-export type CustomJudgeSession = {
-  id: string;
-  name: string;
-  is_active: boolean;
-  role: "judge" | "mentor";
-};
-
-export async function getCustomJudge(): Promise<CustomJudgeSession | null> {
+/**
+ * The signed-in judge or mentor, or null. The roster is read on every
+ * request, so deactivating someone signs them out immediately.
+ */
+export const getJudgeSession = cache(async (): Promise<JudgeSession | null> => {
   const store = await cookies();
   const tok = store.get(COOKIE)?.value;
   if (!tok) return null;
   const payload = verifyToken(tok);
   if (!payload?.startsWith("judge:")) return null;
-  const judgeId = payload.split(":")[1];
+  const [, judgeId, issuedAt] = payload.split(":");
   if (!judgeId) return null;
+  // The browser drops the cookie after maxAge; this stops a copied one too.
+  const iat = Number.parseInt(issuedAt ?? "", 10);
+  if (!Number.isFinite(iat) || Date.now() - iat > MAX_AGE_SECONDS * 1000) return null;
 
-  const admin = createAdminClient();
-  // Try with role; fall back if column missing
-  const withRole = await admin
-    .from("judges")
-    .select("id, name, is_active, role")
-    .eq("id", judgeId)
-    .maybeSingle();
-  if (!withRole.error && withRole.data) {
-    if (!withRole.data.is_active) return null;
-    return {
-      id: withRole.data.id,
-      name: withRole.data.name,
-      is_active: withRole.data.is_active,
-      role: (withRole.data.role as "judge" | "mentor") ?? "judge",
-    };
-  }
-  const fallback = await admin
-    .from("judges")
-    .select("id, name, is_active")
-    .eq("id", judgeId)
-    .maybeSingle();
-  if (!fallback.data?.is_active) return null;
-  return {
-    id: fallback.data.id,
-    name: fallback.data.name,
-    is_active: fallback.data.is_active,
-    role: "judge",
-  };
-}
-
-/** Constant-time string compare. */
-export function passwordsMatch(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-}
+  const event = await getCurrentEvent();
+  return getActiveJudge(event.id, judgeId);
+});

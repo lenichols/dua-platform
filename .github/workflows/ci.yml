@@ -15,6 +15,22 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dua
+          POSTGRES_PASSWORD: dua
+          POSTGRES_DB: dua
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dua -d dua"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgres://dua:dua@localhost:5432/dua_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,13 +40,17 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - name: Migrations match the schema
+        # Fails if src/db/schema.ts changed without a new migration.
+        run: |
+          npm run db:generate
+          git diff --exit-code -- drizzle
+          test -z "$(git status --porcelain -- drizzle)"
       - run: npm test
       - name: Build
         run: npm run build
         env:
           # Placeholders: the build needs the variables to exist, not to work.
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
-          SUPABASE_SECRET_KEY: placeholder
+          DATABASE_URL: postgres://dua:dua@localhost:5432/dua
           ADMIN_PASSWORD: placeholder
           SUBMISSION_EDIT_SECRET: placeholder-placeholder-placeholder

@@ -1,5 +1,5 @@
 // Pure role definitions — safe to import from client components.
-// (Anything touching cookies/crypto/Supabase lives in src/app/admin/auth.ts
+// (Anything touching cookies, crypto or the database lives in src/app/admin/auth.ts
 // and src/lib/admin-users.ts, which are server-only.)
 
 export type AdminRole = "owner" | "admin" | "viewer";

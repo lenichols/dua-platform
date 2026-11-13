@@ -29,10 +29,10 @@ export const RUBRIC: Criterion[] = [
       limited: "Benefit is vague or not quantified; unclear who gains",
       solid: "Clear benefit to a named group, estimated with rough numbers",
       exceptional:
-        "Large, quantified benefit to the people in the brief, backed by real data and the brief's impact metric",
+        "Large, quantified benefit to the people it's built for, backed by real data or real users",
     },
     example:
-      "Impact (4): estimates 3,400 households enrolled using the brief's metric, from state program data.",
+      "Impact (4): tested with six volunteers at one food bank; unfilled shifts fell from nine a week to two.",
   },
   {
     key: "innovation",
@@ -45,21 +45,20 @@ export const RUBRIC: Criterion[] = [
         "Genuinely new approach that addresses a root cause existing solutions miss",
     },
     example:
-      "Innovation (5): a service-and-funding model that keeps clinic fridges running after warranties end, not just a new fridge.",
+      "Innovation (5): works entirely by voice, for riders the existing transit apps leave out.",
   },
   {
     key: "sustainability",
-    label: "Sustainability (incl. affordability)",
+    label: "Sustainability",
     weight: 25,
     anchors: {
-      limited:
-        "Depends on ongoing grants or subsidy; unaffordable for the people it serves",
-      solid: "Plausible path to cover costs; affordable to users with some support",
+      limited: "Stops working when the team stops; no plan for cost or upkeep",
+      solid: "Plausible plan for who runs it and how its costs are covered",
       exceptional:
-        "Pays for itself over its life, affordable to the lowest-income users, maintainable locally, and lowers environmental impact",
+        "Cheap to run, simple to maintain, and someone other than the team could keep it going",
     },
     example:
-      "Sustainability (2): $1,200 per household with no payment path the lowest-income users in the brief can afford.",
+      "Sustainability (2): depends on a paid API with no budget and no one named to maintain it.",
   },
   {
     key: "feasibility",
@@ -69,23 +68,23 @@ export const RUBRIC: Criterion[] = [
       limited: "Major technical, legal, or data gaps; prototype does not run",
       solid: "Prototype works on sample data; main risks named",
       exceptional:
-        "Working prototype on real or realistic data; complies with relevant standards and rules; clear path to a pilot",
+        "Working prototype on real or realistic data, with a clear path to a first real user",
     },
     example:
-      "Feasibility (2): prototype runs only on invented data; no sizing check against the worst solar month.",
+      "Feasibility (2): the demo runs only on invented data and the main feature is mocked.",
   },
   {
     key: "scalability",
     label: "Scalability",
     weight: 10,
     anchors: {
-      limited: "Works only in one site under special conditions",
-      solid: "Could extend to similar sites with adaptation",
+      limited: "Works only for one user or one place under special conditions",
+      solid: "Could extend to similar users or places with some adaptation",
       exceptional:
-        "Clear plan to replicate across sites, utilities, or countries, with costs that fall at scale",
+        "Clear plan to reach many more users, with costs that fall as it grows",
     },
     example:
-      "Scalability (3): could extend to similar villages, but no cost estimate beyond the first site.",
+      "Scalability (3): could serve other food banks, but each one needs manual setup.",
   },
 ];
 

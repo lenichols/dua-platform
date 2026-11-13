@@ -10,38 +10,38 @@ export const dynamic = "force-dynamic";
 // Replace it with your own.
 const PILLARS = [
   {
-    k: "Access",
-    d: "Bring reliable power to the communities still living without it.",
+    k: "Useful",
+    d: "Solve a real problem for real people, and say who they are.",
     example:
-      "Design a low-cost way to connect households that the grid doesn't reach, with a payment plan a low-income family can keep up with.",
+      "A food bank coordinates 40 volunteers by group chat and loses track of who is coming. Build something that tells the organizer, each morning, which shifts are still empty.",
   },
   {
-    k: "Affordability",
-    d: "Drive down the cost of clean energy so it's within reach for everyone.",
+    k: "Original",
+    d: "Bring a new angle, not a copy of something that already exists.",
     example:
-      "Design a financing model that brings a household's energy bills under 6% of its income without a large upfront payment.",
+      "Plenty of apps show bus times. Build one for a rider who can't look at a screen: it speaks the next departure and nothing else.",
   },
   {
-    k: "Availability",
-    d: "Build resilient systems that keep energy flowing — anytime, anywhere.",
+    k: "Working",
+    d: "Show it running. A rough demo beats a polished slide.",
     example:
-      "Design a low-maintenance backup system that keeps a clinic's refrigeration and lighting running through daily grid outages.",
+      "Record three minutes of someone outside your team using it from start to finish, with no one helping them.",
   },
 ];
 
 // Example problem statements per challenge track, keyed by the shared TRACKS
 // strings in src/lib/hackathon.ts (which the forms also use — don't rename).
 const TRACK_EXAMPLES: Record<string, string> = {
-  "New Technologies & Hardware Innovations":
-    "Build a cheaper, easier-to-repair version of a device people already rely on. What do current models get wrong?",
-  "Digital Solutions, Apps & AI/ML Tools":
-    "Build an app that helps a household understand its energy bill and find the cheapest plan it qualifies for.",
-  "Business Models & Financing Approaches":
-    "Design a pay-as-you-go model that lets a small business replace its diesel generator without a loan.",
-  "Clean Energy & Sustainability Solutions":
-    "Design a program that rewards short-term rental guests for using less energy during their stay.",
-  "Policy, Systems & Community-Based Solutions":
-    "Draft the rules a city would need for neighbours to share one rooftop solar system fairly.",
+  "Web & Mobile Apps":
+    "Build an app a neighbourhood group could start using on Monday without any training.",
+  "AI & Data":
+    "Take a public dataset nobody reads and turn it into an answer to one question people keep asking.",
+  "Hardware & Devices":
+    "Build a device under $30 in parts that tells you something useful about the room it's in.",
+  "Developer Tools":
+    "Remove one step that every developer on your team repeats by hand each day.",
+  "Social Good":
+    "Pick one local organization, ask what slows them down most, and build for that.",
 };
 
 const STATS = [
@@ -70,7 +70,7 @@ const FAQ = [
   },
   {
     q: "What should I build?",
-    a: "Anything that fits one of the challenge tracks — hardware, software, AI/ML, a business model, or a policy idea.",
+    a: "Anything that fits one of the challenge tracks. Pick one of the problem briefs or bring a problem of your own.",
   },
   {
     q: "How much does it cost?",
@@ -103,16 +103,8 @@ function SectionHead({
   );
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function Home() {
   const phase = await getPhase();
-  const sp = await searchParams;
-  const errorCode = typeof sp.error_code === "string" ? sp.error_code : null;
-  const errorDesc =
-    typeof sp.error_description === "string" ? sp.error_description : null;
 
   const hero = {
     submissions: {
@@ -146,24 +138,6 @@ export default async function Home({
           </>
         }
       />
-
-      {errorCode && (
-        <div className="mx-auto max-w-5xl px-5 pt-6">
-          <div className="rounded-md border border-blood/60 bg-blood/10 p-4 text-sm text-blood animate-fade-up">
-            <div className="font-cond font-bold uppercase tracking-wider">
-              Sign-in link issue
-            </div>
-            <p className="mt-1 text-bone/90">
-              {errorDesc ?? "The magic link couldn't be used."} Request a fresh
-              link at{" "}
-              <Link href="/judge" className="text-crimson underline">
-                /judge
-              </Link>{" "}
-              and click it within a few minutes.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ---------- HERO ---------- */}
       <section className="theme-dark relative overflow-hidden border-b border-line bg-ink">
@@ -227,9 +201,9 @@ export default async function Home({
         {/* ---------- PILLARS ---------- */}
         <section className="py-12">
           <SectionHead
-            eyebrow="The Mission"
-            title="Access, Affordability & Availability"
-            sub="The three pillars of every great entry. Pick one, or take on all three."
+            eyebrow="What Counts"
+            title="Useful, Original, Working"
+            sub="The three things judges look for in every entry."
           />
           <div className="grid items-start gap-4 md:grid-cols-3">
             {PILLARS.map((p) => (
@@ -243,10 +217,10 @@ export default async function Home({
                     <p className="mt-2 text-sm text-dust">{p.d}</p>
                     <div className="mt-3 font-cond text-[0.7rem] font-semibold uppercase tracking-wider text-crimson">
                       <span className="group-open:hidden">
-                        Example problem statement +
+                        Example +
                       </span>
                       <span className="hidden group-open:inline">
-                        Example problem statement −
+                        Example −
                       </span>
                     </div>
                   </div>
@@ -266,7 +240,7 @@ export default async function Home({
           <SectionHead
             eyebrow="Build Anything"
             title="Challenge Tracks"
-            sub="Hardware, software, AI, business, or policy for residential or non-residential customers — there's a lane for every kind of builder."
+            sub="Software, data, hardware or tooling — there's a lane for every kind of builder."
           />
           <div className="grid items-start gap-4 md:grid-cols-2">
             {TRACKS.map((t) => (

@@ -3,7 +3,8 @@ import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/sh
 import { getPhase, getSubmissionsOpen } from "@/lib/phase";
 import { submissionSchema } from "@/lib/submission-schema";
 import { verifyEditToken } from "@/lib/submission-edit";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentEvent } from "@/server/event";
+import { getSubmissionForEdit } from "@/server/submissions";
 import { SubmitForm } from "../submit-form";
 import { EVENT } from "@/lib/site";
 
@@ -26,17 +27,7 @@ export default async function EditSubmissionPage({
 
   let initial: Record<string, string> | null = null;
   if (valid && open) {
-    const { data } = await createAdminClient()
-      .from("submissions")
-      .select(FORM_FIELDS.join(", "))
-      .eq("id", id)
-      .maybeSingle();
-    if (data) {
-      initial = {};
-      for (const [k, v] of Object.entries(data as unknown as Record<string, unknown>)) {
-        if (v != null && v !== "") initial[k] = String(v);
-      }
-    }
+    initial = await getSubmissionForEdit(await getCurrentEvent(), id, FORM_FIELDS);
   }
 
   const problem = !valid

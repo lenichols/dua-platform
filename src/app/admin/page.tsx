@@ -3,7 +3,16 @@ import { Breadcrumbs, HeaderBar, PageShell, SectionTitle, Wordmark } from "@/com
 import { getAdminSession, type AdminSession } from "./auth";
 import { AdminSignIn } from "./sign-in";
 import { AdminHome } from "./admin-home";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentEvent } from "@/server/event";
+import {
+  getResultsLockForAdmin,
+  judgingProgress,
+  listRecusals,
+  scoreActivity,
+} from "@/server/admin-data";
+import { listJudges } from "@/server/judges";
+import { listRegistrations } from "@/server/registrations";
+import { listSubmissionsForAdmin } from "@/server/submissions";
 import { canManageTeam } from "@/lib/admin-roles";
 import { listCampaigns } from "@/lib/campaigns";
 import { listAdminUsers } from "@/lib/admin-users";
@@ -61,71 +70,28 @@ export default async function AdminPage() {
 }
 
 async function AdminContent({ session }: { session: AdminSession }) {
-  const admin = createAdminClient();
-  // Try the new schema first (with `role`); fall back without `role` if the
-  // 0002_mentors migration hasn't been applied yet.
-  async function loadJudges() {
-    const withRole = await admin
-      .from("judges")
-      .select("id, name, email, is_active, role, created_at")
-      .order("name");
-    if (!withRole.error) return withRole.data ?? [];
-    const fallback = await admin
-      .from("judges")
-      .select("id, name, email, is_active, created_at")
-      .order("name");
-    return (fallback.data ?? []).map((j) => ({ ...j, role: "judge" as const }));
-  }
-
-  const [
-    { data: state },
-    judgesData,
-    { data: subs },
-    { data: progress },
-    { data: scores },
-    { data: lock },
-    { data: registrations },
-    { data: recusals },
-  ] = await Promise.all([
-    admin
-      .from("event_state")
-      .select("phase, updated_at, submissions_open, registration_open")
-      .eq("id", 1)
-      .maybeSingle(),
-    loadJudges(),
-    admin
-      .from("submissions")
-      .select(
-        // Everything the submission modal shows, so it opens instantly.
-        "id, project_name, team_name, solo_or_team, challenge_track, is_submission_complete, needs_review, review_note, hidden_from_judges, created_at, project_category, problem_brief, project_description_summary, project_description, problem_statement, core_energy_problem, disclosure_statement, technologies_used, energy_sector, impact_focus, solution_stage, customer_type, region, target_region, area_of_specification, applies_ai, team_size, github_url, live_demo_url, demo_video_url, demo_video_short_url, pitch_deck_url, summary_url, linkedin_post_url, all_members_in_video, member1_name, member1_email, phone, country, state_region, city, affiliated_org, submitter_role, submitter_linkedin_url, member2_name, member2_email, member2_linkedin_url, member2_occupation, member2_country, member3_name, member3_email, member3_linkedin_url, member3_occupation, member3_country, member4_name, member4_email, member4_linkedin_url, member4_occupation, member4_country, member5_name, member5_email, member5_linkedin_url, member5_occupation, member5_country, mentor_name, mentor_linkedin_url",
-      )
-      .order("created_at", { ascending: false }),
-    admin.from("judging_progress").select("submission_id, project_name, votes"),
-    admin.from("scores").select("judge_id, submission_id, updated_at"),
-    admin.from("results_lock").select("seed, top6, locked_at").eq("id", 1).maybeSingle(),
-    admin
-      .from("registrations")
-      .select(
-        "id, full_name, email, phone, country, participating_as, team_name, primary_interest, experience_level, organization, occupation, partner_org, linkedin_url, website_url, heard_about, referred_by, role, created_at",
-      )
-      .order("created_at", { ascending: false }),
-    admin
-      .from("recusals")
-      .select("judge_id, submission_id, reason, created_at")
-      .order("created_at", { ascending: false }),
+  const event = await getCurrentEvent();
+  const [judges, subs, progress, scores, lock, registrations, recusals] = await Promise.all([
+    listJudges(event.id),
+    // Everything the submission modal shows, so it opens instantly.
+    listSubmissionsForAdmin(event.id),
+    judgingProgress(event.id),
+    scoreActivity(event.id),
+    getResultsLockForAdmin(event.id),
+    listRegistrations(event, { kind: "admin", role: session.role }),
+    listRecusals(event.id),
   ]);
-  const judges = judgesData;
 
   // Only owners manage the admin roster, so only they pay for the query.
   const teamResult = canManageTeam(session.role) ? await listAdminUsers() : null;
-  const campaignResult = await listCampaigns();
+  const campaignResult = await listCampaigns(event.id);
 
   // Build per-judge voting progress
   const scoresByJudge = new Map<
     string,
     { count: number; lastAt: string | null }
   >();
-  (scores ?? []).forEach((s: { judge_id: string; updated_at: string | null }) => {
+  scores.forEach((s) => {
     const prev = scoresByJudge.get(s.judge_id) ?? { count: 0, lastAt: null };
     prev.count += 1;
     if (!prev.lastAt || (s.updated_at && s.updated_at > prev.lastAt)) {
@@ -152,8 +118,8 @@ async function AdminContent({ session }: { session: AdminSession }) {
   const conflicts = (recusals ?? []).map((r) => ({
     judge: judgeNames.get(r.judge_id) ?? "Unknown judge",
     project: projectNames.get(r.submission_id) ?? "Unknown project",
-    reason: r.reason as string | null,
-    created_at: r.created_at as string,
+    reason: r.reason,
+    created_at: r.created_at,
   }));
 
   // Mentors are read-only viewers — they don't vote, so exclude them from
@@ -176,20 +142,23 @@ async function AdminContent({ session }: { session: AdminSession }) {
 
   return (
     <AdminHome
-      phase={(state?.phase as "submissions" | "judging" | "results") ?? "submissions"}
-      judges={judges ?? []}
-      submissions={(subs ?? []).map((s) => ({
+      phase={event.phase}
+      judges={judges}
+      submissions={subs.map((s) => ({
         ...s,
         // So organizers can resend a team's edit link from the modal.
         edit_url: editUrl(siteUrl(), s.id),
       }))}
-      progress={progress ?? []}
+      progress={progress}
       judgeProgress={judgeProgress}
       conflicts={conflicts}
-      lock={lock ?? null}
-      registrations={registrations ?? []}
-      submissionsOpen={state?.submissions_open ?? false}
-      registrationOpen={state?.registration_open ?? false}
+      lock={lock}
+      registrations={registrations.map((r) => ({
+        ...r,
+        role: r.role as "participant" | "mentor",
+      }))}
+      submissionsOpen={event.submissions_open}
+      registrationOpen={event.registration_open}
       session={session}
       campaigns={campaignResult.ok ? campaignResult.campaigns : []}
       campaignsError={campaignResult.ok ? null : campaignResult.error}

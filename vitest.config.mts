@@ -8,5 +8,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    globalSetup: ["./test/global-setup.ts"],
+    setupFiles: ["./test/setup.ts"],
+    // The database tests share one test database, so files run one at a time.
+    fileParallelism: false,
   },
 });

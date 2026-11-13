@@ -102,7 +102,7 @@ export const SHARED_SESSION: AdminSession = {
   role: "owner",
   viaSharedPassword: true,
   // The break-glass path counts as a super admin: it's the recovery route if
-  // every founder loses access, and whoever holds the Vercel env already
+  // every founder loses access, and whoever holds the server environment already
   // controls the database outright.
   isProtected: true,
 };

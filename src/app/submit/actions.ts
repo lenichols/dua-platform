@@ -1,7 +1,8 @@
 "use server";
 
 import { submissionSchema } from "@/lib/submission-schema";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentEvent } from "@/server/event";
+import { createSubmission, updateSubmission as update } from "@/server/submissions";
 import { siteUrl } from "@/lib/email";
 import { editUrl, sendEditLinkEmail, verifyEditToken } from "@/lib/submission-edit";
 
@@ -15,39 +16,10 @@ const CLOSED_ERROR =
 const DUPLICATE_ERROR =
   "A project with that name has already been submitted. One submission per team — if you meant to edit yours, use the edit link we emailed you.";
 
-/**
- * Both new submissions and edits need the submissions phase AND the form
- * explicitly opened by an admin (defaults closed), so closing submissions
- * also cuts off every edit link. Reads with the service-role client so this
- * can't drift from what the admin panel sees due to RLS or auth-context
- * quirks; a missing/null phase defaults to "submissions", matching the panel
- * and the table-level default.
- */
-async function submissionsAccepting(
-  admin: ReturnType<typeof createAdminClient>,
-): Promise<boolean> {
-  const { data: state, error } = await admin
-    .from("event_state")
-    .select("phase, submissions_open")
-    .eq("id", 1)
-    .maybeSingle();
-  if (error) {
-    console.error("submissions gate: failed to read event_state", error);
-  }
-  const rawPhase = (state?.phase ?? "").toString().trim().toLowerCase();
-  const phase = rawPhase || "submissions";
-  return phase === "submissions" && state?.submissions_open === true;
-}
-
 export async function submitProject(
   _prev: SubmitResult | null,
   form: FormData,
 ): Promise<SubmitResult> {
-  const admin = createAdminClient();
-  if (!(await submissionsAccepting(admin))) {
-    return { ok: false, error: CLOSED_ERROR };
-  }
-
   const raw = Object.fromEntries(form.entries());
   const parsed = submissionSchema.safeParse(raw);
   if (!parsed.success) {
@@ -61,20 +33,11 @@ export async function submitProject(
   }
   const input = parsed.data;
 
-  // Service-role insert — bypasses the public-insert RLS policy (which
-  // would also work, but we want consistent inserts and controlled columns).
-  const { data, error } = await admin
-    .from("submissions")
-    .insert({
-      ...input,
-      is_submission_complete: true,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    if (error.code === "23505") return { ok: false, error: DUPLICATE_ERROR };
-    return { ok: false, error: error.message };
+  // Both new submissions and edits need the submissions phase AND the form
+  // opened by an admin, so closing submissions also cuts off every edit link.
+  const data = await createSubmission(await getCurrentEvent(), input);
+  if (!data.ok) {
+    return { ok: false, error: data.reason === "duplicate" ? DUPLICATE_ERROR : CLOSED_ERROR };
   }
 
   const url = editUrl(siteUrl(), data.id);
@@ -101,14 +64,6 @@ export async function updateSubmission(
   if (!verifyEditToken(id, token)) {
     return { ok: false, error: "This edit link isn't valid." };
   }
-  const admin = createAdminClient();
-  if (!(await submissionsAccepting(admin))) {
-    return {
-      ok: false,
-      error: "Submissions have closed, so this submission can no longer be edited.",
-    };
-  }
-
   const raw = Object.fromEntries(form.entries());
   const parsed = submissionSchema.safeParse(raw);
   if (!parsed.success) {
@@ -122,23 +77,18 @@ export async function updateSubmission(
   }
 
   // Only form fields change; review flags, visibility and created_at stay.
-  const { data, error } = await admin
-    .from("submissions")
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        ok: false,
-        error: "Another project already uses that name. Pick a different project name.",
-      };
-    }
-    return { ok: false, error: error.message };
+  const result = await update(await getCurrentEvent(), id, parsed.data);
+  if (!result.ok) {
+    return {
+      ok: false,
+      error:
+        result.reason === "duplicate"
+          ? "Another project already uses that name. Pick a different project name."
+          : result.reason === "missing"
+            ? "This submission no longer exists."
+            : "Submissions have closed, so this submission can no longer be edited.",
+    };
   }
-  if (!data) return { ok: false, error: "This submission no longer exists." };
 
   return { ok: true, id, editUrl: editUrl(siteUrl(), id), updated: true };
 }

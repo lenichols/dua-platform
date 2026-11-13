@@ -1,11 +1,10 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { signOutJudge } from "../actions";
 
 export function SignOutButton() {
   async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOutJudge();
     window.location.href = "/";
   }
   return (

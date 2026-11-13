@@ -92,23 +92,22 @@ export const submissionSchema = z.object({
     .trim()
     .min(1, "Select the problem brief you worked on"),
   project_category: z.string().trim().min(1, "Project category is required"),
-  customer_type: z.enum(["Residential", "Non-residential"], {
-    message: "Select residential or non-residential",
+  customer_type: z.enum(["Individuals", "Organizations"], {
+    message: "Tell us who the project is for",
   }),
   region: z.string().trim().min(1, "Select your region"),
   area_of_specification: z
     .string()
     .trim()
     .min(1, "Select an area of specification"),
-  // energy-specific
-  energy_sector: z.string().trim().min(1, "Energy sector is required"),
+  focus_area: z.string().trim().min(1, "Focus area is required"),
   impact_focus: z.string().trim().min(1, "Select at least one impact focus"),
   solution_stage: z.string().trim().min(1, "Solution stage is required"),
   target_region: z.string().trim().default(""),
-  core_energy_problem: z
+  core_problem: z
     .string()
     .trim()
-    .min(1, "Tell us the core energy problem you're addressing"),
+    .min(1, "Tell us the core problem you're addressing"),
   applies_ai: z.enum(["Yes", "No"], {
     message: "Tell us whether your solution applies AI",
   }),

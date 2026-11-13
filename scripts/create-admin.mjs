@@ -10,7 +10,7 @@
 //
 // The hash format MUST stay in sync with src/lib/admin-password.ts.
 
-import { createClient } from "@supabase/supabase-js";
+import { connect } from "./_db.mjs";
 import {
   MIN_PASSWORD_LENGTH,
   ROLES,
@@ -57,40 +57,28 @@ if (rotate && requested)
 const generated = !requested;
 const password = requested || generatePassword();
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key)
-  die("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY — pass --env-file=.env.local");
-
-const supabase = createClient(url, key, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
+const pool = connect();
 const password_hash = await hashPassword(password);
 
-const { data: existing, error: lookupError } = await supabase
-  .from("admin_users")
-  .select("id, role")
-  .eq("email", email)
-  .maybeSingle();
-
-if (lookupError) {
-  if (lookupError.code === "42P01" || lookupError.code === "PGRST205")
-    die("admin_users table not found — run supabase/migrations/0012_admin_users.sql first");
-  die(lookupError.message);
-}
+const { rows } = await pool.query(
+  "select id, role from admin_users where lower(email) = $1",
+  [email],
+);
+const existing = rows[0];
 
 if (existing) {
   // Only touch the password if one was explicitly supplied — otherwise this
   // is a name/role edit and their current password must keep working.
-  const patch = { name, is_active: true };
-  if (roleGiven) patch.role = role;
-  if (requested || rotate) patch.password_hash = password_hash;
-  const { error } = await supabase
-    .from("admin_users")
-    .update(patch)
-    .eq("id", existing.id);
-  if (error) die(error.message);
+  await pool.query(
+    `update admin_users
+        set name = $2,
+            is_active = true,
+            role = coalesce($3, role),
+            password_hash = coalesce($4, password_hash),
+            updated_at = now()
+      where id = $1`,
+    [existing.id, name, roleGiven ? role : null, requested || rotate ? password_hash : null],
+  );
   console.log(
     roleGiven
       ? `✓ Updated ${email} (${existing.role} → ${role})`
@@ -103,24 +91,19 @@ if (existing) {
         ? `\n  New password (shown once): ${password}\n`
         : "\n  Password: unchanged.\n",
   );
-  console.log("Sign in at /admin with that email + password.");
-  process.exit(0);
 } else {
-  const { error } = await supabase.from("admin_users").insert({
-    name,
-    email,
-    role,
-    password_hash,
-    is_active: true,
-    created_by: "scripts/create-admin.mjs",
-  });
-  if (error) die(error.message);
+  await pool.query(
+    `insert into admin_users (name, email, role, password_hash, is_active, created_by)
+     values ($1, $2, $3, $4, true, 'scripts/create-admin.mjs')`,
+    [name, email, role, password_hash],
+  );
   console.log(`✓ Created ${email} as ${role}`);
+  console.log(
+    generated
+      ? `\n  Password (shown once): ${password}\n`
+      : `\n  Password: the one you passed in.\n`,
+  );
 }
 
-console.log(
-  generated
-    ? `\n  Password (shown once): ${password}\n`
-    : `\n  Password: the one you passed in.\n`,
-);
+await pool.end();
 console.log("Sign in at /admin with that email + password.");

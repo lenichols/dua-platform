@@ -1,34 +1,48 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getJudgeByAuthUser } from "@/lib/judge-lookup";
-import { getPhase } from "@/lib/phase";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
+import { getCurrentEvent } from "@/server/event";
+import {
+  declareConflict as declare,
+  saveScore as save,
+  withdrawConflict as withdraw,
+} from "@/server/judging";
+import { verifyJudgeSignIn } from "@/server/judges";
+import {
+  LOCKED_OUT_MESSAGE,
+  clearFailures,
+  isLockedOut,
+  recordFailure,
+  signInKey,
+} from "@/server/rate-limit";
+import { clearJudgeCookie, issueJudgeCookie } from "./auth";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-// Recusal. The judge is identified from their own
-// session, never from the request, and the writes use the service role so
-// the recusal and the removal of their score happen together.
-async function requireJudge(): Promise<
-  { ok: true; judgeId: string } | { ok: false; error: string }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Your session expired — sign in again." };
-  const judge = await getJudgeByAuthUser(supabase, user.id);
-  if (!judge?.is_active || judge.role !== "judge")
-    return { ok: false, error: "Only judges on the roster can recuse." };
-  const phase = await getPhase();
-  if (phase === "submissions")
-    return { ok: false, error: "Judging hasn't started yet." };
-  if (phase === "results")
-    return { ok: false, error: "Voting has closed — contact the organizers." };
-  return { ok: true, judgeId: judge.id };
+// ── sign in / out ────────────────────────────────────────────────
+export async function signInJudge(email: string, password: string): Promise<Result> {
+  const key = signInKey("judge", email);
+  if (await isLockedOut(key)) return { ok: false, error: LOCKED_OUT_MESSAGE };
+
+  const event = await getCurrentEvent();
+  const judge = await verifyJudgeSignIn(event.id, email, password);
+  if (!judge) {
+    await recordFailure(key);
+    // One message for every failure, so it doesn't reveal who's on the roster.
+    return { ok: false, error: "Wrong email or password. Check with the organizers." };
+  }
+  await clearFailures(key);
+  await issueJudgeCookie(judge.id);
+  return { ok: true };
 }
+
+export async function signOutJudge(): Promise<void> {
+  await clearJudgeCookie();
+}
+
+// ── scoring and conflicts ────────────────────────────────────────
+// The judge is always taken from the session, never from the request.
 
 function revalidate(submissionId: string) {
   revalidatePath("/judge/dashboard");
@@ -36,46 +50,20 @@ function revalidate(submissionId: string) {
   revalidatePath("/admin");
 }
 
-export async function declareConflict(
-  submissionId: string,
-  reason: string,
-): Promise<Result> {
-  const guard = await requireJudge();
-  if (!guard.ok) return guard;
-  const admin = createAdminClient();
+export async function saveScore(submissionId: string, values: unknown): Promise<Result> {
+  const result = await save(await getCurrentEvent(), await getViewer(), submissionId, values);
+  if (result.ok) revalidate(submissionId);
+  return result;
+}
 
-  const { error } = await admin.from("recusals").upsert(
-    {
-      judge_id: guard.judgeId,
-      submission_id: submissionId,
-      reason: reason.trim().slice(0, 500) || null,
-    },
-    { onConflict: "judge_id,submission_id" },
-  );
-  if (error) return { ok: false, error: error.message };
-
-  // A conflicted score mustn't count, even one entered before declaring.
-  const { error: delErr } = await admin
-    .from("scores")
-    .delete()
-    .eq("judge_id", guard.judgeId)
-    .eq("submission_id", submissionId);
-  if (delErr) return { ok: false, error: delErr.message };
-
-  revalidate(submissionId);
-  return { ok: true };
+export async function declareConflict(submissionId: string, reason: string): Promise<Result> {
+  const result = await declare(await getCurrentEvent(), await getViewer(), submissionId, reason);
+  if (result.ok) revalidate(submissionId);
+  return result;
 }
 
 export async function withdrawConflict(submissionId: string): Promise<Result> {
-  const guard = await requireJudge();
-  if (!guard.ok) return guard;
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("recusals")
-    .delete()
-    .eq("judge_id", guard.judgeId)
-    .eq("submission_id", submissionId);
-  if (error) return { ok: false, error: error.message };
-  revalidate(submissionId);
-  return { ok: true };
+  const result = await withdraw(await getCurrentEvent(), await getViewer(), submissionId);
+  if (result.ok) revalidate(submissionId);
+  return result;
 }

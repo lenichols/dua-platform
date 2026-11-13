@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HeaderBar, PageShell, SectionTitle } from "@/components/shell";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { unsubscribeRegistration } from "@/server/registrations";
 import { verifyUnsubscribeToken } from "@/lib/unsubscribe";
 import { EVENT } from "@/lib/site";
 
@@ -10,24 +10,9 @@ type Outcome = "done" | "already" | "invalid" | "missing";
 
 async function unsubscribe(id: string, token: string): Promise<Outcome> {
   if (!id || !token) return "missing";
-  if (!verifyUnsubscribeToken(id, token)) return "invalid";
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !verifyUnsubscribeToken(id, token)) return "invalid";
 
-  const admin = createAdminClient();
-  const { data: row } = await admin
-    .from("registrations")
-    .select("id, unsubscribed_at")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (!row) return "invalid";
-  if (row.unsubscribed_at) return "already";
-
-  const { error } = await admin
-    .from("registrations")
-    .update({ unsubscribed_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) return "invalid";
-  return "done";
+  return unsubscribeRegistration(id);
 }
 
 const COPY: Record<Outcome, { title: string; body: string }> = {

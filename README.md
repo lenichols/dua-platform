@@ -8,14 +8,16 @@ Dua is an open source platform for running a hackathon from first sign-up to
 final results: registration, mentor sign-up, project submission, judging and a
 leaderboard, in one app you host yourself.
 
-It was built for a real event and then opened up. What sets it apart is the
-judging: every score needs a sentence of evidence, scores are normalized per
-judge so a harsh judge and a generous one carry the same weight, judges can
-recuse themselves, and the final ranking can be reproduced from a logged seed.
+What sets it apart is the judging. Every score needs a sentence of evidence,
+scores are normalized per judge so a harsh judge and a generous one carry the
+same weight, judges can recuse themselves, and the final ranking can be
+reproduced from a logged seed.
 
-> **Status: early.** Dua runs today, but it still needs a Supabase project and
-> the sample event is energy-themed in places. The [roadmap](#roadmap) covers
-> what's changing. Expect the database schema to change before 1.0.
+All it needs is Node.js and a Postgres database.
+
+> **Status: early.** Dua runs today and ships with a made-up sample event, the
+> Open Build Hackathon. Expect the database schema to change before 1.0; the
+> [roadmap](#roadmap) covers what's coming.
 
 ## What you get
 
@@ -41,7 +43,172 @@ The event moves through three phases, switched by an admin:
 | Viewer | Read-only. Can watch progress and export CSVs. The server refuses writes even if a request is forged. |
 
 Roles are read from the database on every request, so removing someone takes
-effect immediately. Passwords are stored as scrypt hashes.
+effect immediately. Passwords are stored as scrypt hashes, and repeated failed
+sign-ins are locked out for 15 minutes.
+
+## Quick start
+
+You need [Node.js](https://nodejs.org) 22.9 or newer and a Postgres database.
+The steps below run Postgres in a container, which is the quickest way; see
+[Database options](#database-options) for the alternatives.
+
+```bash
+git clone <this repository's URL>
+cd dua-platform
+npm install
+cp .env.local.example .env.local
+```
+
+Open `.env.local` and set two values:
+
+- `ADMIN_PASSWORD`: a strong password for your first admin sign-in.
+- `SUBMISSION_EDIT_SECRET`: 32 or more random characters.
+  `openssl rand -hex 32` prints one.
+
+Then:
+
+```bash
+npm run db:up        # start Postgres in a container
+npm run db:migrate   # create the tables
+npm run db:seed      # optional: sample projects, a test judge and a test mentor
+npm run dev
+```
+
+Open <http://localhost:3000>. `db:seed` prints the test judge's and mentor's
+passwords; sign in with them at `/judge`.
+
+### Set up your event
+
+1. Go to `/admin`, leave the email blank and sign in with `ADMIN_PASSWORD`.
+2. **Team** tab: create your own owner account, and one for each organizer.
+   Then sign in as yourself and keep `ADMIN_PASSWORD` for emergencies.
+3. **Judges** tab: add judges and mentors, then set the shared sign-in
+   password and send it to them yourself.
+4. **Home** tab: open registration and submissions when you're ready, switch
+   to **judging** to start scoring, then **results**.
+
+Before real submissions open, remove the samples with
+`npm run db:seed -- --cleanup`.
+
+## Database options
+
+Dua works with any Postgres 14 or newer. It connects using one setting,
+`DATABASE_URL`, in `.env.local`.
+
+### Docker Desktop
+
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/),
+start it, then run:
+
+```bash
+npm run db:up
+```
+
+This starts the `db` service from [`docker-compose.yml`](docker-compose.yml):
+Postgres 17, listening on port **54329** of your machine so it won't clash
+with a Postgres you already run on 5432. The `DATABASE_URL` in
+`.env.local.example` already points at it. Your data is kept in a Docker
+volume and survives restarts.
+
+| To | Run |
+| --- | --- |
+| Stop the database, keeping the data | `docker compose stop` |
+| Start it again | `npm run db:up` |
+| Delete the database and its data | `docker compose down --volumes` |
+| Open a SQL prompt | `docker compose exec db psql -U dua -d dua` |
+
+### OrbStack
+
+[OrbStack](https://orbstack.dev) is a lighter replacement for Docker Desktop
+on macOS, and it runs the same commands. Open OrbStack, then:
+
+```bash
+npm run db:up
+```
+
+Everything in the Docker Desktop section applies. OrbStack also gives the
+container a name on your machine, so this address works as well as
+`localhost:54329`:
+
+```
+postgres://dua:dua@db.dua-platform.orb.local:5432/dua
+```
+
+(The middle part is the folder name; it changes if you clone into a
+differently named folder.) You can stop and start the container from the
+OrbStack window.
+
+### pgAdmin
+
+[pgAdmin](https://www.pgadmin.org) is a visual tool for browsing tables and
+running queries. You don't need it to run Dua. There are two ways to use it.
+
+**In the browser, from the compose file:**
+
+```bash
+docker compose --profile tools up -d pgadmin
+```
+
+Open <http://localhost:5050>, then choose **Add New Server** and enter:
+
+| Field | Value |
+| --- | --- |
+| General → Name | `Dua` |
+| Connection → Host name/address | `db` |
+| Connection → Port | `5432` |
+| Connection → Maintenance database | `dua` |
+| Connection → Username | `dua` |
+| Connection → Password | `dua` |
+
+The host is `db` and the port `5432` because pgAdmin is running beside the
+database inside Docker. Stop it with `docker compose stop pgadmin`.
+
+**The pgAdmin desktop app:** use the same values, but with host `localhost`
+and port `54329`.
+
+Your tables are under **Servers → Dua → Databases → dua → Schemas → public →
+Tables**. Right-click a table and choose **View/Edit Data** to see its rows.
+
+### A Postgres you already have
+
+Local, or hosted (Neon, Supabase, Amazon RDS, Render and others all work):
+create an empty database, put its connection string in `DATABASE_URL`, and run
+`npm run db:migrate`. For example, with a local Postgres:
+
+```bash
+createdb dua
+# .env.local
+DATABASE_URL=postgres://localhost:5432/dua
+```
+
+Hosted providers usually need `?sslmode=require` on the end of the URL.
+
+## Configuration
+
+| Variable | Needed | What it's for |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | Postgres connection string. |
+| `ADMIN_PASSWORD` | Yes | Break-glass owner password for `/admin`. |
+| `SUBMISSION_EDIT_SECRET` | Yes | 32+ random characters. Signs sessions and private links. |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Public address of your deployment, used in emails. |
+| `RESEND_API_KEY` | For email | [Resend](https://resend.com) API key. |
+| `EMAIL_FROM` | For email | From header on a domain Resend has verified. |
+| `DUA_EVENT_SLUG` | No | Which event in the database to serve. Defaults to `default`. |
+
+## Make it yours
+
+| To change | Edit |
+| --- | --- |
+| Event name, dates, host, contact email, deadlines | [`src/lib/site.ts`](src/lib/site.ts) |
+| Tracks, problem briefs, partner groups, dropdown options | [`src/lib/hackathon.ts`](src/lib/hackathon.ts) |
+| Judging criteria, weights and guidance | [`src/lib/rubric.ts`](src/lib/rubric.ts) |
+| Homepage copy | [`src/app/page.tsx`](src/app/page.tsx) |
+| Submission form options | [`src/app/submit/submit-form.tsx`](src/app/submit/submit-form.tsx) |
+| Colours and fonts | [`tailwind.config.ts`](tailwind.config.ts), [`src/app/globals.css`](src/app/globals.css) |
+| Logo | [`src/components/dua-mark.tsx`](src/components/dua-mark.tsx), `public/email-logo.png`, `src/app/icon.svg` |
+
+Editing code to configure an event is a stopgap. The roadmap moves all of this
+into settings an organizer edits in the admin panel.
 
 ## How judging works
 
@@ -57,7 +224,7 @@ tests.
    beat nine judges who broadly agree.
 3. **Monte Carlo.** 1,000 trials each add noise to every score, scaled by that
    judge's own spread, and re-rank. A project's chance of placing is the share
-   of trials it landed in the top N. The seed is logged, so anyone can
+   of trials it landed in the top places. The seed is logged, so anyone can
    reproduce the result.
 4. **Selection.** Projects that place in at least 70% of trials are locked in.
    Remaining places are drawn from the rest, weighted by their chance of
@@ -66,118 +233,69 @@ tests.
    tie-breakers can't separate are flagged for the panel to decide.
 
 A recused judge's scores never count: declaring a conflict deletes any score
-that judge gave the project, and the database refuses new ones.
+that judge gave the project, and new ones are refused.
 
-## Quick start
+## Who can see what
 
-You need Node.js 20.18 or newer and a free [Supabase](https://supabase.com)
-project.
+These rules are written as plain functions in
+[`src/server/policy.ts`](src/server/policy.ts) and enforced by every function
+in [`src/server/`](src/server/) that reads or writes on someone's behalf. The
+tests beside them run against a real database.
 
-### 1. Get the code
-
-```bash
-git clone <this repository's URL>
-cd dua-platform
-npm install
-cp .env.local.example .env.local
-```
-
-### 2. Create the database
-
-1. Create a Supabase project and wait for it to finish provisioning.
-2. In **SQL Editor**, run every file in
-   [`supabase/migrations/`](supabase/migrations/) in order, `0001` to `0023`.
-   Each one is safe to re-run.
-3. From **Settings → API**, copy the project URL, the publishable key and the
-   secret key into `.env.local`.
-
-### 3. Fill in the rest of `.env.local`
-
-| Variable | Needed | What it's for |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Public key, safe in the browser. |
-| `SUPABASE_SECRET_KEY` | Yes | Server-only key. Never expose it to the browser. |
-| `ADMIN_PASSWORD` | Yes | Break-glass owner password for `/admin`. |
-| `SUBMISSION_EDIT_SECRET` | Yes | 32+ random characters. Signs sessions and private links. `openssl rand -hex 32` makes one. |
-| `NEXT_PUBLIC_SITE_URL` | Yes | Public address of your deployment, used in emails. |
-| `RESEND_API_KEY` | For email | [Resend](https://resend.com) API key. |
-| `EMAIL_FROM` | For email | From header on a domain Resend has verified. |
-
-### 4. Run it
-
-```bash
-npm run dev
-```
-
-Open <http://localhost:3000>.
-
-### 5. Set up your event
-
-1. Go to `/admin`, leave the email blank and sign in with `ADMIN_PASSWORD`.
-2. **Team** tab: create your own owner account, and one for each organizer.
-   Then sign in as yourself and keep `ADMIN_PASSWORD` for emergencies.
-3. **Judges** tab: add judges and mentors, then set the shared sign-in
-   password and send it to them yourself.
-4. **Phase** tab: open registration and submissions when you're ready, switch
-   to **judging** to start scoring, then **results**.
-
-To try judging with sample projects:
-
-```bash
-node --env-file=.env.local scripts/demo-data.mjs            # add samples
-node --env-file=.env.local scripts/demo-data.mjs --cleanup  # remove them
-```
-
-## Make it yours
-
-| To change | Edit |
+| Who | Can |
 | --- | --- |
-| Event name, dates, host, contact email, deadlines | [`src/lib/site.ts`](src/lib/site.ts) |
-| Tracks, problem briefs, partner groups, dropdown options | [`src/lib/hackathon.ts`](src/lib/hackathon.ts) |
-| Judging criteria, weights and guidance | [`src/lib/rubric.ts`](src/lib/rubric.ts), and `rubric_aggregates()` in `0020_handbook_v2_rubric.sql`. Change both together. |
-| Homepage copy | [`src/app/page.tsx`](src/app/page.tsx) |
-| Colours and fonts | [`tailwind.config.ts`](tailwind.config.ts), [`src/app/globals.css`](src/app/globals.css) |
-| Logo | [`src/components/dua-mark.tsx`](src/components/dua-mark.tsx), `public/email-logo.png`, `src/app/icon.svg` |
-
-Editing code to configure an event is a stopgap. The roadmap moves all of this
-into settings an organizer edits in the admin panel.
+| Public | Register and submit while the admin has those forms open. Edit their own submission through its private link. |
+| Judges | See complete, unhidden submissions once judging opens, without any contact details. Read and write only their own scores and conflicts. See panel averages and anonymous notes once results open. |
+| Mentors | See what judges see. Never score. |
+| Admins | See everything, including contact details. Preview results at any time. |
+| Admins with the viewer role | See everything admins see. Change nothing. |
 
 ## Deploying
 
-Dua is a standard Next.js app. On Vercel: import the repository, add the
-variables from `.env.local`, and deploy. Any host that runs `npm run build`
-and `npm run start` on Node.js 20.18+ works too.
+Dua is a standard Next.js app. Wherever you host it:
+
+1. Set the variables from [Configuration](#configuration).
+2. Run `npm run db:migrate` against your database on each deploy. It skips
+   migrations that have already been applied.
+3. Run `npm run build`, then `npm run start`.
+
+On Vercel, import the repository, add the variables, and set the build command
+to `npm run db:migrate && npm run build`.
 
 ## Roadmap
 
-1. **Any Postgres.** Replace the Supabase client with one schema that runs on
-   any Postgres database, and move permission rules from database policies
-   into tested server code.
-2. **Pluggable providers.** Sign-in, email (Resend, SMTP) and file storage
-   (S3-compatible, local disk) behind small adapters.
-3. **Events as data.** Event details, tracks, rubric, form fields and theme
-   editable in the admin panel instead of in code. Support for more than one
-   event per deployment.
-4. **One-command setup.** Docker Compose with a seeded demo event.
+1. **Pluggable providers.** Email over SMTP as well as Resend, and file
+   storage on S3-compatible services as well as in the database.
+2. **Events as data.** Event details, tracks, rubric, form fields and theme
+   editable in the admin panel instead of in code. More than one event per
+   deployment (the database is already built for it).
+3. **One-command setup.** A container image for the app, alongside the
+   database one.
 
 ## Development
 
 ```bash
-npm run dev         # local server
-npm test            # unit tests
-npm run lint        # ESLint
-npm run typecheck   # TypeScript
-npm run build       # production build
+npm run dev           # local server
+npm test              # tests; needs the database running (npm run db:up)
+npm run lint          # ESLint
+npm run typecheck     # TypeScript
+npm run build         # production build
+npm run db:generate   # after editing src/db/schema.ts: write a new migration
 ```
+
+Tests use their own database, `dua_test`, created automatically on the same
+Postgres server. They never touch your development data.
 
 ```
 src/
-├── app/            # pages and server actions, one folder per area
-├── components/     # shared layout: header, footer, logo, theme toggle
-└── lib/            # event config, rubric, ranking, email, validation
-supabase/migrations/  # database schema, run in order
-scripts/              # command-line helpers: admins, demo data, imports
+├── app/         # pages and server actions, one folder per area
+├── components/  # shared layout: header, footer, logo, theme toggle
+├── db/          # the database schema and connection
+├── lib/         # event config, rubric, ranking, email, validation
+└── server/      # all database reads and writes, and who may make them
+drizzle/         # SQL migrations, generated from src/db/schema.ts
+scripts/         # command-line helpers: migrate, seed, admins, imports
+test/            # test database setup and fixtures
 ```
 
 ## Contributing

@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Breadcrumbs, HeaderBar, PageShell } from "@/components/shell";
-import { getPhase } from "@/lib/phase";
-import { isAdminSignedIn } from "@/app/admin/auth";
-import { getJudgeByAuthUser } from "@/lib/judge-lookup";
-import { RUBRIC, evidenceKey } from "@/lib/rubric";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminSession } from "@/app/admin/auth";
+import { getCurrentEvent } from "@/server/event";
+import {
+  getOwnRecusal,
+  getOwnScore,
+  getSubmissionForViewer,
+  listJudgeNotes,
+} from "@/server/judging";
+import type { Viewer } from "@/server/policy";
+import { getJudgeSession } from "../auth";
 import { safeHref } from "@/lib/url";
 import { ConflictCard } from "./conflict-card";
 import { ScoreForm, type ExistingScore } from "./score-form";
 
 export const dynamic = "force-dynamic";
-
-// The scores and evidence for the current rubric (0020).
-const SCORE_COLUMNS = RUBRIC.flatMap((c) => [c.key, evidenceKey(c.key)]).join(", ");
 
 export default async function JudgeSubmissionPage({
   params,
@@ -22,91 +23,35 @@ export default async function JudgeSubmissionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const phase = await getPhase();
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const event = await getCurrentEvent();
+  const phase = event.phase;
 
   // Determine viewer: judge, mentor, admin, or kick out
-  const judgeRow = user ? await getJudgeByAuthUser(supabase, user.id) : null;
-  const judge = judgeRow?.is_active ? judgeRow : null;
+  const judge = await getJudgeSession();
   const isMentor = judge?.role === "mentor";
   const isJudge = !!judge && !isMentor;
-  const adminOnly = !judge && (await isAdminSignedIn());
-  if (!judge && !adminOnly) redirect("/judge");
+  const adminSession = judge ? null : await getAdminSession();
+  const adminOnly = !!adminSession;
+  if (!judge && !adminSession) redirect("/judge");
   if (judge && phase === "submissions") redirect("/judge/dashboard");
 
-  // Admins use the service role to fetch all submission data; judges use the
-  // sanitized public view (no member emails).
-  let sub: Record<string, string | number | null> | null = null;
-  if (judge) {
-    const { data } = await supabase
-      .from("submissions_public")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-    sub = data ?? null;
-  } else {
-    const admin = createAdminClient();
-    const { data } = await admin
-      .from("submissions")
-      .select(
-        "id, project_name, team_name, solo_or_team, challenge_track, project_category, project_description, project_description_summary, technologies_used, team_size, github_url, live_demo_url, demo_video_url, linkedin_post_url, member1_name, member2_name, member3_name, member4_name, member5_name, energy_sector, impact_focus, target_region, solution_stage, country, customer_type, region, area_of_specification, problem_statement, core_energy_problem, applies_ai, mentor_name, demo_video_short_url, pitch_deck_url, summary_url, disclosure_statement, problem_brief",
-      )
-      .eq("id", id)
-      .maybeSingle();
-    sub = data ?? null;
-  }
+  const viewer: Viewer = judge
+    ? { kind: "judge", judgeId: judge.id, role: judge.role }
+    : { kind: "admin", role: adminSession!.role };
+
+  // Never includes contact details, whoever is looking. Judges only get
+  // submissions that are complete and not hidden.
+  const sub = await getSubmissionForViewer(event, viewer, id);
   if (!sub) notFound();
 
-  const existing = isJudge
-    ? ((
-        await supabase
-          .from("scores")
-          .select(SCORE_COLUMNS)
-          .eq("judge_id", judge!.id)
-          .eq("submission_id", id)
-          .maybeSingle()
-      ).data as unknown as ExistingScore | null)
-    : null;
+  // A judge's own score and conflict, never anyone else's.
+  const existing: ExistingScore | null = await getOwnScore(event, viewer, id);
+  const recusal = await getOwnRecusal(event, viewer, id);
 
-  // Judges read their own recusals (RLS); mentors and admins don't recuse.
-  const recusal = isJudge
-    ? (
-        await supabase
-          .from("recusals")
-          .select("reason")
-          .eq("judge_id", judge!.id)
-          .eq("submission_id", id)
-          .maybeSingle()
-      ).data
-    : null;
-
-  // In results phase (or for admins viewing), fetch every judge's evidence
-  // sentences for this submission. Shown anonymously as "Judge A/B/C…" and
-  // without the scores, to keep the "aggregates only" rule.
-  let judgeNotes: { label: string; lines: { criterion: string; text: string }[] }[] =
-    [];
-  if (phase === "results" || adminOnly) {
-    const admin = createAdminClient();
-    const { data: notes } = await admin
-      .from("scores")
-      .select(SCORE_COLUMNS)
-      .eq("submission_id", id)
-      .not("sustainability", "is", null)
-      .order("created_at", { ascending: true });
-    judgeNotes = ((notes ?? []) as unknown as Record<string, string | null>[]).map(
-      (n, i) => ({
-        label: `Judge ${String.fromCharCode(65 + i)}`,
-        lines: RUBRIC.map((c) => ({
-          criterion: c.label,
-          text: (n[evidenceKey(c.key)] ?? "").trim(),
-        })).filter((l) => l.text.length > 0),
-      }),
-    );
-  }
+  // Once results are open (or for admins), every judge's evidence sentences,
+  // shown anonymously as "Judge A/B/C…" and without the scores, to keep the
+  // "aggregates only" rule.
+  const judgeNotes = await listJudgeNotes(event, viewer, id);
 
   const crumbs = judge
     ? [
@@ -148,8 +93,8 @@ export default async function JudgeSubmissionPage({
               sub.project_category !== sub.challenge_track && (
                 <span className="pill">{sub.project_category}</span>
               )}
-            {sub.energy_sector && (
-              <span className="pill-crimson">⚡ {sub.energy_sector}</span>
+            {sub.focus_area && (
+              <span className="pill-crimson">{sub.focus_area}</span>
             )}
             {sub.solution_stage && (
               <span className="pill">{sub.solution_stage}</span>
@@ -248,10 +193,10 @@ export default async function JudgeSubmissionPage({
                 {sub.project_description || "—"}
               </p>
             </div>
-            {sub.core_energy_problem && (
+            {sub.core_problem && (
               <div>
-                <div className="field-label">Core Energy Problem</div>
-                <p className="mt-1 text-sm">{sub.core_energy_problem}</p>
+                <div className="field-label">Core Problem</div>
+                <p className="mt-1 text-sm">{sub.core_problem}</p>
               </div>
             )}
             {sub.technologies_used && (
@@ -415,7 +360,6 @@ export default async function JudgeSubmissionPage({
             <div className="space-y-4">
               <ScoreForm
                 submissionId={String(sub.id)}
-                judgeId={judge!.id}
                 existing={existing ?? null}
               />
               <ConflictCard submissionId={String(sub.id)} recusal={null} />

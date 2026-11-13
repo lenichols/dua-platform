@@ -1,46 +1,20 @@
 import Link from "next/link";
 import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
-import { isAdminSignedIn } from "@/app/admin/auth";
-import { getPhase } from "@/lib/phase";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getViewer } from "@/lib/viewer";
+import { getCurrentEvent } from "@/server/event";
+import { getResultsLock, rubricAggregates, type RubricAggregate } from "@/server/judging";
+import { canSeeResults } from "@/server/policy";
 
 export const dynamic = "force-dynamic";
 
-type Agg = {
-  submission_id: string;
-  project_name: string;
-  n_judges: number;
-  avg_impact: number | null;
-  avg_innovation: number | null;
-  avg_sustainability: number | null;
-  avg_feasibility: number | null;
-  avg_scalability: number | null;
-  avg_total: number | null;
-};
-
-type Lock = {
-  top6: { submission_id: string; rank: number; probability: number }[];
-};
+type Agg = RubricAggregate;
 
 export default async function ResultsPage() {
-  const phase = await getPhase();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const adminSignedIn = await isAdminSignedIn();
-
-  // Is the signed-in user an active judge or mentor? Both see results.
-  let isJudge = false;
-  if (user) {
-    const { data: judge } = await supabase
-      .from("judges")
-      .select("is_active")
-      .eq("auth_user_id", user.id)
-      .maybeSingle();
-    isJudge = !!judge?.is_active;
-  }
+  const event = await getCurrentEvent();
+  const phase = event.phase;
+  const viewer = await getViewer();
+  const isJudge = viewer.kind === "judge";
+  const adminSignedIn = viewer.kind === "admin";
 
   // Gate: only judges and admin can see results
   if (!isJudge && !adminSignedIn) {
@@ -69,17 +43,8 @@ export default async function ResultsPage() {
     );
   }
 
-  // Fetch aggregates. Judges use RPC (RLS-gated to phase=results or admin).
-  // Admins use the service role so they can preview before the phase flip.
-  const useAdminClient = adminSignedIn && !isJudge;
-  const client = useAdminClient ? createAdminClient() : supabase;
-
-  const [{ data: agg }, { data: lock }] = await Promise.all([
-    client.rpc("rubric_aggregates"),
-    client.from("results_lock").select("top6").eq("id", 1).maybeSingle(),
-  ]);
-
-  if (phase !== "results" && !adminSignedIn) {
+  // Judges and mentors wait for the results phase; admins can preview.
+  if (!canSeeResults(viewer, phase)) {
     return (
       <>
         <HeaderBar
@@ -107,8 +72,13 @@ export default async function ResultsPage() {
     );
   }
 
-  const rows = ((agg ?? []) as Agg[]).filter((r) => r.n_judges > 0);
-  // Ties: higher Impact, then higher Innovation .
+  const [agg, lock] = await Promise.all([
+    rubricAggregates(event, viewer),
+    getResultsLock(event, viewer),
+  ]);
+
+  const rows = (agg as Agg[]).filter((r) => r.n_judges > 0);
+  // Ties: higher Impact, then higher Innovation.
   rows.sort(
     (a, b) =>
       (b.avg_total ?? 0) - (a.avg_total ?? 0) ||
@@ -116,7 +86,7 @@ export default async function ResultsPage() {
       (b.avg_innovation ?? 0) - (a.avg_innovation ?? 0),
   );
 
-  const top6 = (lock?.top6 as Lock["top6"]) ?? [];
+  const top6 = lock?.top6 ?? [];
   const byId = new Map(rows.map((r) => [r.submission_id, r]));
 
   const crumbs = adminSignedIn && !isJudge

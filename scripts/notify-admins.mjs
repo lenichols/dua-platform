@@ -11,7 +11,7 @@
 // plaintext password is ever typed on a command line or written to a file.
 // Without it, the email is a notice only and contains no credentials.
 
-import { createClient } from "@supabase/supabase-js";
+import { connect } from "./_db.mjs";
 import { die, generatePassword, hashPassword, parseArgs } from "./_password.mjs";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
@@ -32,23 +32,16 @@ const only = typeof args.only === "string" ? args.only.toLowerCase() : null;
 const apiKey = process.env.RESEND_API_KEY;
 if (!apiKey && !dryRun) die("RESEND_API_KEY missing — pass --env-file=.env.local");
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key) die("Missing Supabase env vars — pass --env-file=.env.local");
+const pool = connect();
+const { rows: admins } = await pool.query(
+  "select id, name, email, role from admin_users where is_active order by name",
+);
 
-const supabase = createClient(url, key, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-const { data: admins, error } = await supabase
-  .from("admin_users")
-  .select("id, name, email, role")
-  .eq("is_active", true)
-  .order("name");
-if (error) die(error.message);
-
-const recipients = (admins ?? []).filter((a) => !only || a.email.toLowerCase() === only);
-if (recipients.length === 0) die("No matching active admins");
+const recipients = admins.filter((a) => !only || a.email.toLowerCase() === only);
+if (recipients.length === 0) {
+  await pool.end();
+  die("No matching active admins");
+}
 
 const subject = rotate
   ? `Your ${EVENT_NAME} admin password`
@@ -161,13 +154,14 @@ for (const r of recipients) {
 
   if (rotate) {
     password = generatePassword();
-    const { error: updErr } = await supabase
-      .from("admin_users")
-      .update({ password_hash: await hashPassword(password) })
-      .eq("id", r.id);
-    if (updErr) {
+    try {
+      await pool.query(
+        "update admin_users set password_hash = $2, updated_at = now() where id = $1",
+        [r.id, await hashPassword(password)],
+      );
+    } catch (e) {
       failed++;
-      console.error(`✗ ${r.email}: couldn't set password (${updErr.message}) — not emailed`);
+      console.error(`✗ ${r.email}: couldn't set password (${e.message}) — not emailed`);
       continue;
     }
   }

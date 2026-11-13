@@ -1,16 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentEvent, type Phase } from "@/server/event";
 
-export type Phase = "submissions" | "judging" | "results";
+export type { Phase };
+
+// These helpers are for pages that should still render if the database is
+// unreachable: they fall back to the most closed-down answer.
 
 export async function getPhase(): Promise<Phase> {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("event_state")
-      .select("phase")
-      .eq("id", 1)
-      .maybeSingle();
-    return (data?.phase as Phase) ?? "submissions";
+    return (await getCurrentEvent()).phase;
   } catch {
     return "submissions";
   }
@@ -20,13 +17,7 @@ export async function getPhase(): Promise<Phase> {
 // phase; defaults to false (closed) so /submit stays locked until opened.
 export async function getSubmissionsOpen(): Promise<boolean> {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("event_state")
-      .select("submissions_open")
-      .eq("id", 1)
-      .maybeSingle();
-    return data?.submissions_open === true;
+    return (await getCurrentEvent()).submissions_open;
   } catch {
     return false;
   }
@@ -37,13 +28,7 @@ export async function getSubmissionsOpen(): Promise<boolean> {
 // phase leaves "submissions". Defaults to false (closed).
 export async function getRegistrationOpen(): Promise<boolean> {
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("event_state")
-      .select("registration_open")
-      .eq("id", 1)
-      .maybeSingle();
-    return data?.registration_open === true;
+    return (await getCurrentEvent()).registration_open;
   } catch {
     return false;
   }

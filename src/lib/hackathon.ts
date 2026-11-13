@@ -3,11 +3,11 @@
 // These describe the sample event in src/lib/site.ts; replace them with your own.
 
 export const TRACKS = [
-  "New Technologies & Hardware Innovations",
-  "Digital Solutions, Apps & AI/ML Tools",
-  "Business Models & Financing Approaches",
-  "Clean Energy & Sustainability Solutions",
-  "Policy, Systems & Community-Based Solutions",
+  "Web & Mobile Apps",
+  "AI & Data",
+  "Hardware & Devices",
+  "Developer Tools",
+  "Social Good",
 ];
 
 // Problem briefs teams can pick from, or they bring their own problem.
@@ -15,10 +15,10 @@ export const TRACKS = [
 export const OWN_PROBLEM = "Own problem (not one of the briefs)";
 
 export const PROBLEM_BRIEFS = [
-  "1 · Cold storage for clinics without reliable power",
-  "2 · Forecast demand before building a mini-grid",
-  "3 · Lower energy bills for renters",
-  "4 · Keep a neighbourhood running through an outage",
+  "1 · Help a small nonprofit schedule its volunteers",
+  "2 · Make local transit times easier to check",
+  "3 · A study tool that still works offline",
+  "4 · Cut the time it takes to report a bug well",
   OWN_PROBLEM,
 ];
 
@@ -28,7 +28,6 @@ export const EXPERIENCE_LEVELS = [
   "Early career (0–2 yrs)",
   "Mid-level (3–7 yrs)",
   "Senior (8+ yrs)",
-  "Energy industry professional",
 ];
 
 // Experience bands for mentor sign-ups (participant levels don't fit —
@@ -37,7 +36,6 @@ export const MENTOR_EXPERIENCE_LEVELS = [
   "Mid-level (3–7 yrs)",
   "Senior (8–14 yrs)",
   "Executive / 15+ yrs",
-  "Energy industry professional",
   "Academic / Researcher",
 ];
 

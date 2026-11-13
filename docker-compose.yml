@@ -1,0 +1,45 @@
+# Local development services.
+#
+#   docker compose up -d db                      # the database (npm run db:up)
+#   docker compose --profile tools up -d pgadmin # optional: pgAdmin in the browser
+#
+# These passwords are for local development only.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: dua
+      POSTGRES_PASSWORD: dua
+      POSTGRES_DB: dua
+    ports:
+      # 54329 on your machine, so it doesn't clash with a local Postgres on 5432.
+      - "54329:5432"
+    volumes:
+      - dua-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dua -d dua"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # A web UI for browsing the database, at http://localhost:5050.
+  # Only starts when you ask for the "tools" profile.
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.org
+      PGADMIN_DEFAULT_PASSWORD: dua
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - dua-pgadmin:/var/lib/pgadmin
+
+volumes:
+  dua-db:
+  dua-pgadmin:

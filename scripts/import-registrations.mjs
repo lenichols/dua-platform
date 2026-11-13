@@ -12,7 +12,7 @@
 // (Eventbrite drops Home Country once the ticket type stops asking for it)
 // can't blank out detail an earlier import captured.
 
-import { createClient } from "@supabase/supabase-js";
+import { connect, currentEventId, insertRow } from "./_db.mjs";
 import { readSheet } from "./_spreadsheet.mjs";
 import { die, parseArgs } from "./_password.mjs";
 
@@ -154,26 +154,14 @@ for (const [i, row] of rows.entries()) {
 }
 
 // ── compare against the database ─────────────────────────────────
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key)
-  die("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY — pass --env-file=.env.local");
+const pool = connect();
+const eventId = await currentEventId(pool);
 
-const supabase = createClient(url, key, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-const existing = new Set();
-for (let from = 0; ; from += 1000) {
-  const { data, error } = await supabase
-    .from("registrations")
-    .select("email")
-    .eq("role", role)
-    .range(from, from + 999);
-  if (error) die(error.message);
-  for (const r of data) existing.add(String(r.email).trim().toLowerCase());
-  if (data.length < 1000) break;
-}
+const { rows: registered } = await pool.query(
+  "select lower(email) as email from registrations where event_id = $1 and role = $2",
+  [eventId, role],
+);
+const existing = new Set(registered.map((r) => r.email.trim()));
 
 const toInsert = [];
 const alreadyPresent = [];
@@ -210,20 +198,26 @@ for (const r of toInsert)
 
 if (!toInsert.length) {
   console.log("\nNothing to import.");
+  await pool.end();
   process.exit(0);
 }
 
 if (!commit) {
   console.log(`\nDry run — nothing was written. Re-run with --commit to insert ${toInsert.length}.`);
+  await pool.end();
   process.exit(0);
 }
 
 // ── insert ───────────────────────────────────────────────────────
 let inserted = 0;
-for (let i = 0; i < toInsert.length; i += 100) {
-  const chunk = toInsert.slice(i, i + 100);
-  const { data, error } = await supabase.from("registrations").insert(chunk).select("id");
-  if (error) die(`insert failed after ${inserted} rows: ${error.message}`);
-  inserted += data.length;
+for (const record of toInsert) {
+  try {
+    await insertRow(pool, "registrations", { ...record, event_id: eventId });
+    inserted++;
+  } catch (e) {
+    await pool.end();
+    die(`insert failed after ${inserted} rows: ${e.message}`);
+  }
 }
+await pool.end();
 console.log(`\n✓ Inserted ${inserted} ${role} registration${inserted === 1 ? "" : "s"}.`);

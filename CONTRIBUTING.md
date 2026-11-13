@@ -5,15 +5,29 @@ request looks like, and the agreement you'll be asked to sign.
 
 ## Getting set up
 
-Follow the [quick start](README.md#quick-start). You need Node.js 20.18+ and a
-Supabase project of your own for development. Never point a development copy
+Follow the [quick start](README.md#quick-start). You need Node.js 22.9+ and
+Docker (or OrbStack) for the local database. Never point a development copy
 at a database that holds a real event's data.
 
-The unit tests don't need a database:
+Run the tests with the database container up:
 
 ```bash
+npm run db:up
 npm test
 ```
+
+They create and use their own database, `dua_test`, so your development data
+is left alone.
+
+## How the code is laid out
+
+- `src/server/policy.ts` holds the rules for who may see and do what, as plain
+  functions.
+- Everything else in `src/server/` reads and writes the database, and checks
+  those rules first. Pages and server actions call these functions; they
+  don't query the database themselves.
+- `src/db/schema.ts` is the database. After changing it, run
+  `npm run db:generate` and commit the new file under `drizzle/`.
 
 ## Before you open a pull request
 
@@ -39,9 +53,8 @@ npm test
   phone numbers. Don't log them, don't put them in test fixtures, and don't
   paste real data into issues. Use `@example.org` addresses in tests.
 - **Who can see what.** Judges must never see another judge's scores, and
-  viewers must never be able to write. If your change touches a query, a
-  server action or a database policy, say in the pull request how you checked
-  these rules still hold.
+  viewers must never be able to write. If your change touches `src/server/`
+  or a server action, add a test that shows these rules still hold.
 - **Ranking.** Results must stay reproducible from a seed. Don't use
   `Math.random()` in anything that affects a ranking.
 - **Secrets.** Never commit `.env.local` or any key.

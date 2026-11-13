@@ -6,27 +6,29 @@ import { COUNTRIES } from "@/lib/countries";
 import { PROBLEM_BRIEFS, TRACKS } from "@/lib/hackathon";
 import { EVENT } from "@/lib/site";
 
-// Energy-sector focus of the project.
-const ENERGY_SECTORS = [
-  "Solar",
-  "Wind",
-  "Hydropower",
-  "Geothermal",
-  "Bioenergy & Biofuels",
-  "Hydrogen & Fuel Cells",
-  "Energy Storage & Batteries",
-  "Grid, Transmission & Distribution",
-  "Energy Efficiency",
-  "Electric Mobility / EV",
-  "Nuclear",
-  "Energy Access / Off-Grid",
-  "Oil & Gas Transition",
+// What the project is about. Sample options: replace with your event's own.
+const FOCUS_AREAS = [
+  "Education",
+  "Health & Wellbeing",
+  "Climate & Environment",
+  "Money & Work",
+  "Accessibility",
+  "Civic & Community",
+  "Productivity",
+  "Games & Entertainment",
+  "Developer Experience",
 ];
 
-// The hackathon's three impact pillars ("the 3 A's" from the flyer).
-const IMPACT_FOCUS = ["Energy Access", "Affordability", "Availability"];
+// What the project improves for the people who use it.
+const IMPACT_FOCUS = [
+  "Saves time",
+  "Saves money",
+  "Improves access",
+  "Improves safety",
+  "Builds community",
+];
 
-// Continents, matching the official submission form.
+// Continents.
 const REGIONS = [
   "Africa",
   "North America",
@@ -36,12 +38,12 @@ const REGIONS = [
   "Australia",
 ];
 
-// Area of specification, matching the official submission form.
+// The strongest side of the project.
 const AREAS_OF_SPECIFICATION = [
-  "Affordability",
-  "Environmental Friendliness",
   "Technology",
-  "Policy and Regulation",
+  "Design & Usability",
+  "Business Model",
+  "Policy & Community",
 ];
 
 const SOLUTION_STAGES = [
@@ -71,7 +73,6 @@ const ROLES = [
   "Designer",
   "Product / Founder",
   "Data Scientist",
-  "Energy Professional",
   "Hardware Engineer",
   "Policy Analyst",
   "Engineer",
@@ -123,7 +124,7 @@ export function SubmitForm({
     choiceFor(ROLES, initial?.submitter_role),
   );
   const [sectorChoice, setSectorChoice] = useState<string>(
-    choiceFor(ENERGY_SECTORS, initial?.energy_sector),
+    choiceFor(FOCUS_AREAS, initial?.focus_area),
   );
   const [areaChoice, setAreaChoice] = useState<string>(
     choiceFor(AREAS_OF_SPECIFICATION, initial?.area_of_specification),
@@ -493,7 +494,7 @@ export function SubmitForm({
                       <label className="field-label">Occupation</label>
                       <input
                         name={`member${n}_occupation`}
-                        placeholder="e.g. Electrical Engineer, Student"
+                        placeholder="e.g. Software Engineer, Student"
                         className="field-input mt-1"
                       />
                     </div>
@@ -606,7 +607,7 @@ export function SubmitForm({
               {err("problem_brief")}
             </div>
             <div>
-              <label className="field-label">Customer Type *</label>
+              <label className="field-label">Who Is It For? *</label>
               <select
                 name="customer_type"
                 required
@@ -614,12 +615,9 @@ export function SubmitForm({
                 className="field-input mt-1"
               >
                 <option value="">— Select —</option>
-                <option value="Residential">
-                  Residential — household &amp; community power
-                </option>
-                <option value="Non-residential">
-                  Non-residential — industrial, commercial, healthcare &amp;
-                  government
+                <option value="Individuals">Individuals &amp; households</option>
+                <option value="Organizations">
+                  Organizations — businesses, nonprofits &amp; public bodies
                 </option>
               </select>
               {err("customer_type")}
@@ -656,7 +654,7 @@ export function SubmitForm({
               <input
                 name="technologies_used"
                 required
-                placeholder="Python, React, IoT sensors, solar inverters, …"
+                placeholder="Python, React, Postgres, Raspberry Pi, …"
                 className="field-input mt-1"
               />
               {err("technologies_used")}
@@ -665,16 +663,16 @@ export function SubmitForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="field-label">Energy Sector *</label>
+              <label className="field-label">Focus Area *</label>
               <select
                 value={sectorChoice}
                 onChange={(e) => setSectorChoice(e.target.value)}
-                name={sectorChoice === OTHER ? undefined : "energy_sector"}
+                name={sectorChoice === OTHER ? undefined : "focus_area"}
                 required
                 className="field-input mt-1"
               >
                 <option value="">— Select —</option>
-                {ENERGY_SECTORS.map((s) => (
+                {FOCUS_AREAS.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -683,14 +681,14 @@ export function SubmitForm({
               </select>
               {sectorChoice === OTHER && (
                 <input
-                  name="energy_sector"
+                  name="focus_area"
                   required
-                  placeholder="Specify energy sector"
+                  placeholder="Specify focus area"
                   className="field-input mt-2"
                   autoFocus
                 />
               )}
-              {err("energy_sector")}
+              {err("focus_area")}
             </div>
             <div>
               <label className="field-label">Solution Stage *</label>
@@ -759,8 +757,7 @@ export function SubmitForm({
             <label className="field-label">
               Impact Focus *{" "}
               <span className="text-dust">
-                (energy access, affordability &amp; availability — select all
-                that apply)
+                (select all that apply)
               </span>
             </label>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -801,15 +798,15 @@ export function SubmitForm({
 
           <div>
             <label className="field-label">
-              What is the core energy problem your project addresses? *
+              What is the core problem your project addresses? *
             </label>
             <input
-              name="core_energy_problem"
+              name="core_problem"
               required
-              placeholder="e.g. Unreliable grid power for rural hospitals"
+              placeholder="e.g. Volunteer shifts go unfilled because nobody can see the gaps"
               className="field-input mt-1"
             />
-            {err("core_energy_problem")}
+            {err("core_problem")}
           </div>
 
           <div>
@@ -1214,16 +1211,16 @@ function ConfirmModal({
               {row("project_name", "Name")}
               {row("challenge_track", "Track")}
               {row("problem_brief", "Problem Brief")}
-              {row("customer_type", "Customer Type")}
+              {row("customer_type", "Who It's For")}
               {row("region", "Region")}
               {row("project_category", "Category")}
-              {row("energy_sector", "Energy Sector")}
+              {row("focus_area", "Focus Area")}
               {row("area_of_specification", "Specification")}
               {row("solution_stage", "Stage")}
               {row("applies_ai", "Applies AI")}
               {row("impact_focus", "Impact Focus")}
               {row("target_region", "Target Region")}
-              {row("core_energy_problem", "Core Problem")}
+              {row("core_problem", "Core Problem")}
               {row("technologies_used", "Tech")}
               {row("project_description_summary", "Summary")}
               {row("problem_statement", "Problem Statement")}

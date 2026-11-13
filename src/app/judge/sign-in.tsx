@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signInJudge } from "./actions";
 
-export function JudgeSignIn({ unauthorized }: { unauthorized?: boolean }) {
+export function JudgeSignIn() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,18 +15,10 @@ export function JudgeSignIn({ unauthorized }: { unauthorized?: boolean }) {
     e.preventDefault();
     setStatus("signing");
     setErrMsg("");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (error) {
+    const result = await signInJudge(email.trim().toLowerCase(), password);
+    if (!result.ok) {
       setStatus("err");
-      setErrMsg(
-        error.message === "Invalid login credentials"
-          ? "Wrong email or password. Check with the organizers."
-          : error.message,
-      );
+      setErrMsg(result.error);
       return;
     }
     router.push("/judge/dashboard");
@@ -35,12 +27,6 @@ export function JudgeSignIn({ unauthorized }: { unauthorized?: boolean }) {
 
   return (
     <form onSubmit={submit} className="card space-y-4">
-      {unauthorized && (
-        <div className="rounded-md border border-blood/60 bg-blood/10 px-4 py-3 text-sm text-blood">
-          You're signed in but not on the judges roster. Contact the organizers or
-          use a different email.
-        </div>
-      )}
       <div>
         <label className="field-label">Email Address</label>
         <input
