@@ -11,7 +11,7 @@ export default async function setup() {
   const name = url.pathname.slice(1);
   if (!/^[a-z0-9_]+$/.test(name) || !name.includes("test"))
     throw new Error(
-      `Refusing to run tests against "${name}": the test database name must contain "test".`,
+      `Refusing to run tests against "${name}": the test database name must contain "test".`
     );
 
   // Create the database if it isn't there, from the server's default one.
@@ -22,7 +22,7 @@ export default async function setup() {
     await admin.connect();
   } catch (e) {
     throw new Error(
-      `Can't reach Postgres at ${url.host}. Start it with "npm run db:up", or set TEST_DATABASE_URL. (${(e as Error).message})`,
+      `Can't reach Postgres at ${url.host}. Start it with "npm run db:up", or set TEST_DATABASE_URL. (${(e as Error).message})`
     );
   }
   const exists = await admin.query("select 1 from pg_database where datname = $1", [name]);

@@ -62,7 +62,7 @@ export function canSeeSubmissions(v: Viewer, phase: Phase): boolean {
 export function canSeeThisSubmission(
   v: Viewer,
   phase: Phase,
-  s: { hidden_from_judges: boolean; is_submission_complete: boolean },
+  s: { hidden_from_judges: boolean; is_submission_complete: boolean }
 ): boolean {
   if (!canSeeSubmissions(v, phase)) return false;
   if (v.kind === "admin") return true;

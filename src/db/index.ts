@@ -12,7 +12,7 @@ function connectionString(): string {
   const url = process.env.DATABASE_URL;
   if (!url)
     throw new Error(
-      "DATABASE_URL is not set. Point it at your Postgres database, e.g. postgres://dua:dua@localhost:54329/dua",
+      "DATABASE_URL is not set. Point it at your Postgres database, e.g. postgres://dua:dua@localhost:54329/dua"
     );
   return url;
 }
@@ -22,7 +22,9 @@ function connectionString(): string {
  * "no-verify" encrypts without checking it, for hosts whose certificate
  * Node doesn't recognize. Unset leaves it to the connection string.
  */
-export function databaseSsl(value = process.env.DATABASE_SSL): boolean | { rejectUnauthorized: false } | undefined {
+export function databaseSsl(
+  value = process.env.DATABASE_SSL
+): boolean | { rejectUnauthorized: false } | undefined {
   const v = value?.trim().toLowerCase();
   if (v === "require") return true;
   if (v === "no-verify") return { rejectUnauthorized: false };

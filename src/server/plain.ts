@@ -2,11 +2,7 @@
 // passed straight to client components and compared as text.
 
 export type Plain<T> = {
-  [K in keyof T]: T[K] extends Date
-    ? string
-    : T[K] extends Date | null
-      ? string | null
-      : T[K];
+  [K in keyof T]: T[K] extends Date ? string : T[K] extends Date | null ? string | null : T[K];
 };
 
 export function plain<T extends Record<string, unknown>>(row: T): Plain<T> {

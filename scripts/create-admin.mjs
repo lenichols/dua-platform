@@ -21,7 +21,9 @@ import {
 } from "./_password.mjs";
 
 const args = parseArgs(process.argv.slice(2));
-const email = String(args.email ?? "").trim().toLowerCase();
+const email = String(args.email ?? "")
+  .trim()
+  .toLowerCase();
 const name = String(args.name ?? "").trim();
 // Only applied when explicitly passed — an existing account keeps its current
 // role otherwise, so a name edit can't silently demote someone.
@@ -44,15 +46,14 @@ if (args.password === "admin-password" && !requested)
 const allowWeak = args["allow-weak"] === true || args["allow-weak"] === "true";
 if (requested && requested.length < MIN_PASSWORD_LENGTH && !allowWeak)
   die(
-    `password must be at least ${MIN_PASSWORD_LENGTH} characters (pass --allow-weak to override)`,
+    `password must be at least ${MIN_PASSWORD_LENGTH} characters (pass --allow-weak to override)`
   );
 
 // --rotate generates a fresh password and applies it to an EXISTING account.
 // Without it, updates leave the password alone, so a name or role edit can't
 // silently lock someone out.
 const rotate = args.rotate === true || args.rotate === "true";
-if (rotate && requested)
-  die("pass either --rotate or --password, not both");
+if (rotate && requested) die("pass either --rotate or --password, not both");
 
 const generated = !requested;
 const password = requested || generatePassword();
@@ -60,10 +61,9 @@ const password = requested || generatePassword();
 const pool = connect();
 const password_hash = await hashPassword(password);
 
-const { rows } = await pool.query(
-  "select id, role from admin_users where lower(email) = $1",
-  [email],
-);
+const { rows } = await pool.query("select id, role from admin_users where lower(email) = $1", [
+  email,
+]);
 const existing = rows[0];
 
 if (existing) {
@@ -77,31 +77,31 @@ if (existing) {
             password_hash = coalesce($4, password_hash),
             updated_at = now()
       where id = $1`,
-    [existing.id, name, roleGiven ? role : null, requested || rotate ? password_hash : null],
+    [existing.id, name, roleGiven ? role : null, requested || rotate ? password_hash : null]
   );
   console.log(
     roleGiven
       ? `✓ Updated ${email} (${existing.role} → ${role})`
-      : `✓ Updated ${email} (role unchanged: ${existing.role})`,
+      : `✓ Updated ${email} (role unchanged: ${existing.role})`
   );
   console.log(
     requested
       ? "\n  Password: the one you passed in.\n"
       : rotate
         ? `\n  New password (shown once): ${password}\n`
-        : "\n  Password: unchanged.\n",
+        : "\n  Password: unchanged.\n"
   );
 } else {
   await pool.query(
     `insert into admin_users (name, email, role, password_hash, is_active, created_by)
      values ($1, $2, $3, $4, true, 'scripts/create-admin.mjs')`,
-    [name, email, role, password_hash],
+    [name, email, role, password_hash]
   );
   console.log(`✓ Created ${email} as ${role}`);
   console.log(
     generated
       ? `\n  Password (shown once): ${password}\n`
-      : `\n  Password: the one you passed in.\n`,
+      : `\n  Password: the one you passed in.\n`
   );
 }
 

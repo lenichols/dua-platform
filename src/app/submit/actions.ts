@@ -21,12 +21,12 @@ const DUPLICATE_ERROR =
 /** Check a posted form against this event's rules: built-in questions and its own. */
 function checkSubmission(
   settings: EventSettings,
-  form: FormData,
+  form: FormData
 ):
   | { ok: true; data: SubmissionInput; custom: Record<string, string> }
   | { ok: false; result: SubmitResult } {
   const parsed = submissionSchemaFor(hiddenColumns(settings, "submission")).safeParse(
-    Object.fromEntries(form.entries()),
+    Object.fromEntries(form.entries())
   );
   const custom = parseCustomAnswers(settings.customFields.submission, form);
   if (parsed.success && custom.ok) return { ok: true, data: parsed.data, custom: custom.values };
@@ -42,7 +42,7 @@ function checkSubmission(
 
 export async function submitProject(
   _prev: SubmitResult | null,
-  form: FormData,
+  form: FormData
 ): Promise<SubmitResult> {
   const event = await getCurrentEvent();
   const checked = checkSubmission(event.settings, form);
@@ -77,7 +77,7 @@ export async function submitProject(
 export async function updateSubmission(
   id: string,
   token: string,
-  form: FormData,
+  form: FormData
 ): Promise<SubmitResult> {
   if (!verifyEditToken(id, token)) {
     return { ok: false, error: "This edit link isn't valid." };

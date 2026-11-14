@@ -80,7 +80,9 @@ import { unsubscribeUrl } from "@/lib/unsubscribe";
 
 // ── sign in / out ────────────────────────────────────────────────
 export async function signInAdmin(_: unknown, form: FormData) {
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const pw = String(form.get("password") ?? "");
 
   const key = signInKey("admin", email);
@@ -132,11 +134,8 @@ export async function signOutAdmin() {
 
 // ── phase toggle ─────────────────────────────────────────────────
 export async function setPhase(
-  phase: "submissions" | "judging" | "results",
-): Promise<
-  | { ok: true; persisted: string; rowsAffected: number }
-  | { ok: false; error: string }
-> {
+  phase: "submissions" | "judging" | "results"
+): Promise<{ ok: true; persisted: string; rowsAffected: number } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
 
@@ -162,7 +161,7 @@ const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e)
 
 /** Runs a write and reports a failure as a message instead of throwing. */
 async function attempt(
-  work: () => Promise<void>,
+  work: () => Promise<void>
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     await work();
@@ -187,7 +186,7 @@ function tidy(value: unknown): unknown {
 }
 
 export async function saveSettings(
-  input: unknown,
+  input: unknown
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -207,8 +206,12 @@ export async function addJudge(_: unknown, form: FormData) {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false as const, error: guard.error };
   const name = String(form.get("name") ?? "").trim();
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
-  const roleRaw = String(form.get("role") ?? "judge").trim().toLowerCase();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const roleRaw = String(form.get("role") ?? "judge")
+    .trim()
+    .toLowerCase();
   const role = roleRaw === "mentor" ? "mentor" : "judge";
   if (!name || !email) return { ok: false as const, error: "Name and email required" };
 
@@ -223,7 +226,7 @@ export async function addJudge(_: unknown, form: FormData) {
 }
 
 export async function removeJudge(
-  judgeId: string,
+  judgeId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -235,7 +238,7 @@ export async function removeJudge(
 
 // ── registrations ────────────────────────────────────────────────
 export async function deleteRegistration(
-  id: string,
+  id: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -247,7 +250,7 @@ export async function deleteRegistration(
 
 // ── registration open/close (participants + mentors) ────────────
 export async function setRegistrationOpen(
-  open: boolean,
+  open: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -262,7 +265,7 @@ export async function setRegistrationOpen(
 
 // ── submission form open/close ──────────────────────────────────
 export async function setSubmissionsOpen(
-  open: boolean,
+  open: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -278,7 +281,7 @@ export async function setSubmissionsOpen(
 // ── shared password for all judges ───────────────────────────────
 export async function setSharedJudgePassword(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<{ ok: true; updated: number } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -302,7 +305,7 @@ export async function setSharedJudgePassword(
 // ── diagnose sign-in — pinpoints exactly why a judge can't log in ──
 export async function diagnoseJudgeSignIn(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<
   | {
       ok: true;
@@ -317,7 +320,9 @@ export async function diagnoseJudgeSignIn(
 > {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const password = String(form.get("password") ?? "");
   if (!email || !password) return { ok: false, error: "Email + password required" };
 
@@ -339,14 +344,18 @@ export async function diagnoseJudgeSignIn(
 // ── one-off test account with a known password ──────────────────
 export async function createTestJudge(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
   const name = String(form.get("name") ?? "").trim() || "Test Judge";
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const password = String(form.get("password") ?? "").trim();
-  const roleRaw = String(form.get("role") ?? "judge").trim().toLowerCase();
+  const roleRaw = String(form.get("role") ?? "judge")
+    .trim()
+    .toLowerCase();
   const role = roleRaw === "mentor" ? "mentor" : "judge";
 
   if (!email) return { ok: false, error: "Email required" };
@@ -367,7 +376,7 @@ export async function createTestJudge(
 
 export async function toggleHideSubmission(
   id: string,
-  hidden: boolean,
+  hidden: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -379,7 +388,7 @@ export async function toggleHideSubmission(
 
 // ── top-6 compute + lock ─────────────────────────────────────────
 export async function computeAndLockTop6(
-  formData: FormData,
+  formData: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -404,36 +413,37 @@ export async function recordTieBreak(
   winnerId: string,
   loserId: string,
   reason: string,
-  decidedBy: string,
+  decidedBy: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
   const event = await getCurrentEvent();
-  const res = await attempt(() =>
-    saveTieBreak(event.id, { winnerId, loserId, reason, decidedBy }),
-  );
+  const res = await attempt(() => saveTieBreak(event.id, { winnerId, loserId, reason, decidedBy }));
   if (res.ok) revalidatePath("/admin");
   return res;
 }
 
 // ── admin team (owner only) ──────────────────────────────────────
 function parseRole(raw: unknown): AdminRole | null {
-  const value = String(raw ?? "").trim().toLowerCase();
+  const value = String(raw ?? "")
+    .trim()
+    .toLowerCase();
   return (ADMIN_ROLES as string[]).includes(value) ? (value as AdminRole) : null;
 }
 
 export async function addAdminUser(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<
-  | { ok: true; email: string; password: string; generated: boolean }
-  | { ok: false; error: string }
+  { ok: true; email: string; password: string; generated: boolean } | { ok: false; error: string }
 > {
   const guard = await requireTeamAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
 
   const name = String(form.get("name") ?? "").trim();
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const role = parseRole(form.get("role"));
   const typed = String(form.get("password") ?? "").trim();
 
@@ -463,7 +473,6 @@ export async function addAdminUser(
   return { ok: true, email, password, generated };
 }
 
-
 /**
  * Blocks any change that would leave zero active super admins. They're the only
  * accounts that can change or remove anyone, so hitting zero freezes the roster
@@ -480,7 +489,7 @@ async function wouldOrphanSuperAdmins(target: {
 
 export async function setAdminUserProtected(
   id: string,
-  makeProtected: boolean,
+  makeProtected: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireSuperAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -508,15 +517,14 @@ export async function setAdminUserProtected(
 
 export async function setAdminUserRole(
   id: string,
-  roleRaw: string,
+  roleRaw: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireSuperAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
 
   const role = parseRole(roleRaw);
   if (!role) return { ok: false, error: "Unknown role." };
-  if (id === guard.session.id)
-    return { ok: false, error: "You can't change your own role." };
+  if (id === guard.session.id) return { ok: false, error: "You can't change your own role." };
 
   const target = await getAdminUserById(id);
   if (!target) return { ok: false, error: "That account no longer exists." };
@@ -525,11 +533,7 @@ export async function setAdminUserRole(
     const orphan = await wouldOrphanSuperAdmins(target);
     if (orphan) return { ok: false, error: orphan };
   }
-  if (
-    target.role === "owner" &&
-    role !== "owner" &&
-    (await countOtherActiveOwners(id)) === 0
-  )
+  if (target.role === "owner" && role !== "owner" && (await countOtherActiveOwners(id)) === 0)
     return {
       ok: false,
       error: "That's the last active owner — promote someone else first.",
@@ -543,7 +547,7 @@ export async function setAdminUserRole(
 
 export async function setAdminUserActive(
   id: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireSuperAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -571,7 +575,7 @@ export async function setAdminUserActive(
 
 export async function resetAdminUserPassword(
   id: string,
-  passwordRaw?: string,
+  passwordRaw?: string
 ): Promise<{ ok: true; password: string } | { ok: false; error: string }> {
   const guard = await requireSuperAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -599,7 +603,7 @@ export async function resetAdminUserPassword(
  */
 export async function changeOwnPassword(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -621,8 +625,7 @@ export async function changeOwnPassword(
       ok: false,
       error: `New password must be at least ${MIN_ADMIN_PASSWORD_LENGTH} characters.`,
     };
-  if (next !== confirm)
-    return { ok: false, error: "The two new passwords don't match." };
+  if (next !== confirm) return { ok: false, error: "The two new passwords don't match." };
   if (next === current)
     return { ok: false, error: "That's already your password — pick a different one." };
 
@@ -644,12 +647,11 @@ export async function changeOwnPassword(
 }
 
 export async function removeAdminUser(
-  id: string,
+  id: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const guard = await requireSuperAdmin();
   if (!guard.ok) return { ok: false, error: guard.error };
-  if (id === guard.session.id)
-    return { ok: false, error: "You can't delete your own account." };
+  if (id === guard.session.id) return { ok: false, error: "You can't delete your own account." };
 
   const target = await getAdminUserById(id);
   if (target) {
@@ -674,8 +676,7 @@ const MAX_SUBJECT = 200;
 
 function validateCampaign(subject: string, bodyHtml: string): string | null {
   if (!subject.trim()) return "Subject is required.";
-  if (subject.length > MAX_SUBJECT)
-    return `Subject must be under ${MAX_SUBJECT} characters.`;
+  if (subject.length > MAX_SUBJECT) return `Subject must be under ${MAX_SUBJECT} characters.`;
   // Strip tags to check there's actual copy, not just empty formatting.
   if (!htmlToText(bodyHtml).trim()) return "The message body is empty.";
   return null;
@@ -683,11 +684,8 @@ function validateCampaign(subject: string, bodyHtml: string): string | null {
 
 /** Live recipient count for the composer, so you know the blast size up front. */
 export async function previewAudience(
-  audienceRaw: string,
-): Promise<
-  | { ok: true; subscribed: number; unsubscribed: number }
-  | { ok: false; error: string }
-> {
+  audienceRaw: string
+): Promise<{ ok: true; subscribed: number; unsubscribed: number } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
   const audience = parseAudience(audienceRaw);
@@ -702,12 +700,14 @@ export async function previewAudience(
  */
 export async function sendCampaignTest(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
 
-  const to = String(form.get("testEmail") ?? "").trim().toLowerCase();
+  const to = String(form.get("testEmail") ?? "")
+    .trim()
+    .toLowerCase();
   const subject = String(form.get("subject") ?? "").trim();
   const bodyHtml = sanitizeCampaignHtml(String(form.get("bodyHtml") ?? ""));
 
@@ -741,10 +741,9 @@ export async function sendCampaignTest(
  */
 export async function sendCampaign(
   _: unknown,
-  form: FormData,
+  form: FormData
 ): Promise<
-  | { ok: true; sent: number; failed: number; errors: string[] }
-  | { ok: false; error: string }
+  { ok: true; sent: number; failed: number; errors: string[] } | { ok: false; error: string }
 > {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -752,13 +751,14 @@ export async function sendCampaign(
   const subject = String(form.get("subject") ?? "").trim();
   const bodyHtml = sanitizeCampaignHtml(String(form.get("bodyHtml") ?? ""));
   const audience = parseAudience(form.get("audience"));
-  const confirm = String(form.get("confirm") ?? "").trim().toUpperCase();
+  const confirm = String(form.get("confirm") ?? "")
+    .trim()
+    .toUpperCase();
 
   if (!audience) return { ok: false, error: "Pick an audience." };
   const invalid = validateCampaign(subject, bodyHtml);
   if (invalid) return { ok: false, error: invalid };
-  if (confirm !== "SEND")
-    return { ok: false, error: 'Type SEND in the confirmation box to send.' };
+  if (confirm !== "SEND") return { ok: false, error: "Type SEND in the confirmation box to send." };
   if (!(await getCurrentEvent()).settings.features.emailCampaigns)
     return { ok: false, error: "Email campaigns are switched off for this event." };
   if (!emailConfigured()) return { ok: false, error: EMAIL_NOT_CONFIGURED };
@@ -817,7 +817,7 @@ export async function sendCampaign(
 // ── campaign image upload ────────────────────────────────────────
 
 export async function uploadCampaignImage(
-  form: FormData,
+  form: FormData
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const guard = await requireWriteAccess();
   if (!guard.ok) return { ok: false, error: guard.error };
@@ -826,7 +826,10 @@ export async function uploadCampaignImage(
   if (!(file instanceof File) || file.size === 0)
     return { ok: false, error: "Pick an image to upload." };
   if (!ALLOWED_IMAGE_TYPES.has(file.type))
-    return { ok: false, error: "Use a PNG, JPEG, or GIF — other formats don't render in every email client." };
+    return {
+      ok: false,
+      error: "Use a PNG, JPEG, or GIF — other formats don't render in every email client.",
+    };
   if (file.size > MAX_UPLOAD_BYTES)
     return {
       ok: false,

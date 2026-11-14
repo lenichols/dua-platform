@@ -32,10 +32,10 @@ export function ScoreForm({
   const RUBRIC = rubric.criteria;
   const prior = existing;
   const [scores, setScores] = useState<Scores>(() =>
-    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.marks[c.key] ?? null])),
+    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.marks[c.key] ?? null]))
   );
   const [evidence, setEvidence] = useState<Evidence>(() =>
-    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.evidence[c.key] ?? ""])),
+    Object.fromEntries(RUBRIC.map((c) => [c.key, prior?.evidence[c.key] ?? ""]))
   );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -53,9 +53,7 @@ export function ScoreForm({
       ? RUBRIC.filter((c) => (evidence[c.key] ?? "").trim().length < MIN_EVIDENCE_LENGTH)
       : [];
     if (missing.length > 0) {
-      setErr(
-        `Write one sentence of evidence for ${missing.map((c) => c.label).join(", ")}.`,
-      );
+      setErr(`Write one sentence of evidence for ${missing.map((c) => c.label).join(", ")}.`);
       return;
     }
     setSaving(true);
@@ -78,12 +76,9 @@ export function ScoreForm({
         <div className="pill-accent">Your Score</div>
         <div className="text-right">
           <div className="font-display text-4xl text-accent">
-            {allScored ? Math.round(total) : "–"}{" "}
-            <span className="text-base text-dust">/ 100</span>
+            {allScored ? Math.round(total) : "–"} <span className="text-base text-dust">/ 100</span>
           </div>
-          <div className="text-[0.6rem] text-dust">
-            Weighted total
-          </div>
+          <div className="text-[0.6rem] text-dust">Weighted total</div>
         </div>
       </div>
 
@@ -103,9 +98,7 @@ export function ScoreForm({
                     </span>
                   )}
                 </label>
-                <span className="font-display text-xl text-bone">
-                  {scores[c.key] ?? "–"}
-                </span>
+                <span className="font-display text-xl text-bone">{scores[c.key] ?? "–"}</span>
               </div>
               <div className="mt-1 grid grid-cols-5 gap-1" data-criterion={c.key}>
                 {Array.from({ length: SCALE_MAX }, (_, i) => i + 1).map((n) => {
@@ -122,11 +115,7 @@ export function ScoreForm({
                       }`}
                     >
                       <span className="text-sm">{n}</span>
-                      {LEVEL_LABELS[n] && (
-                        <span className="text-[0.55rem]">
-                          {LEVEL_LABELS[n]}
-                        </span>
-                      )}
+                      {LEVEL_LABELS[n] && <span className="text-[0.55rem]">{LEVEL_LABELS[n]}</span>}
                     </button>
                   );
                 })}
@@ -136,9 +125,18 @@ export function ScoreForm({
                   Scoring levels
                 </summary>
                 <dl className="mt-1 space-y-0.5">
-                  <div><dt className="inline font-semibold text-bone/80">1 Limited: </dt><dd className="inline">{c.anchors.limited}</dd></div>
-                  <div><dt className="inline font-semibold text-bone/80">3 Solid: </dt><dd className="inline">{c.anchors.solid}</dd></div>
-                  <div><dt className="inline font-semibold text-bone/80">5 Exceptional: </dt><dd className="inline">{c.anchors.exceptional}</dd></div>
+                  <div>
+                    <dt className="inline font-semibold text-bone/80">1 Limited: </dt>
+                    <dd className="inline">{c.anchors.limited}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline font-semibold text-bone/80">3 Solid: </dt>
+                    <dd className="inline">{c.anchors.solid}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline font-semibold text-bone/80">5 Exceptional: </dt>
+                    <dd className="inline">{c.anchors.exceptional}</dd>
+                  </div>
                   <div>2 and 4 sit between the levels.</div>
                 </dl>
               </details>
@@ -159,9 +157,7 @@ export function ScoreForm({
                       : "Evidence (optional)"
                 }
                 value={evidence[ek] ?? ""}
-                onChange={(e) =>
-                  setEvidence((v) => ({ ...v, [ek]: e.target.value }))
-                }
+                onChange={(e) => setEvidence((v) => ({ ...v, [ek]: e.target.value }))}
               />
             </div>
           );

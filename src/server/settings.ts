@@ -40,7 +40,7 @@ const LABELS: Record<string, string> = {
   home: "Homepage",
 };
 
-function labelFor(path: (string | number)[]): string {
+function labelFor(path: PropertyKey[]): string {
   const [first] = path;
   return LABELS[String(first)] ?? (first === undefined ? "Settings" : String(first));
 }
@@ -72,7 +72,7 @@ export type SaveSettingsResult =
  */
 export async function saveEventSettings(
   event: EventRow,
-  input: unknown,
+  input: unknown
 ): Promise<SaveSettingsResult> {
   const parsed = settingsSchema.safeParse(input);
   if (!parsed.success) {

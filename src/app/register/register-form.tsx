@@ -24,12 +24,8 @@ export function RegisterForm() {
   const [partnerOther, setPartnerOther] = useState("");
 
   const togglePartner = (o: string) =>
-    setPartnerSel((prev) =>
-      prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o],
-    );
-  const partnerOrgValue = [...partnerSel, partnerOther.trim()]
-    .filter(Boolean)
-    .join(", ");
+    setPartnerSel((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
+  const partnerOrgValue = [...partnerSel, partnerOther.trim()].filter(Boolean).join(", ");
 
   if (state?.ok) {
     return (
@@ -37,9 +33,8 @@ export function RegisterForm() {
         <div className="pill-accent mb-4">✓ You&apos;re Registered</div>
         <h2 className="hex-title text-4xl">See You There.</h2>
         <p className="mt-3 text-dust">
-          Thanks for registering for {EVENT.name}. We&apos;ll email you
-          everything you need before the event — including your link to the
-          project submission form.
+          Thanks for registering for {EVENT.name}. We&apos;ll email you everything you need before
+          the event — including your link to the project submission form.
         </p>
         <p className="mt-4 text-sm text-dust">
           In the meantime, post about it on LinkedIn and tag{" "}
@@ -69,12 +64,7 @@ export function RegisterForm() {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="field-label">Full Name *</label>
-            <input
-              name="full_name"
-              required
-              autoComplete="name"
-              className="field-input mt-1"
-            />
+            <input name="full_name" required autoComplete="name" className="field-input mt-1" />
             {err("full_name")}
           </div>
           <div>
@@ -101,9 +91,7 @@ export function RegisterForm() {
                 className="field-input mt-1"
               />
               {err("phone")}
-              <p className="mt-1 text-xs text-dust">
-                Include your country code if outside the US.
-              </p>
+              <p className="mt-1 text-xs text-dust">Include your country code if outside the US.</p>
             </div>
           )}
           <div>
@@ -163,8 +151,8 @@ export function RegisterForm() {
           )}
           {shown("verification") && (
             <p className="text-xs text-dust md:col-span-2">
-              Add your LinkedIn <span className="text-dust">and/or</span> a
-              personal website so organizers can verify who you are.{" "}
+              Add your LinkedIn <span className="text-dust">and/or</span> a personal website so
+              organizers can verify who you are.{" "}
               <span className="text-bone/80">At least one is required.</span>
             </p>
           )}
@@ -172,9 +160,7 @@ export function RegisterForm() {
       </fieldset>
 
       <fieldset className="card space-y-4">
-        <legend className="pill-accent -mt-2 mb-2">
-          How You&apos;ll Compete
-        </legend>
+        <legend className="pill-accent -mt-2 mb-2">How You&apos;ll Compete</legend>
 
         {shown("team") && (
           <div className="flex gap-2">
@@ -207,8 +193,8 @@ export function RegisterForm() {
             <input name="team_name" required className="field-input mt-1" />
             {err("team_name")}
             <p className="mt-1 text-xs text-dust">
-              Don&apos;t have a final team yet? A working name is fine — you can
-              finalize it when you submit your project.
+              Don&apos;t have a final team yet? A working name is fine — you can finalize it when
+              you submit your project.
             </p>
           </div>
         )}
@@ -217,12 +203,7 @@ export function RegisterForm() {
           {shown("primary_interest") && (
             <div>
               <label className="field-label">Primary Interest *</label>
-              <select
-                name="primary_interest"
-                required
-                defaultValue=""
-                className="field-input mt-1"
-              >
+              <select name="primary_interest" required defaultValue="" className="field-input mt-1">
                 <option value="">— Select a track —</option>
                 {TRACKS.map((t) => (
                   <option key={t} value={t}>
@@ -236,12 +217,7 @@ export function RegisterForm() {
           {shown("experience_level") && (
             <div>
               <label className="field-label">Experience Level *</label>
-              <select
-                name="experience_level"
-                required
-                defaultValue=""
-                className="field-input mt-1"
-              >
+              <select name="experience_level" required defaultValue="" className="field-input mt-1">
                 <option value="">— Select —</option>
                 {EXPERIENCE_LEVELS.map((e) => (
                   <option key={e} value={e}>
@@ -258,9 +234,7 @@ export function RegisterForm() {
           <div>
             <label className="field-label">
               Partner Organization{" "}
-              <span className="text-dust">
-                (optional · select any that apply)
-              </span>
+              <span className="text-dust">(optional · select any that apply)</span>
             </label>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {PARTNER_ORGS.map((o) => {
@@ -298,12 +272,7 @@ export function RegisterForm() {
         {shown("heard_about") && (
           <div>
             <label className="field-label">How did you hear about us? *</label>
-            <select
-              name="heard_about"
-              required
-              defaultValue=""
-              className="field-input mt-1"
-            >
+            <select name="heard_about" required defaultValue="" className="field-input mt-1">
               <option value="">— Select —</option>
               {HEARD_ABOUT.map((h) => (
                 <option key={h} value={h}>
@@ -342,11 +311,7 @@ export function RegisterForm() {
       )}
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          className="btn-accent h-12 px-8"
-          disabled={pending}
-        >
+        <button type="submit" className="btn-accent h-12 px-8" disabled={pending}>
           {pending ? "Registering…" : "Complete Registration"}
         </button>
       </div>

@@ -76,7 +76,8 @@ describe("what judges can see", () => {
   });
 
   it("has no contact column on the judge-visible list", () => {
-    const contact = /email|phone|city|state_region|occupation|affiliated_org|submitter_|mentor_linkedin|member\d_(linkedin|country)/;
+    const contact =
+      /email|phone|city|state_region|occupation|affiliated_org|submitter_|mentor_linkedin|member\d_(linkedin|country)/;
     expect(JUDGE_VISIBLE_COLUMNS.filter((c) => contact.test(c))).toEqual([]);
   });
 
@@ -147,7 +148,12 @@ describe("saving a score", () => {
       expect((await saveScore(event, viewer, visible, withMark(bad))).ok).toBe(false);
     }
     expect(
-      (await saveScore(event, viewer, visible, { ...good, evidence: { ...good.evidence, impact: "ok" } })).ok,
+      (
+        await saveScore(event, viewer, visible, {
+          ...good,
+          evidence: { ...good.evidence, impact: "ok" },
+        })
+      ).ok
     ).toBe(false);
     const { feasibility: _dropped, ...partial } = good.marks;
     expect((await saveScore(event, viewer, visible, { ...good, marks: partial })).ok).toBe(false);
@@ -190,7 +196,9 @@ describe("conflicts of interest", () => {
   it("remove the judge's score and block a new one until withdrawn", async () => {
     const { viewer } = await makeJudge(event);
     await saveScore(event, viewer, visible, scoreOf(5));
-    expect(await declareConflict(event, viewer, visible, "I mentored this team")).toEqual({ ok: true });
+    expect(await declareConflict(event, viewer, visible, "I mentored this team")).toEqual({
+      ok: true,
+    });
     expect(await scoreCount()).toBe(0);
     expect((await getOwnRecusal(event, viewer, visible))?.reason).toBe("I mentored this team");
     expect((await saveScore(event, viewer, visible, scoreOf(5))).ok).toBe(false);
@@ -214,7 +222,9 @@ describe("conflicts of interest", () => {
     const mentor = await makeJudge(event, "mentor");
     expect((await declareConflict(event, mentor.viewer, visible, "")).ok).toBe(false);
     expect((await declareConflict(event, ADMIN, visible, "")).ok).toBe(false);
-    expect((await declareConflict(inPhase(event, "results"), judge.viewer, visible, "")).ok).toBe(false);
+    expect((await declareConflict(inPhase(event, "results"), judge.viewer, visible, "")).ok).toBe(
+      false
+    );
     expect((await db().select().from(recusals)).length).toBe(0);
   });
 });
@@ -233,7 +243,9 @@ describe("results", () => {
     const mentor = await makeJudge(event, "mentor");
     await expect(rubricAggregates(event, a.viewer)).rejects.toBeInstanceOf(NotAllowed);
     await expect(rubricAggregates(event, mentor.viewer)).rejects.toBeInstanceOf(NotAllowed);
-    await expect(rubricAggregates(inPhase(event, "results"), PUBLIC)).rejects.toBeInstanceOf(NotAllowed);
+    await expect(rubricAggregates(inPhase(event, "results"), PUBLIC)).rejects.toBeInstanceOf(
+      NotAllowed
+    );
     expect(await listJudgeNotes(event, a.viewer, visible)).toEqual([]);
     expect(await getResultsLock(event, a.viewer)).toBeNull();
   });
@@ -245,9 +257,13 @@ describe("results", () => {
     expect(row.n_judges).toBe(2);
     expect(row.averages.impact).toBe(4);
     expect(Object.keys(row.averages)).toEqual(DEFAULT_RUBRIC.criteria.map((c) => c.key));
-    const five = Object.fromEntries(["impact", "innovation", "sustainability", "feasibility", "scalability"].map((k) => [k, 5]));
+    const five = Object.fromEntries(
+      ["impact", "innovation", "sustainability", "feasibility", "scalability"].map((k) => [k, 5])
+    );
     const three = Object.fromEntries(Object.keys(five).map((k) => [k, 3]));
-    expect(row.avg_total).toBeCloseTo((totalScore(DEFAULT_RUBRIC, five) + totalScore(DEFAULT_RUBRIC, three)) / 2);
+    expect(row.avg_total).toBeCloseTo(
+      (totalScore(DEFAULT_RUBRIC, five) + totalScore(DEFAULT_RUBRIC, three)) / 2
+    );
     expect(row.avg_total).toBeCloseTo(80);
   });
 
@@ -286,7 +302,10 @@ describe("results", () => {
     const later = await makeSubmission(event);
     await saveScore(event, viewer, visible, scoreOf(3));
     await saveScore(event, viewer, later, scoreOf(5));
-    await db().update(submissions).set({ hidden_from_judges: true }).where(eq(submissions.id, later));
+    await db()
+      .update(submissions)
+      .set({ hidden_from_judges: true })
+      .where(eq(submissions.id, later));
     const { top6 } = await computeAndLockResults(event, 7);
     expect(top6.map((t) => t.submission_id)).not.toContain(later);
   });
@@ -295,14 +314,29 @@ describe("results", () => {
 describe("an event with its own rubric and number of places", () => {
   const rubric = {
     criteria: [
-      { key: "craft", label: "Craft", weight: 70, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
-      { key: "story", label: "Story", weight: 30, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
+      {
+        key: "craft",
+        label: "Craft",
+        weight: 70,
+        anchors: { limited: "", solid: "", exceptional: "" },
+        example: "",
+      },
+      {
+        key: "story",
+        label: "Story",
+        weight: 30,
+        anchors: { limited: "", solid: "", exceptional: "" },
+        example: "",
+      },
     ],
     tieBreakers: ["story"],
   };
   const entry = (craft: number, story: number) => ({
     marks: { craft, story },
-    evidence: { craft: "The build quality was shown in the demo.", story: "The pitch explained who it is for." },
+    evidence: {
+      craft: "The build quality was shown in the demo.",
+      story: "The pitch explained who it is for.",
+    },
   });
 
   it("scores, averages and ranks on that rubric", async () => {
@@ -315,7 +349,12 @@ describe("an event with its own rubric and number of places", () => {
     expect((await saveScore(custom, viewer, strong, scoreOf(4))).ok).toBe(false);
 
     expect(await saveScore(custom, viewer, strong, entry(5, 4))).toEqual({ ok: true });
-    expect(await saveScore(custom, viewer, weak, { ...entry(2, 2), marks: { craft: 2, story: 2, impact: 5 } })).toEqual({ ok: true });
+    expect(
+      await saveScore(custom, viewer, weak, {
+        ...entry(2, 2),
+        marks: { craft: 2, story: 2, impact: 5 },
+      })
+    ).toEqual({ ok: true });
     // Marks for criteria that aren't on the rubric are dropped.
     expect((await getOwnScore(custom, viewer, weak))?.marks).toEqual({ craft: 2, story: 2 });
 
@@ -348,11 +387,20 @@ describe("answers to the organizer's own questions", () => {
     const custom = await makeEvent({
       phase: "judging",
       settings: {
-        customFields: { registration: [], mentor: [], submission: [q("stack", true), q("backup_phone", false)] },
+        customFields: {
+          registration: [],
+          mentor: [],
+          submission: [q("stack", true), q("backup_phone", false)],
+        },
       },
     });
-    const sub = await makeSubmission(custom, { custom: { stack: "Rust", backup_phone: "+1 555 0199" } });
-    const hiddenSub = await makeSubmission(custom, { hidden_from_judges: true, custom: { stack: "Go" } });
+    const sub = await makeSubmission(custom, {
+      custom: { stack: "Rust", backup_phone: "+1 555 0199" },
+    });
+    const hiddenSub = await makeSubmission(custom, {
+      hidden_from_judges: true,
+      custom: { stack: "Go" },
+    });
     const judge = await makeJudge(custom);
     const mentor = await makeJudge(custom, "mentor");
 
@@ -362,7 +410,9 @@ describe("answers to the organizer's own questions", () => {
       expect(JSON.stringify(rows)).not.toContain("555 0199");
     }
     expect(await getAnswersForViewer(custom, judge.viewer, hiddenSub)).toEqual([]);
-    expect(await getAnswersForViewer(inPhase(custom, "submissions"), judge.viewer, sub)).toEqual([]);
+    expect(await getAnswersForViewer(inPhase(custom, "submissions"), judge.viewer, sub)).toEqual(
+      []
+    );
     expect(await getAnswersForViewer(custom, PUBLIC, sub)).toEqual([]);
   });
 });

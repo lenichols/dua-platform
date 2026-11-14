@@ -52,8 +52,7 @@ export function AdminSignIn({ samples = [] }: { samples?: SampleLogin[] }) {
       </button>
       <p className="text-xs text-dust">
         Setting up for the first time? Leave the email blank and enter the{" "}
-        <code>ADMIN_PASSWORD</code>
-        {" "}from your server&apos;s settings.
+        <code>ADMIN_PASSWORD</code> from your server&apos;s settings.
       </p>
       <SampleLogins
         logins={samples}

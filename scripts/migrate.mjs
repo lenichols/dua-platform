@@ -21,13 +21,17 @@ if (!url) {
 
 const pool = new pg.Pool({ connectionString: url, max: 1, ssl: databaseSsl() });
 try {
-  await migrate(drizzle(pool), { migrationsFolder: new URL("../drizzle", import.meta.url).pathname });
+  await migrate(drizzle(pool), {
+    migrationsFolder: new URL("../drizzle", import.meta.url).pathname,
+  });
   const slug = process.env.DUA_EVENT_SLUG?.trim() || "default";
   const { rowCount } = await pool.query(
     "insert into events (slug) values ($1) on conflict (slug) do nothing",
-    [slug],
+    [slug]
   );
-  console.log(`Database is up to date. Event "${slug}" ${rowCount ? "created" : "already exists"}.`);
+  console.log(
+    `Database is up to date. Event "${slug}" ${rowCount ? "created" : "already exists"}.`
+  );
 
   // A demo site should never come up empty: load the samples on first deploy.
   if (process.env.DEMO_MODE?.trim().toLowerCase() === "true") {

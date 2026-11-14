@@ -1,0 +1,20 @@
+name: Branch Name
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Branch convention
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check head branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: node scripts/check-branch-name.mjs "$HEAD_REF" --ci

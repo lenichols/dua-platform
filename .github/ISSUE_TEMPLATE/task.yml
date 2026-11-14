@@ -1,0 +1,45 @@
+name: Task
+description: Internal work such as a refactor, test or tooling change
+title: "[Task] "
+labels: ["task", "status:needs-triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Frontend
+        - Backend
+        - Database
+        - CI/CD
+        - Deployment
+        - Security
+        - Documentation
+        - Testing
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, risks, rollout or rollback details.
+      render: markdown
+    validations:
+      required: false

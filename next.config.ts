@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   turbopack: { root },
   outputFileTracingRoot: root,
+  // The Docker image builds a self-contained server. Vercel and local `next
+  // build` leave this unset and keep their normal output.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
 };
 
 export default nextConfig;

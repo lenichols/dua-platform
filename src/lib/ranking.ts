@@ -20,7 +20,7 @@ export type AverageRanking = {
 export function rankByAverage(
   scores: { submission_id: string; marks: Marks }[],
   submissionIds: string[],
-  rubric: Rubric,
+  rubric: Rubric
 ): AverageRanking[] {
   const bySubmission = new Map<string, Marks[]>();
   for (const s of scores) {
@@ -44,7 +44,8 @@ export function rankByAverage(
     .sort((a, b) => {
       if (b.average !== a.average) return b.average - a.average;
       for (let i = 0; i < a.tiebreak_means.length; i++) {
-        if (b.tiebreak_means[i] !== a.tiebreak_means[i]) return b.tiebreak_means[i] - a.tiebreak_means[i];
+        if (b.tiebreak_means[i] !== a.tiebreak_means[i])
+          return b.tiebreak_means[i] - a.tiebreak_means[i];
       }
       // Stable and repeatable when everything is level.
       return a.submission_id < b.submission_id ? -1 : 1;

@@ -1,9 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import {
-  generateAdminPassword,
-  hashAdminPassword,
-  verifyAdminPassword,
-} from "./admin-password";
+import { generateAdminPassword, hashAdminPassword, verifyAdminPassword } from "./admin-password";
 import { canManageTeam, canWrite } from "./admin-roles";
 import { shuffleForUser } from "./shuffle";
 import { editToken, editUrl, verifyEditToken } from "./submission-edit";
@@ -121,7 +117,7 @@ describe("shuffleForUser", () => {
 
   it("gives different judges different orders", () => {
     expect(shuffleForUser(items, "judge-a", key)).not.toEqual(
-      shuffleForUser(items, "judge-b", key),
+      shuffleForUser(items, "judge-b", key)
     );
   });
 

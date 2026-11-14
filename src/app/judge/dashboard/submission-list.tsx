@@ -42,11 +42,7 @@ export function SubmissionList({
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((r) => {
-      if (
-        !mentorMode &&
-        filter === "pending" &&
-        (scored.has(r.id) || recused.has(r.id))
-      )
+      if (!mentorMode && filter === "pending" && (scored.has(r.id) || recused.has(r.id)))
         return false;
       if (!mentorMode && filter === "scored" && !scored.has(r.id)) return false;
       if (track !== "all" && r.challenge_track !== track) return false;
@@ -121,9 +117,7 @@ export function SubmissionList({
       {/* List */}
       {filtered.length === 0 ? (
         <div className="card text-center text-dust">
-          {rows.length === 0
-            ? "No submissions are visible yet."
-            : "Nothing matches those filters."}
+          {rows.length === 0 ? "No submissions are visible yet." : "Nothing matches those filters."}
         </div>
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-ink-3">
@@ -142,11 +136,7 @@ export function SubmissionList({
                   <span
                     aria-hidden
                     className={`h-2 w-2 flex-shrink-0 rounded-full ${
-                      mentorMode || isRecused
-                        ? "bg-dust/40"
-                        : isDone
-                          ? "bg-jade"
-                          : "bg-blood/70"
+                      mentorMode || isRecused ? "bg-dust/40" : isDone ? "bg-jade" : "bg-blood/70"
                     }`}
                   />
 

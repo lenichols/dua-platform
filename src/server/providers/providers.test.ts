@@ -18,7 +18,9 @@ describe("choosing an email provider", () => {
   it("follows whichever settings are present, preferring Resend", () => {
     expect(emailProviderName(env({ RESEND_API_KEY: "k" }))).toBe("resend");
     expect(emailProviderName(env({ SMTP_URL: "smtp://localhost" }))).toBe("smtp");
-    expect(emailProviderName(env({ RESEND_API_KEY: "k", SMTP_URL: "smtp://localhost" }))).toBe("resend");
+    expect(emailProviderName(env({ RESEND_API_KEY: "k", SMTP_URL: "smtp://localhost" }))).toBe(
+      "resend"
+    );
   });
 
   it("lets EMAIL_PROVIDER override, and stays off if that provider isn't set up", () => {
@@ -26,7 +28,9 @@ describe("choosing an email provider", () => {
     expect(emailProviderName(env({ ...both, EMAIL_PROVIDER: "smtp" }))).toBe("smtp");
     expect(emailProviderName(env({ ...both, EMAIL_PROVIDER: " Console " }))).toBe("console");
     expect(emailProviderName(env({ EMAIL_PROVIDER: "smtp" }))).toBeNull();
-    expect(emailProviderName(env({ EMAIL_PROVIDER: "resend", SMTP_URL: "smtp://localhost" }))).toBeNull();
+    expect(
+      emailProviderName(env({ EMAIL_PROVIDER: "resend", SMTP_URL: "smtp://localhost" }))
+    ).toBeNull();
     expect(emailProviderName(env({ ...both, EMAIL_PROVIDER: "carrier-pigeon" }))).toBeNull();
   });
 });
@@ -38,8 +42,13 @@ describe("the console email provider", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const message = { to: "a@example.org", subject: "Hello", html: "<p>Hi</p>", text: "Hi" };
 
-    expect(await emailTransport()!.sendOne(message, "Dua <noreply@example.org>")).toMatchObject({ ok: true });
-    const batch = await emailTransport()!.sendBatch([message, message], "Dua <noreply@example.org>");
+    expect(await emailTransport()!.sendOne(message, "Dua <noreply@example.org>")).toMatchObject({
+      ok: true,
+    });
+    const batch = await emailTransport()!.sendBatch(
+      [message, message],
+      "Dua <noreply@example.org>"
+    );
     expect(batch).toEqual({ sent: 2, failed: 0, errors: [] });
     expect(log.mock.calls[0][0]).toContain("Subject: Hello");
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -61,7 +70,10 @@ describe("the Resend email provider", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(JSON.stringify({ id: "abc" }), { status: 200 }));
 
-    expect(await emailTransport()!.sendOne(message, "Dua <noreply@example.org>")).toEqual({ ok: true, id: "abc" });
+    expect(await emailTransport()!.sendOne(message, "Dua <noreply@example.org>")).toEqual({
+      ok: true,
+      id: "abc",
+    });
     const [url, init] = fetchSpy.mock.calls[0];
     expect(url).toBe("https://api.resend.com/emails");
     const body = JSON.parse(String(init!.body));
@@ -73,9 +85,12 @@ describe("the Resend email provider", () => {
   it("counts every recipient in a batch the service refuses", async () => {
     vi.stubEnv("RESEND_API_KEY", "test-key");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ message: "domain not verified" }), { status: 403 }),
+      new Response(JSON.stringify({ message: "domain not verified" }), { status: 403 })
     );
-    const result = await emailTransport()!.sendBatch([message, message, message], "Dua <noreply@example.org>");
+    const result = await emailTransport()!.sendBatch(
+      [message, message, message],
+      "Dua <noreply@example.org>"
+    );
     expect(result.sent).toBe(0);
     expect(result.failed).toBe(3);
     expect(result.errors[0]).toContain("domain not verified");

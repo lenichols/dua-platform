@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a new capability or improvement
+title: "[Feature] "
+labels: ["enhancement", "status:needs-triage"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Registration / mentor sign-up
+        - Submissions / edit links
+        - Judging / scoring / recusal
+        - Results / ranking
+        - Admin panel
+        - Email / campaigns
+        - Authentication / permissions
+        - Deployment / infrastructure
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What is missing or painful today? Who does it affect?
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: Describe the smallest version that would solve the problem.
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      render: markdown
+    validations:
+      required: false

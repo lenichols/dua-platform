@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# Server-side CI remains authoritative, but catch failures before they reach
+# the remote: format, ESLint (zero warnings) and TypeScript.
+
+echo "🔎 Checking branch name..."
+node "$(git rev-parse --show-toplevel)/scripts/check-branch-name.mjs" --pre-push || exit 1
+
+echo "🚦 Running local quality gate..."
+npm run verify || exit 1
+
+# Tests need Postgres. CI always runs them; opt in locally with:
+#   RUN_TESTS_ON_PUSH=1 git push
+if [ "${RUN_TESTS_ON_PUSH:-0}" = "1" ]; then
+  echo "🧪 Running tests..."
+  npm test || exit 1
+fi
+
+echo "✅ Pre-push checks passed."

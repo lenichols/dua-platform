@@ -51,7 +51,11 @@ export const rubricSchema = z
   .superRefine((r, ctx) => {
     const keys = r.criteria.map((c) => c.key);
     if (new Set(keys).size !== keys.length)
-      ctx.addIssue({ code: "custom", message: "Each criterion needs its own key", path: ["criteria"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Each criterion needs its own key",
+        path: ["criteria"],
+      });
     const total = r.criteria.reduce((t, c) => t + c.weight, 0);
     if (total !== 100)
       ctx.addIssue({
@@ -98,7 +102,11 @@ export const customFieldSchema = z
   })
   .superRefine((f, ctx) => {
     if ((f.type === "select" || f.type === "checkboxes") && f.options.length === 0)
-      ctx.addIssue({ code: "custom", message: `"${f.label}" needs at least one option`, path: ["options"] });
+      ctx.addIssue({
+        code: "custom",
+        message: `"${f.label}" needs at least one option`,
+        path: ["options"],
+      });
   });
 
 export type CustomField = z.infer<typeof customFieldSchema>;
@@ -125,13 +133,21 @@ const TEAMMATE_DETAILS = [2, 3, 4, 5].flatMap((n) => [
 export const HIDEABLE = {
   submission: [
     { id: "phone", label: "Phone number", columns: ["phone"] },
-    { id: "location", label: "Country, state and city", columns: ["country", "state_region", "city"] },
+    {
+      id: "location",
+      label: "Country, state and city",
+      columns: ["country", "state_region", "city"],
+    },
     {
       id: "submitter_profile",
       label: "Affiliation, role and LinkedIn profile",
       columns: ["affiliated_org", "submitter_role", "submitter_linkedin_url"],
     },
-    { id: "teammate_details", label: "Team-mates' LinkedIn, occupation and country", columns: TEAMMATE_DETAILS },
+    {
+      id: "teammate_details",
+      label: "Team-mates' LinkedIn, occupation and country",
+      columns: TEAMMATE_DETAILS,
+    },
     { id: "mentor", label: "Mentor", columns: ["mentor_name", "mentor_linkedin_url"] },
     { id: "challenge_track", label: "Challenge track", columns: ["challenge_track"] },
     { id: "problem_brief", label: "Problem brief", columns: ["problem_brief"] },
@@ -142,12 +158,20 @@ export const HIDEABLE = {
     { id: "region", label: "Your region", columns: ["region"] },
     { id: "focus_area", label: "Focus area", columns: ["focus_area"] },
     { id: "solution_stage", label: "Solution stage", columns: ["solution_stage"] },
-    { id: "area_of_specification", label: "Area of specification", columns: ["area_of_specification"] },
+    {
+      id: "area_of_specification",
+      label: "Area of specification",
+      columns: ["area_of_specification"],
+    },
     { id: "applies_ai", label: "Does it apply AI?", columns: ["applies_ai"] },
     { id: "impact_focus", label: "Impact focus", columns: ["impact_focus"] },
     { id: "target_region", label: "Target region / market", columns: ["target_region"] },
     { id: "core_problem", label: "Core problem", columns: ["core_problem"] },
-    { id: "code_links", label: "GitHub and live demo links", columns: ["github_url", "live_demo_url"] },
+    {
+      id: "code_links",
+      label: "GitHub and live demo links",
+      columns: ["github_url", "live_demo_url"],
+    },
     { id: "demo_video", label: "Demo video", columns: ["demo_video_url", "all_members_in_video"] },
     { id: "pitch_video", label: "Pitch video", columns: ["demo_video_short_url"] },
     {
@@ -164,7 +188,11 @@ export const HIDEABLE = {
       label: "LinkedIn or website, to verify identity",
       columns: ["linkedin_url", "website_url"],
     },
-    { id: "team", label: "Solo or team, and team name", columns: ["participating_as", "team_name"] },
+    {
+      id: "team",
+      label: "Solo or team, and team name",
+      columns: ["participating_as", "team_name"],
+    },
     { id: "primary_interest", label: "Primary interest (track)", columns: ["primary_interest"] },
     { id: "experience_level", label: "Experience level", columns: ["experience_level"] },
     { id: "organization", label: "Organization", columns: ["organization"] },
@@ -183,13 +211,18 @@ export const HIDEABLE = {
     { id: "heard_about", label: "How did you hear about us", columns: ["heard_about"] },
     { id: "referred_by", label: "Referred by", columns: ["referred_by"] },
   ],
-} as const satisfies Record<string, readonly { id: string; label: string; columns: readonly string[] }[]>;
+} as const satisfies Record<
+  string,
+  readonly { id: string; label: string; columns: readonly string[] }[]
+>;
 
 export type FormName = keyof typeof HIDEABLE;
 
 const hideableIds = (form: FormName) => HIDEABLE[form].map((h) => h.id) as string[];
 const hiddenList = (form: FormName) =>
-  z.array(z.string()).transform((ids) => [...new Set(ids)].filter((id) => hideableIds(form).includes(id)));
+  z
+    .array(z.string())
+    .transform((ids) => [...new Set(ids)].filter((id) => hideableIds(form).includes(id)));
 
 /**
  * The ids of the built-in questions a form should not ask. Turning the mentor
@@ -197,7 +230,7 @@ const hiddenList = (form: FormName) =>
  */
 export function hiddenQuestions(
   settings: Pick<EventSettings, "hidden" | "features">,
-  form: FormName,
+  form: FormName
 ): Set<string> {
   const off = new Set<string>(settings.hidden[form]);
   if (form === "submission" && !settings.features.mentors) off.add("mentor");
@@ -207,11 +240,11 @@ export function hiddenQuestions(
 /** The columns a form should neither show nor require. */
 export function hiddenColumns(
   settings: Pick<EventSettings, "hidden" | "features">,
-  form: FormName,
+  form: FormName
 ): Set<string> {
   const off = hiddenQuestions(settings, form);
   return new Set(
-    HIDEABLE[form].filter((h) => off.has(h.id)).flatMap((h) => h.columns as readonly string[]),
+    HIDEABLE[form].filter((h) => off.has(h.id)).flatMap((h) => h.columns as readonly string[])
   );
 }
 
@@ -253,7 +286,10 @@ export const settingsSchema = z.object({
       .string()
       .trim()
       .max(500)
-      .refine((v) => v === "" || /^https?:\/\//i.test(v), "Use a full address starting with https://"),
+      .refine(
+        (v) => v === "" || /^https?:\/\//i.test(v),
+        "Use a full address starting with https://"
+      ),
     /** Whether the header links to Dua's source code on GitHub. */
     showSourceLink: z.boolean().default(true),
   }),
@@ -329,9 +365,7 @@ export const settingsSchema = z.object({
     pillarsEyebrow: line(60),
     pillarsTitle: line(120),
     pillarsSubtitle: line(240),
-    pillars: z
-      .array(z.object({ title: required(60), text: line(300), example: line(600) }))
-      .max(6),
+    pillars: z.array(z.object({ title: required(60), text: line(300), example: line(600) })).max(6),
     /** An example problem statement per track, matched by the track's name. */
     trackExamples: z.array(z.object({ track: required(160), example: line(600) })).max(60),
     faq: z.array(z.object({ q: required(200), a: required(1200) })).max(30),
@@ -395,7 +429,8 @@ export const DEFAULT_RUBRIC: Rubric = {
         exceptional:
           "Working prototype on real or realistic data, with a clear path to a first real user",
       },
-      example: "Feasibility (2): the demo runs only on invented data and the main feature is mocked.",
+      example:
+        "Feasibility (2): the demo runs only on invented data and the main feature is mocked.",
     },
     {
       key: "scalability",
@@ -445,7 +480,13 @@ export const DEFAULT_SETTINGS: EventSettings = {
     publicResults: false,
   },
 
-  tracks: ["Web & Mobile Apps", "AI & Data", "Hardware & Devices", "Developer Tools", "Social Good"],
+  tracks: [
+    "Web & Mobile Apps",
+    "AI & Data",
+    "Hardware & Devices",
+    "Developer Tools",
+    "Social Good",
+  ],
   problemBriefs: [
     "1 · Help a small nonprofit schedule its volunteers",
     "2 · Make local transit times easier to check",
@@ -476,7 +517,11 @@ export const DEFAULT_SETTINGS: EventSettings = {
     "Other social media",
     "Search engine",
   ],
-  partnerOrgs: ["Example Engineering Society", "Example Student Network", "Example Founders Community"],
+  partnerOrgs: [
+    "Example Engineering Society",
+    "Example Student Network",
+    "Example Founders Community",
+  ],
   focusAreas: [
     "Education",
     "Health & Wellbeing",
@@ -488,9 +533,20 @@ export const DEFAULT_SETTINGS: EventSettings = {
     "Games & Entertainment",
     "Developer Experience",
   ],
-  impactFocus: ["Saves time", "Saves money", "Improves access", "Improves safety", "Builds community"],
+  impactFocus: [
+    "Saves time",
+    "Saves money",
+    "Improves access",
+    "Improves safety",
+    "Builds community",
+  ],
   regions: ["Africa", "North America", "South America", "Asia", "Europe", "Australia"],
-  areasOfSpecification: ["Technology", "Design & Usability", "Business Model", "Policy & Community"],
+  areasOfSpecification: [
+    "Technology",
+    "Design & Usability",
+    "Business Model",
+    "Policy & Community",
+  ],
   solutionStages: ["Idea / Concept", "Prototype", "MVP / Pilot", "Deployed / In Market"],
   affiliations: [
     "Startup",

@@ -38,15 +38,31 @@ export function siteUrl(): string {
 // pasted Word/Google-Docs markup can't wreck the layout.
 
 const ALLOWED_TAGS = new Set([
-  "p", "br", "strong", "b", "em", "i", "u", "s",
-  "a", "ul", "ol", "li", "h2", "h3", "blockquote", "hr", "img",
+  "p",
+  "br",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "a",
+  "ul",
+  "ol",
+  "li",
+  "h2",
+  "h3",
+  "blockquote",
+  "hr",
+  "img",
 ]);
 
 /** Void tags must not be given a closing partner. */
 const VOID_TAGS = new Set(["br", "hr", "img"]);
 
 /** Tags whose *content* goes too, not just the tag. */
-const STRIP_WITH_CONTENT = /<(script|style|iframe|object|embed|head|title)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const STRIP_WITH_CONTENT =
+  /<(script|style|iframe|object|embed|head|title)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 
 function safeUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -95,7 +111,7 @@ export function sanitizeCampaignHtml(input: string): string {
       // Every other allowed tag keeps zero attributes — no style, no class,
       // no on* handlers, nothing to reason about.
       return `<${tag}>`;
-    },
+    }
   );
 
   return html.trim();
@@ -108,7 +124,7 @@ function escapeAttr(s: string) {
 export function escapeHtml(s: string) {
   return String(s).replace(
     /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!
   );
 }
 
@@ -181,15 +197,15 @@ export function renderCampaignEmail(opts: {
          ${escapeHtml(footerNote)}
        </p>`
     : unsubscribeUrl
-    ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
+      ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
          You're receiving this because you registered for ${escapeHtml(eventName)}.
          <a href="${escapeAttr(unsubscribeUrl)}" style="color:#6b7280;text-decoration:underline;">Unsubscribe</a>.
        </p>`
-    : internal
-      ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
+      : internal
+        ? `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
            Internal message to the ${escapeHtml(eventName)} admin team.
          </p>`
-      : `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
+        : `<p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
            Preview — the real send includes a working unsubscribe link.
          </p>`;
 
@@ -219,10 +235,7 @@ export function emailConfigured(): boolean {
   return emailTransport() !== null;
 }
 
-export async function sendOne(
-  message: OutgoingEmail,
-  from = DEFAULT_FROM,
-): Promise<SendOneResult> {
+export async function sendOne(message: OutgoingEmail, from = DEFAULT_FROM): Promise<SendOneResult> {
   const transport = emailTransport();
   if (!transport) return { ok: false, error: EMAIL_NOT_CONFIGURED };
   return transport.sendOne(message, from);
@@ -230,10 +243,9 @@ export async function sendOne(
 
 export async function sendBatch(
   messages: OutgoingEmail[],
-  from = DEFAULT_FROM,
+  from = DEFAULT_FROM
 ): Promise<SendResult> {
   const transport = emailTransport();
-  if (!transport)
-    return { sent: 0, failed: messages.length, errors: [EMAIL_NOT_CONFIGURED] };
+  if (!transport) return { sent: 0, failed: messages.length, errors: [EMAIL_NOT_CONFIGURED] };
   return transport.sendBatch(messages, from);
 }

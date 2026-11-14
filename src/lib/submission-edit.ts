@@ -1,11 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
-import {
-  ACCENT,
-  escapeHtml,
-  htmlToText,
-  renderCampaignEmail,
-  sendOne,
-} from "./email";
+import { ACCENT, escapeHtml, htmlToText, renderCampaignEmail, sendOne } from "./email";
 
 /**
  * Private edit links for submissions. Like unsubscribe links, they're
@@ -15,15 +9,12 @@ import {
  */
 function secret() {
   const s = process.env.SUBMISSION_EDIT_SECRET || process.env.ADMIN_PASSWORD;
-  if (!s)
-    throw new Error("SUBMISSION_EDIT_SECRET or ADMIN_PASSWORD env var required");
+  if (!s) throw new Error("SUBMISSION_EDIT_SECRET or ADMIN_PASSWORD env var required");
   return s;
 }
 
 export function editToken(submissionId: string): string {
-  return createHmac("sha256", secret())
-    .update(`edit-submission:${submissionId}`)
-    .digest("hex");
+  return createHmac("sha256", secret()).update(`edit-submission:${submissionId}`).digest("hex");
 }
 
 export function verifyEditToken(submissionId: string, token: string): boolean {
@@ -69,8 +60,7 @@ ${opts.late ? "<p>Our confirmation screen said we'd email you a link to edit you
       logoUrl: EVENT.theme.logoUrl,
       bodyHtml,
       unsubscribeUrl: null,
-      footerNote:
-        `You're receiving this because you submitted a project to ${EVENT.name}.`,
+      footerNote: `You're receiving this because you submitted a project to ${EVENT.name}.`,
     }),
     text: htmlToText(bodyHtml),
   });

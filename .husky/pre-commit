@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# Fast local gate: branch name, formatting and lint on staged files only.
+# The full suite (typecheck, tests, build) runs in CI and on pre-push.
+
+echo "🔎 Checking branch name..."
+node "$(git rev-parse --show-toplevel)/scripts/check-branch-name.mjs" --pre-commit || exit 1
+
+echo "🧹 Formatting and linting staged files..."
+npx --no-install lint-staged || exit 1

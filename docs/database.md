@@ -18,12 +18,12 @@ with a Postgres you already run on 5432. The `DATABASE_URL` in
 `.env.local.example` already points at it. Your data is kept in a Docker
 volume and survives restarts.
 
-| To | Run |
-| --- | --- |
-| Stop the database, keeping the data | `docker compose stop` |
-| Start it again | `npm run db:up` |
-| Delete the database and its data | `docker compose down --volumes` |
-| Open a SQL prompt | `docker compose exec db psql -U dua -d dua` |
+| To                                  | Run                                         |
+| ----------------------------------- | ------------------------------------------- |
+| Stop the database, keeping the data | `docker compose stop`                       |
+| Start it again                      | `npm run db:up`                             |
+| Delete the database and its data    | `docker compose down --volumes`             |
+| Open a SQL prompt                   | `docker compose exec db psql -U dua -d dua` |
 
 ## OrbStack
 
@@ -59,14 +59,14 @@ docker compose --profile tools up -d pgadmin
 
 Open <http://localhost:5050>, then choose **Add New Server** and enter:
 
-| Field | Value |
-| --- | --- |
-| General → Name | `Dua` |
-| Connection → Host name/address | `db` |
-| Connection → Port | `5432` |
-| Connection → Maintenance database | `dua` |
-| Connection → Username | `dua` |
-| Connection → Password | `dua` |
+| Field                             | Value  |
+| --------------------------------- | ------ |
+| General → Name                    | `Dua`  |
+| Connection → Host name/address    | `db`   |
+| Connection → Port                 | `5432` |
+| Connection → Maintenance database | `dua`  |
+| Connection → Username             | `dua`  |
+| Connection → Password             | `dua`  |
 
 The host is `db` and the port `5432` because pgAdmin is running beside the
 database inside Docker. Stop it with `docker compose stop pgadmin`.

@@ -1,0 +1,3 @@
+# Formatting-only commits. GitHub and `git blame --ignore-revs-file` skip these.
+# Prettier baseline
+920facc60d07d506f34cfa465ea6e03534143fe6

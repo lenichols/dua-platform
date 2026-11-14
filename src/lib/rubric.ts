@@ -16,10 +16,7 @@ export type Evidence = Record<string, string>;
  * by its criterion. A missing mark counts as zero.
  */
 export function totalScore(rubric: Rubric, marks: Partial<Record<string, number | null>>): number {
-  return rubric.criteria.reduce(
-    (t, c) => t + ((marks[c.key] ?? 0) / SCALE_MAX) * c.weight,
-    0,
-  );
+  return rubric.criteria.reduce((t, c) => t + ((marks[c.key] ?? 0) / SCALE_MAX) * c.weight, 0);
 }
 
 /** True when every criterion has a whole-number mark on the scale. */

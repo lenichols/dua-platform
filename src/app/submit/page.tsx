@@ -25,12 +25,7 @@ export default async function SubmitPage() {
         }
       />
       <PageShell>
-        <Breadcrumbs
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Submit" },
-          ]}
-        />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Submit" }]} />
         {!open ? (
           <div className="mx-auto max-w-xl text-center">
             <SectionTitle
@@ -62,9 +57,7 @@ export default async function SubmitPage() {
           <>
             <div className="mb-8">
               <div className="pill-accent mb-3">Phase 1 · Submissions Open</div>
-              <h1 className="hex-title text-4xl md:text-5xl">
-                {EVENT.name} Submission Form
-              </h1>
+              <h1 className="hex-title text-4xl md:text-5xl">{EVENT.name} Submission Form</h1>
             </div>
 
             <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
@@ -75,17 +68,16 @@ export default async function SubmitPage() {
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-bone/90">
-                All required fields must be complete for your entry to be
-                reviewed. <strong className="text-accent">One submission per team
-                or solo participant.</strong> Please ensure all participant, team,
-                project demo, and LinkedIn post details are included.
+                All required fields must be complete for your entry to be reviewed.{" "}
+                <strong className="text-accent">
+                  One submission per team or solo participant.
+                </strong>{" "}
+                Please ensure all participant, team, project demo, and LinkedIn post details are
+                included.
               </p>
               <p className="text-xs text-dust">
                 Need help? Email{" "}
-                <a
-                  href={`mailto:${EVENT.contactEmail}`}
-                  className="text-accent underline"
-                >
+                <a href={`mailto:${EVENT.contactEmail}`} className="text-accent underline">
                   {EVENT.contactEmail}
                 </a>
                 .

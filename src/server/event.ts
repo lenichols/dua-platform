@@ -48,8 +48,7 @@ export async function getEventBySlug(slug: string): Promise<EventRow | null> {
 export const getCurrentEvent = cache(async (): Promise<EventRow> => {
   const slug = currentEventSlug();
   const event = await getEventBySlug(slug);
-  if (!event)
-    throw new Error(`No event "${slug}" in the database. Run: npm run db:migrate`);
+  if (!event) throw new Error(`No event "${slug}" in the database. Run: npm run db:migrate`);
   return event;
 });
 

@@ -17,9 +17,20 @@ import { submissionSchema, submissionSchemaFor } from "./submission-schema";
 
 // The questions on the registration form, for checking the switch list against.
 const REGISTRATION_FIELDS = {
-  full_name: 1, email: 1, phone: 1, country: 1, participating_as: 1, team_name: 1,
-  primary_interest: 1, experience_level: 1, organization: 1, partner_org: 1,
-  linkedin_url: 1, website_url: 1, heard_about: 1, referred_by: 1,
+  full_name: 1,
+  email: 1,
+  phone: 1,
+  country: 1,
+  participating_as: 1,
+  team_name: 1,
+  primary_interest: 1,
+  experience_level: 1,
+  organization: 1,
+  partner_org: 1,
+  linkedin_url: 1,
+  website_url: 1,
+  heard_about: 1,
+  referred_by: 1,
 };
 
 const field = (over: Partial<CustomField> & { key: string }): CustomField => ({
@@ -40,8 +51,19 @@ function form(entries: [string, string][]): FormData {
 
 describe("parseCustomAnswers", () => {
   const fields = [
-    field({ key: "tshirt", label: "T-shirt size", type: "select", options: ["S", "M", "L"], required: true }),
-    field({ key: "diet", label: "Dietary needs", type: "checkboxes", options: ["Vegan", "Halal", "Gluten-free"] }),
+    field({
+      key: "tshirt",
+      label: "T-shirt size",
+      type: "select",
+      options: ["S", "M", "L"],
+      required: true,
+    }),
+    field({
+      key: "diet",
+      label: "Dietary needs",
+      type: "checkboxes",
+      options: ["Vegan", "Halal", "Gluten-free"],
+    }),
     field({ key: "repo", label: "Repository", type: "url" }),
     field({ key: "why", label: "Why are you joining?", type: "textarea" }),
   ];
@@ -57,42 +79,78 @@ describe("parseCustomAnswers", () => {
         ["custom.why", "  To learn.  "],
         ["custom.is_admin", "true"],
         ["full_name", "Sam"],
-      ]),
+      ])
     );
     expect(r).toEqual({
       ok: true,
-      values: { tshirt: "M", diet: "Vegan, Halal", repo: "https://example.org/repo", why: "To learn." },
+      values: {
+        tshirt: "M",
+        diet: "Vegan, Halal",
+        repo: "https://example.org/repo",
+        why: "To learn.",
+      },
     });
   });
 
   it("requires required questions and leaves optional ones out when blank", () => {
     const missing = parseCustomAnswers(fields, form([["custom.why", "x"]]));
-    expect(missing).toEqual({ ok: false, fieldErrors: { "custom.tshirt": ["T-shirt size is required"] } });
-    const fine = parseCustomAnswers(fields, form([["custom.tshirt", "S"], ["custom.repo", "  "]]));
+    expect(missing).toEqual({
+      ok: false,
+      fieldErrors: { "custom.tshirt": ["T-shirt size is required"] },
+    });
+    const fine = parseCustomAnswers(
+      fields,
+      form([
+        ["custom.tshirt", "S"],
+        ["custom.repo", "  "],
+      ])
+    );
     expect(fine).toEqual({ ok: true, values: { tshirt: "S" } });
   });
 
   it("refuses a choice that isn't one of the options", () => {
     expect(parseCustomAnswers(fields, form([["custom.tshirt", "XXXL"]])).ok).toBe(false);
     expect(
-      parseCustomAnswers(fields, form([["custom.tshirt", "S"], ["custom.diet", "Vegan"], ["custom.diet", "Anything"]])).ok,
+      parseCustomAnswers(
+        fields,
+        form([
+          ["custom.tshirt", "S"],
+          ["custom.diet", "Vegan"],
+          ["custom.diet", "Anything"],
+        ])
+      ).ok
     ).toBe(false);
   });
 
   it("takes only one choice for a pick-one question", () => {
-    const r = parseCustomAnswers(fields, form([["custom.tshirt", "S"], ["custom.tshirt", "L"]]));
+    const r = parseCustomAnswers(
+      fields,
+      form([
+        ["custom.tshirt", "S"],
+        ["custom.tshirt", "L"],
+      ])
+    );
     expect(r).toEqual({ ok: true, values: { tshirt: "S" } });
   });
 
   it("checks links and length", () => {
     const base: [string, string][] = [["custom.tshirt", "S"]];
-    expect(parseCustomAnswers(fields, form([...base, ["custom.repo", "javascript:alert(1)"]])).ok).toBe(false);
-    expect(parseCustomAnswers(fields, form([...base, ["custom.repo", "example.org"]])).ok).toBe(false);
-    expect(parseCustomAnswers(fields, form([...base, ["custom.why", "x".repeat(4001)]])).ok).toBe(false);
+    expect(
+      parseCustomAnswers(fields, form([...base, ["custom.repo", "javascript:alert(1)"]])).ok
+    ).toBe(false);
+    expect(parseCustomAnswers(fields, form([...base, ["custom.repo", "example.org"]])).ok).toBe(
+      false
+    );
+    expect(parseCustomAnswers(fields, form([...base, ["custom.why", "x".repeat(4001)]])).ok).toBe(
+      false
+    );
   });
 
   it("returns nothing for an event with no questions of its own", () => {
-    expect(parseCustomAnswers([], form([["custom.anything", "x"]]))).toEqual({ ok: true, values: {} });
+    expect(parseCustomAnswers([], form([["custom.anything", "x"]]))).toEqual({
+      ok: true,
+      values: {},
+    });
   });
 });
 
@@ -112,7 +170,9 @@ describe("customAnswerRows", () => {
   });
 
   it("gives judges only the questions marked for them", () => {
-    expect(customAnswerRows(fields, answers, { judgesOnly: true }).map((r) => r.key)).toEqual(["stack"]);
+    expect(customAnswerRows(fields, answers, { judgesOnly: true }).map((r) => r.key)).toEqual([
+      "stack",
+    ]);
     expect(customAnswerRows(fields, null, { judgesOnly: true })).toEqual([]);
   });
 });
@@ -121,7 +181,8 @@ describe("questions in the event's settings", () => {
   it("need options for choice questions, and a key each", () => {
     const base = { ...DEFAULT_SETTINGS, hidden: { registration: [], submission: [] } };
     const withFields = (fields: CustomField[]) =>
-      settingsSchema.safeParse({ ...base, customFields: { registration: fields, submission: [] } }).success;
+      settingsSchema.safeParse({ ...base, customFields: { registration: fields, submission: [] } })
+        .success;
     expect(withFields([field({ key: "a", type: "select", options: ["x"] })])).toBe(true);
     expect(withFields([field({ key: "a", type: "select" })])).toBe(false);
     expect(withFields([field({ key: "a" }), field({ key: "a" })])).toBe(false);
@@ -129,7 +190,9 @@ describe("questions in the event's settings", () => {
   });
 
   it("can only switch off questions that are meant to be optional", () => {
-    const s = resolveSettings({ hidden: { registration: ["referred_by", "email"], submission: ["mentor", "project_name"] } });
+    const s = resolveSettings({
+      hidden: { registration: ["referred_by", "email"], submission: ["mentor", "project_name"] },
+    });
     expect(s.hidden).toEqual({ registration: ["referred_by"], submission: ["mentor"], mentor: [] });
     expect(hiddenColumns(s, "submission")).toEqual(new Set(["mentor_name", "mentor_linkedin_url"]));
     expect(hiddenColumns(DEFAULT_SETTINGS, "submission").size).toBe(0);
@@ -139,7 +202,8 @@ describe("questions in the event's settings", () => {
     for (const h of HIDEABLE.submission)
       for (const c of h.columns) expect(Object.keys(submissionSchema.shape)).toContain(c);
     const registration = Object.keys(REGISTRATION_FIELDS);
-    for (const h of HIDEABLE.registration) for (const c of h.columns) expect(registration).toContain(c);
+    for (const h of HIDEABLE.registration)
+      for (const c of h.columns) expect(registration).toContain(c);
     for (const h of HIDEABLE.mentor)
       for (const c of h.columns) expect(Object.keys(mentorRegistrationSchema.shape)).toContain(c);
   });
@@ -168,12 +232,20 @@ describe("form rules with questions switched off", () => {
     const all = new Set(
       HIDEABLE.registration
         .filter((h) => h.id !== "verification" && h.id !== "team")
-        .flatMap((h) => [...h.columns]),
+        .flatMap((h) => [...h.columns])
     );
-    expect(registrationSchemaFor(all).safeParse({ ...registration, email: "nope" }).success).toBe(false);
-    expect(registrationSchemaFor(all).safeParse({ ...registration, linkedin_url: "" }).success).toBe(false);
+    expect(registrationSchemaFor(all).safeParse({ ...registration, email: "nope" }).success).toBe(
+      false
+    );
     expect(
-      registrationSchemaFor(all).safeParse({ ...registration, participating_as: "Team", team_name: "" }).success,
+      registrationSchemaFor(all).safeParse({ ...registration, linkedin_url: "" }).success
+    ).toBe(false);
+    expect(
+      registrationSchemaFor(all).safeParse({
+        ...registration,
+        participating_as: "Team",
+        team_name: "",
+      }).success
     ).toBe(false);
   });
 
@@ -187,7 +259,8 @@ describe("form rules with questions switched off", () => {
       project_name: "Notebook",
       project_category: "Notes",
       problem_statement: "Students lose track of their notes across several different apps.",
-      project_description: "One place for notes that works without a connection, built in a weekend.",
+      project_description:
+        "One place for notes that works without a connection, built in a weekend.",
       project_description_summary: "Offline notes",
       technologies_used: "TypeScript",
     };
@@ -208,21 +281,25 @@ describe("form rules with questions switched off", () => {
       solo_or_team: "Solo",
       project_name: "Notebook",
       project_category: "Notes",
-      project_description: "One place for notes that works without a connection, built in a weekend.",
+      project_description:
+        "One place for notes that works without a connection, built in a weekend.",
       project_description_summary: "Offline notes",
       technologies_used: "TypeScript",
     };
     const everythingElseOff = new Set(
-      HIDEABLE.submission.filter((h) => h.id !== "problem_statement").flatMap((h) => [...h.columns]),
+      HIDEABLE.submission.filter((h) => h.id !== "problem_statement").flatMap((h) => [...h.columns])
     );
     // Still required while the question is on…
     expect(submissionSchemaFor(everythingElseOff).safeParse(entry).success).toBe(false);
     // …and not once it's switched off.
     const off = new Set([...everythingElseOff, "problem_statement"]);
     expect(submissionSchemaFor(off).safeParse(entry).success).toBe(true);
-    expect(hiddenColumns(resolveSettings({ hidden: { registration: [], submission: ["problem_statement"] } }), "submission")).toEqual(
-      new Set(["problem_statement"]),
-    );
+    expect(
+      hiddenColumns(
+        resolveSettings({ hidden: { registration: [], submission: ["problem_statement"] } }),
+        "submission"
+      )
+    ).toEqual(new Set(["problem_statement"]));
   });
 });
 
@@ -232,39 +309,82 @@ describe("the newer switches", () => {
     new Set<string>(HIDEABLE[form].flatMap((h) => [...h.columns]));
 
   it("let registration ask for a name and an email and nothing else", () => {
-    expect(registrationSchemaFor(everything("registration")).safeParse({ ...person, country: "Canada" }).success).toBe(true);
+    expect(
+      registrationSchemaFor(everything("registration")).safeParse({ ...person, country: "Canada" })
+        .success
+    ).toBe(true);
     // Country isn't switchable on this form.
     expect(registrationSchemaFor(everything("registration")).safeParse(person).success).toBe(false);
   });
 
   it("drop the identity-link rule only when that question is off", () => {
-    const base = { ...person, phone: "+1 555 0100", country: "Canada", participating_as: "Solo", primary_interest: "x", experience_level: "x", heard_about: "x", referred_by: "Someone" };
+    const base = {
+      ...person,
+      phone: "+1 555 0100",
+      country: "Canada",
+      participating_as: "Solo",
+      primary_interest: "x",
+      experience_level: "x",
+      heard_about: "x",
+      referred_by: "Someone",
+    };
     expect(registrationSchemaFor(new Set()).safeParse(base).success).toBe(false);
-    expect(registrationSchemaFor(new Set(["linkedin_url", "website_url"])).safeParse(base).success).toBe(true);
+    expect(
+      registrationSchemaFor(new Set(["linkedin_url", "website_url"])).safeParse(base).success
+    ).toBe(true);
   });
 
   it("drop the team-name rule only when solo-or-team is off", () => {
-    const base = { ...person, phone: "+1 555 0100", country: "Canada", linkedin_url: "https://example.org/in/sam", primary_interest: "x", experience_level: "x", heard_about: "x", referred_by: "Someone" };
-    expect(registrationSchemaFor(new Set()).safeParse({ ...base, participating_as: "Team" }).success).toBe(false);
-    expect(registrationSchemaFor(new Set(["participating_as", "team_name"])).safeParse(base).success).toBe(true);
+    const base = {
+      ...person,
+      phone: "+1 555 0100",
+      country: "Canada",
+      linkedin_url: "https://example.org/in/sam",
+      primary_interest: "x",
+      experience_level: "x",
+      heard_about: "x",
+      referred_by: "Someone",
+    };
+    expect(
+      registrationSchemaFor(new Set()).safeParse({ ...base, participating_as: "Team" }).success
+    ).toBe(false);
+    expect(
+      registrationSchemaFor(new Set(["participating_as", "team_name"])).safeParse(base).success
+    ).toBe(true);
   });
 
   it("work on the mentor form too", () => {
     const mentor = { ...person, country: "Canada" };
     expect(mentorRegistrationSchemaFor(new Set()).safeParse(mentor).success).toBe(false);
     expect(mentorRegistrationSchemaFor(everything("mentor")).safeParse(mentor).success).toBe(true);
-    expect(mentorRegistrationSchemaFor(everything("mentor")).safeParse({ ...mentor, email: "nope" }).success).toBe(false);
+    expect(
+      mentorRegistrationSchemaFor(everything("mentor")).safeParse({ ...mentor, email: "nope" })
+        .success
+    ).toBe(false);
   });
 
   it("remove the mentor question from submissions when the mentor programme is off", () => {
     const off = resolveSettings({ features: { mentors: false } });
-    expect(hiddenColumns(off, "submission")).toEqual(new Set(["mentor_name", "mentor_linkedin_url"]));
+    expect(hiddenColumns(off, "submission")).toEqual(
+      new Set(["mentor_name", "mentor_linkedin_url"])
+    );
     expect(hiddenColumns(DEFAULT_SETTINGS, "submission").size).toBe(0);
   });
 
   it("default to today's behaviour, and survive settings saved before they existed", () => {
-    expect(DEFAULT_SETTINGS.features).toEqual({ mentors: true, registration: true, emailCampaigns: true, howItWorks: true });
-    expect(DEFAULT_SETTINGS.judging).toEqual({ anonymous: false, requireEvidence: true, ranking: "normalized", recusals: true, publicResults: false });
+    expect(DEFAULT_SETTINGS.features).toEqual({
+      mentors: true,
+      registration: true,
+      emailCampaigns: true,
+      howItWorks: true,
+    });
+    expect(DEFAULT_SETTINGS.judging).toEqual({
+      anonymous: false,
+      requireEvidence: true,
+      ranking: "normalized",
+      recusals: true,
+      publicResults: false,
+    });
     const older = resolveSettings({
       name: "Older Event",
       hidden: { registration: ["referred_by"], submission: [] },

@@ -22,9 +22,10 @@ const args = parseArgs(argv);
 const file = String(args.file ?? argv.find((a) => !a.startsWith("--")) ?? "");
 if (!file) die("pass the export file: scripts/import-registrations.mjs <file.xlsx>");
 
-const role = String(args.role ?? "participant").trim().toLowerCase();
-if (!["participant", "mentor"].includes(role))
-  die("--role must be participant or mentor");
+const role = String(args.role ?? "participant")
+  .trim()
+  .toLowerCase();
+if (!["participant", "mentor"].includes(role)) die("--role must be participant or mentor");
 
 const heardAbout = args["heard-about"] === undefined ? "Eventbrite" : String(args["heard-about"]);
 const commit = args.commit === true || args.commit === "true";
@@ -63,7 +64,7 @@ function normalizeName(name) {
   if (clean !== clean.toUpperCase() && clean !== clean.toLowerCase()) return clean;
   return clean.replace(
     /[^\s]+/g,
-    (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   );
 }
 
@@ -159,7 +160,7 @@ const eventId = await currentEventId(pool);
 
 const { rows: registered } = await pool.query(
   "select lower(email) as email from registrations where event_id = $1 and role = $2",
-  [eventId, role],
+  [eventId, role]
 );
 const existing = new Set(registered.map((r) => r.email.trim()));
 
@@ -189,12 +190,13 @@ console.log(`  ${String(toInsert.length).padStart(4)}  to insert\n`);
 if (args.verbose === true || args.verbose === "true") {
   for (const [label, list] of Object.entries(skipped))
     if (list.length) console.log(`${label}:\n  ${list.join("\n  ")}\n`);
-  if (alreadyPresent.length)
-    console.log(`already registered:\n  ${alreadyPresent.join("\n  ")}\n`);
+  if (alreadyPresent.length) console.log(`already registered:\n  ${alreadyPresent.join("\n  ")}\n`);
 }
 
 for (const r of toInsert)
-  console.log(`  + ${r.full_name.padEnd(28)} ${r.email.padEnd(38)} ${r.created_at?.slice(0, 10) ?? ""}`);
+  console.log(
+    `  + ${r.full_name.padEnd(28)} ${r.email.padEnd(38)} ${r.created_at?.slice(0, 10) ?? ""}`
+  );
 
 if (!toInsert.length) {
   console.log("\nNothing to import.");
@@ -203,7 +205,9 @@ if (!toInsert.length) {
 }
 
 if (!commit) {
-  console.log(`\nDry run — nothing was written. Re-run with --commit to insert ${toInsert.length}.`);
+  console.log(
+    `\nDry run — nothing was written. Re-run with --commit to insert ${toInsert.length}.`
+  );
   await pool.end();
   process.exit(0);
 }

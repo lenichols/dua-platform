@@ -69,7 +69,7 @@ type JudgeVisibleKey = (typeof JUDGE_VISIBLE_COLUMNS)[number];
 export type JudgeVisibleSubmission = Record<JudgeVisibleKey, string | number | null>;
 
 const judgeVisibleSelection = Object.fromEntries(
-  JUDGE_VISIBLE_COLUMNS.map((c) => [c, submissions[c]]),
+  JUDGE_VISIBLE_COLUMNS.map((c) => [c, submissions[c]])
 ) as { [K in JudgeVisibleKey]: (typeof submissions)[K] };
 
 function toJudgeVisible(row: Record<string, unknown>): JudgeVisibleSubmission {
@@ -100,7 +100,7 @@ function namesHiddenFrom(event: EventRow, viewer: Viewer): boolean {
 /** In a judge's queue: complete and not hidden by an organizer. */
 const inJudgesQueue = and(
   eq(submissions.hidden_from_judges, false),
-  eq(submissions.is_submission_complete, true),
+  eq(submissions.is_submission_complete, true)
 );
 
 export type SubmissionSummary = {
@@ -115,7 +115,7 @@ export type SubmissionSummary = {
 /** The list on the judge dashboard. Empty unless the viewer may see submissions. */
 export async function listSubmissionsForJudging(
   event: EventRow,
-  viewer: Viewer,
+  viewer: Viewer
 ): Promise<SubmissionSummary[]> {
   if (!canSeeSubmissions(viewer, event.phase)) return [];
   const rows = await db()
@@ -136,7 +136,7 @@ export async function listSubmissionsForJudging(
 export async function getSubmissionForViewer(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<JudgeVisibleSubmission | null> {
   if (!canSeeSubmissions(viewer, event.phase)) return null;
   if (!isUuid(submissionId)) return null;
@@ -164,7 +164,7 @@ export async function getSubmissionForViewer(
 export async function getAnswersForViewer(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<{ key: string; label: string; value: string; type: string }[]> {
   if (!(await getSubmissionForViewer(event, viewer, submissionId))) return [];
   const [row] = await db()
@@ -172,7 +172,9 @@ export async function getAnswersForViewer(
     .from(submissions)
     .where(and(eq(submissions.event_id, event.id), eq(submissions.id, submissionId)))
     .limit(1);
-  return customAnswerRows(event.settings.customFields.submission, row?.custom, { judgesOnly: true });
+  return customAnswerRows(event.settings.customFields.submission, row?.custom, {
+    judgesOnly: true,
+  });
 }
 
 // ── a judge's own scores and conflicts ───────────────────────────
@@ -183,7 +185,7 @@ export type ScoreValues = { marks: Marks; evidence: Evidence };
 export async function getOwnScore(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<ScoreValues | null> {
   if (viewer.kind !== "judge" || !canSeeScoresOf(viewer, viewer.judgeId)) return null;
   if (!isUuid(submissionId)) return null;
@@ -194,8 +196,8 @@ export async function getOwnScore(
       and(
         eq(scores.event_id, event.id),
         eq(scores.judge_id, viewer.judgeId),
-        eq(scores.submission_id, submissionId),
-      ),
+        eq(scores.submission_id, submissionId)
+      )
     )
     .limit(1);
   return row ?? null;
@@ -204,7 +206,7 @@ export async function getOwnScore(
 /** Which submissions this judge has scored and which they've recused from. */
 export async function getOwnProgress(
   event: EventRow,
-  viewer: Viewer,
+  viewer: Viewer
 ): Promise<{ scoredIds: string[]; recusedIds: string[] }> {
   if (viewer.kind !== "judge" || viewer.role !== "judge") return { scoredIds: [], recusedIds: [] };
   const [scored, recused] = await Promise.all([
@@ -223,7 +225,7 @@ export async function getOwnProgress(
 export async function getOwnRecusal(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<{ reason: string | null } | null> {
   if (viewer.kind !== "judge" || viewer.role !== "judge") return null;
   if (!isUuid(submissionId)) return null;
@@ -234,8 +236,8 @@ export async function getOwnRecusal(
       and(
         eq(recusals.event_id, event.id),
         eq(recusals.judge_id, viewer.judgeId),
-        eq(recusals.submission_id, submissionId),
-      ),
+        eq(recusals.submission_id, submissionId)
+      )
     )
     .limit(1);
   return row ?? null;
@@ -258,11 +260,14 @@ export type SaveResult = { ok: true } | { ok: false; error: string };
 export function parseScore(
   rubric: Rubric,
   input: unknown,
-  opts: { requireEvidence?: boolean } = {},
+  opts: { requireEvidence?: boolean } = {}
 ): { ok: true; value: ScoreValues } | { ok: false; error: string } {
   const requireEvidence = opts.requireEvidence ?? true;
   const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
-  const rawMarks = (raw.marks && typeof raw.marks === "object" ? raw.marks : {}) as Record<string, unknown>;
+  const rawMarks = (raw.marks && typeof raw.marks === "object" ? raw.marks : {}) as Record<
+    string,
+    unknown
+  >;
   const rawEvidence = (
     raw.evidence && typeof raw.evidence === "object" ? raw.evidence : {}
   ) as Record<string, unknown>;
@@ -273,11 +278,15 @@ export function parseScore(
     const mark = Number(rawMarks[c.key]);
     if (!Number.isInteger(mark) || mark < 1 || mark > SCALE_MAX)
       return { ok: false, error: `Give ${c.label} a score from 1 to ${SCALE_MAX}.` };
-    const text = typeof rawEvidence[c.key] === "string" ? (rawEvidence[c.key] as string).trim() : "";
+    const text =
+      typeof rawEvidence[c.key] === "string" ? (rawEvidence[c.key] as string).trim() : "";
     if (requireEvidence && text.length < MIN_EVIDENCE_LENGTH)
       return { ok: false, error: `Write one sentence of evidence for ${c.label}.` };
     if (text.length > MAX_EVIDENCE_LENGTH)
-      return { ok: false, error: `Keep the evidence for ${c.label} under ${MAX_EVIDENCE_LENGTH} characters.` };
+      return {
+        ok: false,
+        error: `Keep the evidence for ${c.label} under ${MAX_EVIDENCE_LENGTH} characters.`,
+      };
     marks[c.key] = mark;
     if (text) evidence[c.key] = text;
   }
@@ -295,7 +304,7 @@ export async function saveScore(
   event: EventRow,
   viewer: Viewer,
   submissionId: string,
-  input: unknown,
+  input: unknown
 ): Promise<SaveResult> {
   if (viewer.kind !== "judge" || !canScore(viewer, event.phase)) {
     return { ok: false, error: scoringRefusal(event, viewer) };
@@ -345,7 +354,7 @@ export async function declareConflict(
   event: EventRow,
   viewer: Viewer,
   submissionId: string,
-  reason: string,
+  reason: string
 ): Promise<SaveResult> {
   if (viewer.kind !== "judge" || !canRecuse(viewer, event.phase, event.settings.judging.recusals)) {
     return { ok: false, error: recusalRefusal(event, viewer) };
@@ -358,7 +367,12 @@ export async function declareConflict(
   await db().transaction(async (tx) => {
     await tx
       .insert(recusals)
-      .values({ event_id: event.id, judge_id: judgeId, submission_id: submissionId, reason: trimmed })
+      .values({
+        event_id: event.id,
+        judge_id: judgeId,
+        submission_id: submissionId,
+        reason: trimmed,
+      })
       .onConflictDoUpdate({
         target: [recusals.judge_id, recusals.submission_id],
         set: { reason: trimmed },
@@ -373,7 +387,7 @@ export async function declareConflict(
 export async function withdrawConflict(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<SaveResult> {
   if (viewer.kind !== "judge" || !canRecuse(viewer, event.phase, event.settings.judging.recusals)) {
     return { ok: false, error: recusalRefusal(event, viewer) };
@@ -385,8 +399,8 @@ export async function withdrawConflict(
       and(
         eq(recusals.event_id, event.id),
         eq(recusals.judge_id, viewer.judgeId),
-        eq(recusals.submission_id, submissionId),
-      ),
+        eq(recusals.submission_id, submissionId)
+      )
     );
   return { ok: true };
 }
@@ -411,7 +425,7 @@ export type JudgeNotes = { label: string; lines: { criterion: string; text: stri
 export async function listJudgeNotes(
   event: EventRow,
   viewer: Viewer,
-  submissionId: string,
+  submissionId: string
 ): Promise<JudgeNotes[]> {
   if (!canSeeJudgeNotes(viewer, event.phase)) return [];
   if (!isUuid(submissionId)) return [];
@@ -447,7 +461,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  */
 export async function rubricAggregates(
   event: EventRow,
-  viewer: Viewer,
+  viewer: Viewer
 ): Promise<RubricAggregate[]> {
   if (!canSeeResults(viewer, event.phase, event.settings.judging.publicResults))
     throw new NotAllowed("Results aren't open yet.");
@@ -489,9 +503,7 @@ export async function rubricAggregates(
       submission_id: s.id,
       project_name: s.project_name,
       n_judges: n,
-      averages: Object.fromEntries(
-        rubric.criteria.map((c) => [c.key, mean((m) => m[c.key] ?? 0)]),
-      ),
+      averages: Object.fromEntries(rubric.criteria.map((c) => [c.key, mean((m) => m[c.key] ?? 0)])),
       avg_total: mean((m) => totalScore(rubric, m)),
     };
   });
@@ -500,7 +512,7 @@ export async function rubricAggregates(
 /** The locked final ranking. Null until computed, or if the viewer may not see results. */
 export async function getResultsLock(
   event: EventRow,
-  viewer: Viewer,
+  viewer: Viewer
 ): Promise<{ seed: number; top6: LockedPlace[]; locked_at: string } | null> {
   if (!canSeeResults(viewer, event.phase, event.settings.judging.publicResults)) return null;
   const [row] = await db()

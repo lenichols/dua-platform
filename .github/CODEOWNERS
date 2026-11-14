@@ -1,0 +1,9 @@
+# Default reviewer for every change.
+# Update this handle/team when maintainers change.
+* @lenichols
+
+# Protected branches require a code-owner review once branch protection is
+# applied (see scripts/apply-branch-protection.mjs).
+/develop @lenichols
+/staging @lenichols
+/production @lenichols

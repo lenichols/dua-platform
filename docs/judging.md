@@ -38,13 +38,13 @@ These rules are written as plain functions in
 in [`src/server/`](../src/server/) that reads or writes on someone's behalf. The
 tests beside them run against a real database.
 
-| Who | Can |
-| --- | --- |
-| Public | Register and submit while the admin has those forms open. Edit their own submission through its private link. |
-| Judges | See complete, unhidden submissions once judging opens, without any contact details. Answers to your own questions reach them only where you tick "Show the answer to judges". Read and write only their own scores and conflicts. See panel averages and anonymous notes once results open. |
-| Mentors | See what judges see. Never score. |
-| Admins | See everything, including contact details. Preview results at any time. |
-| Admins with the viewer role | See everything admins see. Change nothing. |
+| Who                         | Can                                                                                                                                                                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public                      | Register and submit while the admin has those forms open. Edit their own submission through its private link.                                                                                                                                                                               |
+| Judges                      | See complete, unhidden submissions once judging opens, without any contact details. Answers to your own questions reach them only where you tick "Show the answer to judges". Read and write only their own scores and conflicts. See panel averages and anonymous notes once results open. |
+| Mentors                     | See what judges see. Never score.                                                                                                                                                                                                                                                           |
+| Admins                      | See everything, including contact details. Preview results at any time.                                                                                                                                                                                                                     |
+| Admins with the viewer role | See everything admins see. Change nothing.                                                                                                                                                                                                                                                  |
 
 ---
 

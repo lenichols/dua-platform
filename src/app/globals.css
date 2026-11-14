@@ -19,13 +19,13 @@
     --accent: var(--accent-base);
     --accent-dark: var(--accent-base-dark);
     --accent-deep: var(--accent-base-deep);
-    --ink: 246 247 251;      /* page */
+    --ink: 246 247 251; /* page */
     --ink-2: 255 255 255;
-    --ink-3: 255 255 255;    /* cards */
-    --ink-4: 241 243 249;    /* quiet fills */
-    --ink-5: 255 255 255;    /* inputs */
-    --bone: 6 21 59;         /* text: the logo's navy */
-    --dust: 84 96 128;       /* secondary text */
+    --ink-3: 255 255 255; /* cards */
+    --ink-4: 241 243 249; /* quiet fills */
+    --ink-5: 255 255 255; /* inputs */
+    --bone: 6 21 59; /* text: the logo's navy */
+    --dust: 84 96 128; /* secondary text */
     --line: 221 225 236;
     /* Teal from the logo, for "open" and "live" states. */
     --go: 0 133 122;
@@ -48,14 +48,17 @@
     --go-ink: 153 246 228;
     color-scheme: dark;
   }
-  html, body {
+  html,
+  body {
     background: rgb(var(--ink));
     color: rgb(var(--bone));
   }
   body {
     min-height: 100vh;
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display), system-ui, sans-serif;
     font-weight: 600;
     letter-spacing: -0.015em;
@@ -69,7 +72,10 @@
     background: rgb(var(--accent) / 0.18);
   }
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 }
 
@@ -131,10 +137,19 @@
   margin: 0 0 0.75rem 1.25rem;
   list-style-position: outside;
 }
-.campaign-editor ul { list-style-type: disc; }
-.campaign-editor ol { list-style-type: decimal; }
-.campaign-editor li { margin-bottom: 0.25rem; }
-.campaign-editor a { color: rgb(var(--accent)); text-decoration: underline; }
+.campaign-editor ul {
+  list-style-type: disc;
+}
+.campaign-editor ol {
+  list-style-type: decimal;
+}
+.campaign-editor li {
+  margin-bottom: 0.25rem;
+}
+.campaign-editor a {
+  color: rgb(var(--accent));
+  text-decoration: underline;
+}
 .campaign-editor blockquote {
   border-left: 3px solid rgb(var(--accent));
   padding-left: 0.875rem;

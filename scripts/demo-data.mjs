@@ -45,7 +45,8 @@ const passwords = {
   mentor: typeof args["mentor-password"] === "string" ? args["mentor-password"] : undefined,
 };
 for (const [who, value] of Object.entries(passwords)) {
-  if (value !== undefined && value.length < 8) die(`--${who}-password must be at least 8 characters`);
+  if (value !== undefined && value.length < 8)
+    die(`--${who}-password must be at least 8 characters`);
 }
 
 let result;
@@ -66,14 +67,14 @@ console.log(`✓ Seeded ${result.submissions} sample submissions`);
 console.log(
   result.scored
     ? "✓ Added one sample score from the sample judge"
-    : "· Skipped the sample score: this event has its own rubric",
+    : "· Skipped the sample score: this event has its own rubric"
 );
 if (args["keep-phase"] !== true) console.log("✓ Event moved to the judging phase");
 
 console.log(
   DEMO_MODE
     ? "\nDemo mode is on: these logins are fixed and shown on the sign-in pages (/judge and /admin)."
-    : "\nSign in at /judge (passwords shown once):",
+    : "\nSign in at /judge (passwords shown once):"
 );
 for (const c of result.created) console.log(`  ${c.role.padEnd(6)}  ${c.email}  ${c.password}`);
 console.log("\nRemove it all with: npm run db:seed -- --cleanup");

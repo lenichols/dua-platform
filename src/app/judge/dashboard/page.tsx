@@ -96,20 +96,13 @@ export default async function JudgeDashboard() {
                 {done} <span className="text-base text-dust">/ {queueSize}</span>
               </div>
               {recusedIds.length > 0 && (
-                <div className="text-[0.65rem] text-dust">
-                  {recusedIds.length} recused
-                </div>
+                <div className="text-[0.65rem] text-dust">{recusedIds.length} recused</div>
               )}
             </div>
             <div className="h-3 flex-1 overflow-hidden rounded-full border border-line bg-ink-5">
-              <div
-                className="h-full bg-accent transition-all"
-                style={{ width: `${pct}%` }}
-              />
+              <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
             </div>
-            <div className="text-sm font-semibold text-bone">
-              {pct}%
-            </div>
+            <div className="text-sm font-semibold text-bone">{pct}%</div>
             {phase === "results" && (
               <Link href="/results" className="btn-accent">
                 View Results

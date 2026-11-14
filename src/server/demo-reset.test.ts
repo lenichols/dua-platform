@@ -54,7 +54,10 @@ describe("the sample data", () => {
   it("can make the sample admin read-only", async () => {
     vi.stubEnv("DEMO_MODE", "true");
     await seedDemo(getPool(), event.id, { demoMode: true, adminRole: "viewer" });
-    const [admin] = await db().select().from(admin_users).where(eq(admin_users.email, DEMO_ADMIN.email));
+    const [admin] = await db()
+      .select()
+      .from(admin_users)
+      .where(eq(admin_users.email, DEMO_ADMIN.email));
     expect(admin.role).toBe("viewer");
     expect((await sampleAdminLogins())[0].can).toMatch(/can't change anything/);
   });
@@ -74,12 +77,22 @@ describe("resetting a demo site", () => {
   async function visitorsChangeThings() {
     await seedDemo(getPool(), event.id, { demoMode: true });
     const live = { ...(await getEventBySlug("default"))!, registration_open: true };
-    await saveEventSettings(live, { ...live.settings, name: "Defaced Event", tracks: ["Nonsense"] });
+    await saveEventSettings(live, {
+      ...live.settings,
+      name: "Defaced Event",
+      tracks: ["Nonsense"],
+    });
     const extra = await makeSubmission(live);
     const judge = await makeJudge(live);
     await saveScore(live, judge.viewer, extra, scoreOf(1));
-    await createRegistration(live, "participant", { full_name: "Visitor", email: "visitor@example.org" });
-    await db().update(events).set({ phase: "results", registration_open: true }).where(eq(events.id, event.id));
+    await createRegistration(live, "participant", {
+      full_name: "Visitor",
+      email: "visitor@example.org",
+    });
+    await db()
+      .update(events)
+      .set({ phase: "results", registration_open: true })
+      .where(eq(events.id, event.id));
   }
 
   it("puts back the sample data, the default settings and the judging phase", async () => {
@@ -95,7 +108,13 @@ describe("resetting a demo site", () => {
   });
 
   it("leaves the owner's own admin accounts alone", async () => {
-    await createAdminUser({ name: "Owner", email: "owner@example.org", password: "a-long-password", role: "owner", createdBy: "test" });
+    await createAdminUser({
+      name: "Owner",
+      email: "owner@example.org",
+      password: "a-long-password",
+      role: "owner",
+      createdBy: "test",
+    });
     await visitorsChangeThings();
     await resetDemo(getPool(), event.id, { adminRole: "viewer" });
     const admins = await db().select().from(admin_users);
@@ -117,7 +136,11 @@ describe("resetting a demo site", () => {
 
 describe("the reset endpoint", () => {
   const call = (auth?: string) =>
-    GET(new Request("http://localhost/api/demo/reset", { headers: auth ? { authorization: auth } : {} }));
+    GET(
+      new Request("http://localhost/api/demo/reset", {
+        headers: auth ? { authorization: auth } : {},
+      })
+    );
 
   it("doesn't exist outside demo mode, even with the right secret", async () => {
     vi.stubEnv("CRON_SECRET", "s3cret");
@@ -130,7 +153,13 @@ describe("the reset endpoint", () => {
     vi.stubEnv("DEMO_MODE", "true");
     expect((await call("Bearer anything")).status).toBe(503);
     vi.stubEnv("CRON_SECRET", "s3cret");
-    for (const auth of [undefined, "Bearer wrong", "s3cret", "Bearer s3cret-and-more", "Basic s3cret"]) {
+    for (const auth of [
+      undefined,
+      "Bearer wrong",
+      "s3cret",
+      "Bearer s3cret-and-more",
+      "Basic s3cret",
+    ]) {
       expect((await call(auth)).status).toBe(401);
     }
     expect(await hasDemoData(getPool(), event.id)).toBe(false);

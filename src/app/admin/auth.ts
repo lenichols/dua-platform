@@ -50,8 +50,7 @@ function verifyToken(token: string): string | null {
 }
 
 type CookiePayload =
-  | { v: 1; kind: "user"; id: string; iat: number }
-  | { v: 1; kind: "shared"; iat: number };
+  { v: 1; kind: "user"; id: string; iat: number } | { v: 1; kind: "shared"; iat: number };
 
 function encode(payload: CookiePayload) {
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -123,8 +122,7 @@ export const getAdminSession = cache(async (): Promise<AdminSession | null> => {
   // Cookies issued before multi-admin support: `admin:<timestamp>`.
   if (payload.startsWith("admin:")) {
     const iat = Number.parseInt(payload.slice("admin:".length), 10);
-    if (Number.isFinite(iat) && Date.now() - iat > MAX_AGE_SECONDS * 1000)
-      return null;
+    if (Number.isFinite(iat) && Date.now() - iat > MAX_AGE_SECONDS * 1000) return null;
     return SHARED_SESSION;
   }
 
@@ -151,14 +149,11 @@ export async function isAdminSignedIn(): Promise<boolean> {
 }
 
 // ── guards for server actions ────────────────────────────────────
-type Guard =
-  | { ok: true; session: AdminSession }
-  | { ok: false; error: string };
+type Guard = { ok: true; session: AdminSession } | { ok: false; error: string };
 
 export async function requireAdmin(): Promise<Guard> {
   const session = await getAdminSession();
-  if (!session)
-    return { ok: false, error: "Admin session expired — please sign in again." };
+  if (!session) return { ok: false, error: "Admin session expired — please sign in again." };
   return { ok: true, session };
 }
 
@@ -194,17 +189,14 @@ export async function requireSuperAdmin(): Promise<Guard> {
   if (!guard.session.isProtected)
     return {
       ok: false,
-      error:
-        "Only super administrators can change or remove admin accounts. You can add new ones.",
+      error: "Only super administrators can change or remove admin accounts. You can add new ones.",
     };
   return guard;
 }
 
 /** Label recorded on rows this session creates. */
 export function sessionLabel(session: AdminSession): string {
-  return session.viaSharedPassword
-    ? "shared password"
-    : `${session.name} <${session.email}>`;
+  return session.viaSharedPassword ? "shared password" : `${session.name} <${session.email}>`;
 }
 
 // ── password check for the shared env password ───────────────────

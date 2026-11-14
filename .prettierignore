@@ -1,0 +1,33 @@
+# Generated, vendored or environment-specific files.
+.next
+node_modules
+coverage
+dist
+build
+out
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Lockfiles are maintained by npm.
+package-lock.json
+
+# Drizzle writes these; formatting them would make `db:generate` dirty.
+drizzle/meta
+
+# Workflow YAML is reviewed as written; keep its formatting deliberate.
+.github/workflows/*.yml
+.github/workflows/*.yaml
+
+# Binary assets.
+public/*.png
+public/*.jpg
+public/*.jpeg
+public/*.gif
+public/*.ico
+docs/images/*
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico

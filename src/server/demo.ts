@@ -24,5 +24,7 @@ export async function sampleAdminLogins(): Promise<SampleLogin[]> {
   if (!matches) return [];
   // Say what this account can actually do: it may be read-only.
   const readOnly = lookup.user.role === "viewer";
-  return [{ ...DEMO_ADMIN, can: readOnly ? "Looks around, can't change anything" : DEMO_ADMIN.can }];
+  return [
+    { ...DEMO_ADMIN, can: readOnly ? "Looks around, can't change anything" : DEMO_ADMIN.can },
+  ];
 }

@@ -17,8 +17,7 @@ export type JudgeSession = {
   role: JudgeRole;
 };
 
-const emailMatches = (email: string) =>
-  sql`lower(${judges.email}) = ${email.trim().toLowerCase()}`;
+const emailMatches = (email: string) => sql`lower(${judges.email}) = ${email.trim().toLowerCase()}`;
 
 /** The roster for the admin panel. Never includes password hashes. */
 export async function listJudges(eventId: string) {
@@ -40,7 +39,7 @@ export async function listJudges(eventId: string) {
 /** For resolving a session cookie. Null if the judge is gone or deactivated. */
 export async function getActiveJudge(
   eventId: string,
-  judgeId: string,
+  judgeId: string
 ): Promise<JudgeSession | null> {
   const [row] = await db()
     .select({ id: judges.id, name: judges.name, is_active: judges.is_active, role: judges.role })
@@ -58,7 +57,7 @@ export async function getActiveJudge(
  */
 export async function upsertJudge(
   eventId: string,
-  input: { name: string; email: string; role: JudgeRole; password?: string },
+  input: { name: string; email: string; role: JudgeRole; password?: string }
 ): Promise<{ id: string }> {
   const email = input.email.trim().toLowerCase();
   const [existing] = await db()
@@ -77,7 +76,13 @@ export async function upsertJudge(
   } else {
     const [row] = await db()
       .insert(judges)
-      .values({ event_id: eventId, name: input.name.trim(), email, role: input.role, is_active: true })
+      .values({
+        event_id: eventId,
+        name: input.name.trim(),
+        email,
+        role: input.role,
+        is_active: true,
+      })
       .returning({ id: judges.id });
     id = row.id;
   }
@@ -98,7 +103,7 @@ export async function deactivateJudge(eventId: string, judgeId: string): Promise
  */
 export async function setSharedJudgePassword(
   eventId: string,
-  password: string,
+  password: string
 ): Promise<{ updated: number }> {
   const active = await db()
     .select({ id: judges.id, email: judges.email })
@@ -120,7 +125,7 @@ export type SignInCheck = {
 export async function checkJudgeSignIn(
   eventId: string,
   email: string,
-  password: string,
+  password: string
 ): Promise<SignInCheck & { judge: JudgeSession | null }> {
   const passwords = judgePasswords();
   const [row] = await db()
@@ -136,7 +141,13 @@ export async function checkJudgeSignIn(
     .limit(1);
   if (!row) {
     await passwords.verifyNobody(password);
-    return { onRoster: false, isActive: null, hasPassword: false, passwordMatches: false, judge: null };
+    return {
+      onRoster: false,
+      isActive: null,
+      hasPassword: false,
+      passwordMatches: false,
+      judge: null,
+    };
   }
   const passwordMatches = await passwords.verify(row, password);
   return {
@@ -155,7 +166,7 @@ export async function checkJudgeSignIn(
 export async function verifyJudgeSignIn(
   eventId: string,
   email: string,
-  password: string,
+  password: string
 ): Promise<JudgeSession | null> {
   return (await checkJudgeSignIn(eventId, email, password)).judge;
 }

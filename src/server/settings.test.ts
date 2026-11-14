@@ -77,10 +77,18 @@ describe("the rubric once scoring has started", () => {
     const [first, second, ...rest] = DEFAULT_RUBRIC.criteria;
     const reweighted = {
       ...DEFAULT_RUBRIC,
-      criteria: [{ ...first, weight: first.weight + 5 }, { ...second, weight: second.weight - 5 }, ...rest],
+      criteria: [
+        { ...first, weight: first.weight + 5 },
+        { ...second, weight: second.weight - 5 },
+        ...rest,
+      ],
     };
     const removed = {
-      criteria: [{ ...first, weight: first.weight + rest[rest.length - 1].weight }, second, ...rest.slice(0, -1)],
+      criteria: [
+        { ...first, weight: first.weight + rest[rest.length - 1].weight },
+        second,
+        ...rest.slice(0, -1),
+      ],
       tieBreakers: [],
     };
     for (const rubric of [reweighted, removed]) {
@@ -94,7 +102,9 @@ describe("the rubric once scoring has started", () => {
     const event = await scoredEvent();
     const rubric = {
       ...DEFAULT_RUBRIC,
-      criteria: DEFAULT_RUBRIC.criteria.map((c, i) => (i === 0 ? { ...c, label: "Real-world impact" } : c)),
+      criteria: DEFAULT_RUBRIC.criteria.map((c, i) =>
+        i === 0 ? { ...c, label: "Real-world impact" } : c
+      ),
     };
     const r = await saveEventSettings(event, { ...DEFAULT_SETTINGS, name: "Renamed", rubric });
     expect(r.ok).toBe(true);
@@ -107,12 +117,27 @@ describe("the rubric once scoring has started", () => {
     const event = await makeEvent({ phase: "judging" });
     const rubric = {
       criteria: [
-        { key: "craft", label: "Craft", weight: 60, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
-        { key: "story", label: "Story", weight: 40, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
+        {
+          key: "craft",
+          label: "Craft",
+          weight: 60,
+          anchors: { limited: "", solid: "", exceptional: "" },
+          example: "",
+        },
+        {
+          key: "story",
+          label: "Story",
+          weight: 40,
+          anchors: { limited: "", solid: "", exceptional: "" },
+          example: "",
+        },
       ],
       tieBreakers: ["craft"],
     };
     expect((await saveEventSettings(event, { ...DEFAULT_SETTINGS, rubric })).ok).toBe(true);
-    expect((await reload(event.slug)).settings.rubric.criteria.map((c) => c.key)).toEqual(["craft", "story"]);
+    expect((await reload(event.slug)).settings.rubric.criteria.map((c) => c.key)).toEqual([
+      "craft",
+      "story",
+    ]);
   });
 });

@@ -1,0 +1,156 @@
+name: Deploy
+
+# Branch → environment:
+#   develop     → development (optional; Vercel preview)
+#   staging     → staging (QA)
+#   production  → production (release; protect this environment with reviewers)
+#
+# Vercel's Git integration normally deploys these branches automatically. This
+# workflow adds the gates around it: it waits for CI on the same commit, then
+# optionally triggers an explicit Vercel deploy hook and smoke-tests the result.
+# Set the deploy hook secrets only if you disable Vercel's automatic Git
+# deployment; otherwise leave them unset and use the smoke test.
+
+on:
+  push:
+    branches: [staging, production]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: choice
+        options: [staging, production]
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Determine environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      url: ${{ steps.env.outputs.url }}
+      hook: ${{ steps.env.outputs.hook }}
+    steps:
+      - name: Resolve environment
+        id: env
+        env:
+          INPUT_ENV: ${{ inputs.environment }}
+          REF_NAME: ${{ github.ref_name }}
+          STAGING_URL: ${{ vars.STAGING_URL }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          STAGING_HOOK: ${{ secrets.VERCEL_STAGING_DEPLOY_HOOK_URL }}
+          PRODUCTION_HOOK: ${{ secrets.VERCEL_PRODUCTION_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_ENV:-}" ]; then
+            ENV_NAME="$INPUT_ENV"
+          elif [ "$REF_NAME" = "production" ]; then
+            ENV_NAME="production"
+          else
+            ENV_NAME="staging"
+          fi
+
+          if [ "$ENV_NAME" = "production" ]; then
+            URL="${PRODUCTION_URL:-}"
+            HOOK="${PRODUCTION_HOOK:-}"
+          else
+            URL="${STAGING_URL:-}"
+            HOOK="${STAGING_HOOK:-}"
+          fi
+
+          echo "environment=$ENV_NAME" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "hook=$HOOK" >> "$GITHUB_OUTPUT"
+          echo "Deploying $ENV_NAME${URL:+ to $URL}"
+
+  verify-ci:
+    name: Verify CI passed
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for CI on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "::notice::Manual deploy: CI is expected to be green before dispatch."
+            exit 0
+          fi
+          for attempt in $(seq 1 60); do
+            RUN=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&event=push&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "CI")][0]' 2>/dev/null || echo "")
+            STATUS=$(printf '%s' "$RUN" | jq -r '.status // ""')
+            CONCLUSION=$(printf '%s' "$RUN" | jq -r '.conclusion // ""')
+            if [ "$STATUS" = "completed" ]; then
+              if [ "$CONCLUSION" = "success" ]; then
+                echo "✅ CI passed for $SHA."
+                exit 0
+              fi
+              echo "::error::CI concluded '$CONCLUSION' for $SHA — deployment blocked."
+              exit 1
+            fi
+            echo "⏳ CI status '${STATUS:-not found}' (attempt $attempt/60)..."
+            sleep 20
+          done
+          echo "::error::Timed out waiting for CI on $SHA."
+          exit 1
+
+  deploy:
+    name: Deploy ${{ needs.prepare.outputs.environment }}
+    needs: [prepare, verify-ci]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+      url: ${{ needs.prepare.outputs.url }}
+    steps:
+      - name: Trigger the Vercel deploy hook (optional)
+        env:
+          HOOK: ${{ needs.prepare.outputs.hook }}
+        run: |
+          set -euo pipefail
+          if [ -z "$HOOK" ]; then
+            echo "::notice::No Vercel deploy hook configured. Relying on Vercel's Git integration."
+            exit 0
+          fi
+          echo "Triggering Vercel deployment..."
+          curl -fsS -X POST "$HOOK" >/dev/null
+          echo "✅ Deploy hook triggered."
+
+      - name: Smoke test /api/health
+        env:
+          SITE_URL: ${{ needs.prepare.outputs.url }}
+          ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SITE_URL" ]; then
+            echo "::warning::No ${ENVIRONMENT^^}_URL repository variable set; skipping the smoke test."
+            exit 0
+          fi
+
+          URL="${SITE_URL%/}/api/health"
+          for attempt in $(seq 1 30); do
+            if BODY=$(curl -fsS --max-time 10 "$URL" 2>/dev/null); then
+              echo "✅ Health check passed: $BODY"
+              exit 0
+            fi
+            echo "⏳ Waiting for ${URL} (attempt $attempt/30)..."
+            sleep 10
+          done
+
+          echo "::error::Health check failed at $URL after 5 minutes."
+          exit 1

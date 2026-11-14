@@ -19,11 +19,7 @@ import { ScoreForm, type ExistingScore } from "./score-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function JudgeSubmissionPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function JudgeSubmissionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const event = await getCurrentEvent();
   const phase = event.phase;
@@ -56,8 +52,7 @@ export default async function JudgeSubmissionPage({
   const judgeNotes = await listJudgeNotes(event, viewer, id);
   // What to do before scoring, built from what this event asks teams for, so
   // it never points a judge at something the form doesn't collect.
-  const asked = (id: string) =>
-    !hiddenQuestions(event.settings, "submission").has(id);
+  const asked = (id: string) => !hiddenQuestions(event.settings, "submission").has(id);
   const { requireEvidence, recusals } = event.settings.judging;
   const videos = [
     asked("demo_video") && "demo video",
@@ -137,37 +132,21 @@ export default async function JudgeSubmissionPage({
 
         <div className="mb-6">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            {sub.solo_or_team && (
-              <span className="pill">{sub.solo_or_team}</span>
-            )}
+            {sub.solo_or_team && <span className="pill">{sub.solo_or_team}</span>}
             {sub.team_name && <span className="pill">{sub.team_name}</span>}
-            {sub.challenge_track && (
-              <span className="pill">{sub.challenge_track}</span>
+            {sub.challenge_track && <span className="pill">{sub.challenge_track}</span>}
+            {sub.project_category && sub.project_category !== sub.challenge_track && (
+              <span className="pill">{sub.project_category}</span>
             )}
-            {sub.project_category &&
-              sub.project_category !== sub.challenge_track && (
-                <span className="pill">{sub.project_category}</span>
-              )}
-            {sub.focus_area && (
-              <span className="pill-accent">{sub.focus_area}</span>
-            )}
-            {sub.solution_stage && (
-              <span className="pill">{sub.solution_stage}</span>
-            )}
-            {sub.customer_type && (
-              <span className="pill">{sub.customer_type}</span>
-            )}
-            {sub.area_of_specification && (
-              <span className="pill">{sub.area_of_specification}</span>
-            )}
-            {sub.applies_ai === "Yes" && (
-              <span className="pill-accent">🤖 Uses AI</span>
-            )}
+            {sub.focus_area && <span className="pill-accent">{sub.focus_area}</span>}
+            {sub.solution_stage && <span className="pill">{sub.solution_stage}</span>}
+            {sub.customer_type && <span className="pill">{sub.customer_type}</span>}
+            {sub.area_of_specification && <span className="pill">{sub.area_of_specification}</span>}
+            {sub.applies_ai === "Yes" && <span className="pill-accent">🤖 Uses AI</span>}
           </div>
           {sub.problem_brief && (
             <p className="mb-2 text-sm text-dust">
-              Problem brief:{" "}
-              <span className="font-bold text-bone">{sub.problem_brief}</span>
+              Problem brief: <span className="font-bold text-bone">{sub.problem_brief}</span>
             </p>
           )}
           <h1 className="hex-title text-4xl md:text-5xl">{sub.project_name}</h1>
@@ -181,23 +160,19 @@ export default async function JudgeSubmissionPage({
           <div className="card mb-6 border-l-4 border-l-accent">
             <div className="mb-2 flex items-center gap-2">
               <span className="pill-accent">How to Score</span>
-              <span className="text-[0.7rem] text-dust">
-                Read this before scoring
-              </span>
+              <span className="text-[0.7rem] text-dust">Read this before scoring</span>
             </div>
             <ol className="list-decimal space-y-2 pl-5 text-sm text-bone/90">
               {steps.map((step) => (
                 <li key={step.lead}>
-                  <strong className="text-accent">{step.lead}</strong>{" "}
-                  {step.rest}
+                  <strong className="text-accent">{step.lead}</strong> {step.rest}
                 </li>
               ))}
             </ol>
             <p className="mt-3 text-[0.7rem] text-dust">
-              Whole numbers only; use 2 and 4 when a team falls between levels.
-              You can update a score any time until voting closes. If the video
-              won&apos;t play or a link is broken, don&apos;t score it — tell
-              the organizers.
+              Whole numbers only; use 2 and 4 when a team falls between levels. You can update a
+              score any time until voting closes. If the video won&apos;t play or a link is broken,
+              don&apos;t score it — tell the organizers.
             </p>
           </div>
         )}
@@ -207,16 +182,12 @@ export default async function JudgeSubmissionPage({
             {sub.problem_statement && (
               <div>
                 <div className="field-label">Problem Statement</div>
-                <p className="mt-1 whitespace-pre-wrap text-sm">
-                  {sub.problem_statement}
-                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{sub.problem_statement}</p>
               </div>
             )}
             <div>
               <div className="field-label">Description</div>
-              <p className="mt-1 whitespace-pre-wrap text-sm">
-                {sub.project_description || "—"}
-              </p>
+              <p className="mt-1 whitespace-pre-wrap text-sm">{sub.project_description || "—"}</p>
             </div>
             {sub.core_problem && (
               <div>
@@ -252,9 +223,7 @@ export default async function JudgeSubmissionPage({
                 <div className="field-label">
                   Disclosure · prior work, AI tools, open source &amp; data
                 </div>
-                <p className="mt-1 whitespace-pre-wrap text-sm">
-                  {sub.disclosure_statement}
-                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{sub.disclosure_statement}</p>
               </div>
             )}
             {(sub.impact_focus ||
@@ -400,23 +369,14 @@ export default async function JudgeSubmissionPage({
             <ConflictCard submissionId={String(sub.id)} recusal={recusal} />
           ) : isJudge && phase === "judging" ? (
             <div className="space-y-4">
-              <ScoreForm
-                submissionId={String(sub.id)}
-                existing={existing ?? null}
-              />
-              {recusals && (
-                <ConflictCard submissionId={String(sub.id)} recusal={null} />
-              )}
+              <ScoreForm submissionId={String(sub.id)} existing={existing ?? null} />
+              {recusals && <ConflictCard submissionId={String(sub.id)} recusal={null} />}
             </div>
           ) : (
             <div className="space-y-4">
               <div className="card h-fit">
                 <div className="pill mb-2">
-                  {isMentor
-                    ? "Mentor · View Only"
-                    : adminOnly
-                      ? "Admin View"
-                      : "Scoring closed"}
+                  {isMentor ? "Mentor · View Only" : adminOnly ? "Admin View" : "Scoring closed"}
                 </div>
                 <p className="text-sm text-dust">
                   {isMentor
@@ -444,25 +404,13 @@ export default async function JudgeSubmissionPage({
                   </div>
                   <ul className="space-y-3">
                     {judgeNotes.map((n, idx) => (
-                      <li
-                        key={idx}
-                        className="border-l-2 border-l-accent/40 bg-ink-4/60 px-3 py-2"
-                      >
-                        <div className="mb-1 text-[0.65rem] font-bold text-accent">
-                          {n.label}
-                        </div>
+                      <li key={idx} className="border-l-2 border-l-accent/40 bg-ink-4/60 px-3 py-2">
+                        <div className="mb-1 text-[0.65rem] font-bold text-accent">{n.label}</div>
                         <dl className="space-y-1">
                           {n.lines.map((l) => (
-                            <div
-                              key={l.criterion}
-                              className="text-sm text-bone/90"
-                            >
-                              <dt className="inline font-semibold">
-                                {l.criterion}:{" "}
-                              </dt>
-                              <dd className="inline whitespace-pre-wrap">
-                                {l.text}
-                              </dd>
+                            <div key={l.criterion} className="text-sm text-bone/90">
+                              <dt className="inline font-semibold">{l.criterion}: </dt>
+                              <dd className="inline whitespace-pre-wrap">{l.text}</dd>
                             </div>
                           ))}
                         </dl>
@@ -470,8 +418,8 @@ export default async function JudgeSubmissionPage({
                     ))}
                   </ul>
                   <p className="mt-3 text-[0.65rem] italic text-dust">
-                    Judge names are anonymized and individual scores stay
-                    private — only the evidence sentences are shown here.
+                    Judge names are anonymized and individual scores stay private — only the
+                    evidence sentences are shown here.
                   </p>
                 </div>
               )}

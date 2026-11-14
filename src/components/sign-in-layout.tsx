@@ -115,7 +115,5 @@ export function PhaseTrack({
  * high on a tall screen. On a short screen it simply starts at the top.
  */
 export function SignInStage({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-[calc(100vh-13rem)] flex-col justify-center">{children}</div>
-  );
+  return <div className="flex min-h-[calc(100vh-13rem)] flex-col justify-center">{children}</div>;
 }

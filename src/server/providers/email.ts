@@ -46,7 +46,7 @@ function unsubscribeHeaders(m: OutgoingEmail): Record<string, string> | undefine
 async function oneByOne(
   transport: Pick<EmailTransport, "sendOne">,
   messages: OutgoingEmail[],
-  from: string,
+  from: string
 ): Promise<SendResult> {
   const result: SendResult = { sent: 0, failed: 0, errors: [] };
   for (const m of messages) {
@@ -114,7 +114,7 @@ function resend(apiKey: string): EmailTransport {
             // every one so the campaign record reflects reality.
             result.failed += chunk.length;
             result.errors.push(
-              `${label} (${chunk.length} recipients): ${body.message ?? res.statusText}`,
+              `${label} (${chunk.length} recipients): ${body.message ?? res.statusText}`
             );
           }
         } catch (e) {
@@ -163,7 +163,7 @@ function consoleLog(): EmailTransport {
   const transport: EmailTransport = {
     async sendOne(m, from) {
       console.log(
-        `\n── email (not sent: EMAIL_PROVIDER=console) ──\nFrom: ${from}\nTo: ${m.to}\nSubject: ${m.subject}\n\n${m.text}\n──────────────────────────────────────────────\n`,
+        `\n── email (not sent: EMAIL_PROVIDER=console) ──\nFrom: ${from}\nTo: ${m.to}\nSubject: ${m.subject}\n\n${m.text}\n──────────────────────────────────────────────\n`
       );
       return { ok: true, id: "console" };
     },

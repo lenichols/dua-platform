@@ -8,21 +8,15 @@ import { createHmac, timingSafeEqual } from "crypto";
  */
 function secret() {
   const s = process.env.SUBMISSION_EDIT_SECRET || process.env.ADMIN_PASSWORD;
-  if (!s)
-    throw new Error("SUBMISSION_EDIT_SECRET or ADMIN_PASSWORD env var required");
+  if (!s) throw new Error("SUBMISSION_EDIT_SECRET or ADMIN_PASSWORD env var required");
   return s;
 }
 
 export function unsubscribeToken(registrationId: string): string {
-  return createHmac("sha256", secret())
-    .update(`unsubscribe:${registrationId}`)
-    .digest("hex");
+  return createHmac("sha256", secret()).update(`unsubscribe:${registrationId}`).digest("hex");
 }
 
-export function verifyUnsubscribeToken(
-  registrationId: string,
-  token: string,
-): boolean {
+export function verifyUnsubscribeToken(registrationId: string, token: string): boolean {
   const expected = unsubscribeToken(registrationId);
   const a = Buffer.from(token, "hex");
   const b = Buffer.from(expected, "hex");

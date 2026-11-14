@@ -9,10 +9,26 @@ const DEMO_TAG = "demo-seed: sample submission";
 
 // Keep these in step with src/lib/demo.ts, which the sign-in pages read.
 const ACCOUNTS = [
-  { key: "judge", name: "Demo Judge (Test)", email: "demo.judge@example.org", role: "judge", demoPassword: "dua-demo-judge" },
-  { key: "mentor", name: "Demo Mentor (Test)", email: "demo.mentor@example.org", role: "mentor", demoPassword: "dua-demo-mentor" },
+  {
+    key: "judge",
+    name: "Demo Judge (Test)",
+    email: "demo.judge@example.org",
+    role: "judge",
+    demoPassword: "dua-demo-judge",
+  },
+  {
+    key: "mentor",
+    name: "Demo Mentor (Test)",
+    email: "demo.mentor@example.org",
+    role: "mentor",
+    demoPassword: "dua-demo-mentor",
+  },
 ];
-const DEMO_ADMIN = { name: "Demo Admin (Test)", email: "demo.admin@example.org", password: "dua-demo-admin" };
+const DEMO_ADMIN = {
+  name: "Demo Admin (Test)",
+  email: "demo.admin@example.org",
+  password: "dua-demo-admin",
+};
 
 // Every link is a placeholder on example.org.
 const links = (slug) => ({
@@ -80,8 +96,7 @@ const SAMPLES = [
     core_problem: "Transit apps assume the rider can read a small, busy screen",
     problem_statement:
       "Riders with low vision, and anyone with their hands full, struggle with transit apps built around maps and long lists. What they want is one fact: when the next bus leaves from the stop they're standing at.",
-    project_description_summary:
-      "Ask out loud when the next bus leaves and hear one short answer.",
+    project_description_summary: "Ask out loud when the next bus leaves and hear one short answer.",
     project_description:
       "NextBus Voice works out the nearest stop from the phone's location and reads the next two departures aloud from the city's open transit feed.\n\nThere is no screen to navigate. A single large button repeats the answer. Speech recognition is used only to let the rider name a different stop.",
     disclosure_statement:
@@ -141,7 +156,7 @@ const SAMPLES = [
     target_region: "Small web teams",
     core_problem: "Bug reports arrive without the steps needed to reproduce them",
     problem_statement:
-      "A tester writes \"checkout is broken\" and a developer spends an hour finding out how. The details that matter, such as what was clicked, what the page requested and what failed, are gone by the time anyone asks.",
+      'A tester writes "checkout is broken" and a developer spends an hour finding out how. The details that matter, such as what was clicked, what the page requested and what failed, are gone by the time anyone asks.',
     project_description_summary:
       "A browser extension that turns the last sixty seconds into a ready-to-file bug report.",
     project_description:
@@ -207,7 +222,7 @@ const SAMPLE_SCORE = {
 async function removeSamples(pool, eventId) {
   const { rowCount } = await pool.query(
     "delete from submissions where event_id = $1 and review_note = $2",
-    [eventId, DEMO_TAG],
+    [eventId, DEMO_TAG]
   );
   return rowCount ?? 0;
 }
@@ -219,7 +234,7 @@ export async function cleanupDemo(pool, eventId) {
   for (const a of ACCOUNTS) {
     const { rowCount } = await pool.query(
       "delete from judges where event_id = $1 and lower(email) = $2",
-      [eventId, a.email],
+      [eventId, a.email]
     );
     if (rowCount) accounts.push(a.email);
   }
@@ -251,7 +266,7 @@ export async function seedDemo(pool, eventId, opts = {}) {
        do update set name = excluded.name, role = excluded.role, is_active = true,
                      password_hash = excluded.password_hash
        returning id`,
-      [eventId, a.name, a.email, a.role, await hashPassword(password)],
+      [eventId, a.name, a.email, a.role, await hashPassword(password)]
     );
     created.push({ key: a.key, role: a.role, email: a.email, password, judgeId: rows[0].id });
   }
@@ -265,7 +280,7 @@ export async function seedDemo(pool, eventId, opts = {}) {
        on conflict (lower(email))
        do update set password_hash = excluded.password_hash, is_active = true,
                      role = excluded.role, updated_at = now()`,
-      [DEMO_ADMIN.name, DEMO_ADMIN.email, role, await hashPassword(DEMO_ADMIN.password)],
+      [DEMO_ADMIN.name, DEMO_ADMIN.email, role, await hashPassword(DEMO_ADMIN.password)]
     );
     created.push({ key: "admin", role, email: DEMO_ADMIN.email, password: DEMO_ADMIN.password });
   } else {
@@ -276,7 +291,10 @@ export async function seedDemo(pool, eventId, opts = {}) {
   await removeSamples(pool, eventId);
   const inserted = [];
   for (const [i, s] of SAMPLES.entries()) {
-    const slug = s.project_name.replace(/ \(Sample\)$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const slug = s.project_name
+      .replace(/ \(Sample\)$/, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-");
     try {
       inserted.push(
         await insertRow(
@@ -293,19 +311,23 @@ export async function seedDemo(pool, eventId, opts = {}) {
             hidden_from_judges: false,
             review_note: DEMO_TAG,
           },
-          "id, project_name",
-        ),
+          "id, project_name"
+        )
       );
     } catch (e) {
       if (e.code === "23505")
-        throw new Error(`"${s.project_name}" already exists and isn't a sample — rename or remove it first`);
+        throw new Error(
+          `"${s.project_name}" already exists and isn't a sample — rename or remove it first`
+        );
       throw e;
     }
   }
 
   // The sample score fits the default rubric. If this event's rubric has been
   // changed, skip it rather than store marks that don't match.
-  const { rows: eventRows } = await pool.query("select settings from events where id = $1", [eventId]);
+  const { rows: eventRows } = await pool.query("select settings from events where id = $1", [
+    eventId,
+  ]);
   const scored = !eventRows[0]?.settings?.rubric;
   if (scored) {
     const judge = created.find((c) => c.key === "judge");
@@ -320,7 +342,9 @@ export async function seedDemo(pool, eventId, opts = {}) {
   }
 
   if (!opts.keepPhase) {
-    await pool.query("update events set phase = 'judging', updated_at = now() where id = $1", [eventId]);
+    await pool.query("update events set phase = 'judging', updated_at = now() where id = $1", [
+      eventId,
+    ]);
   }
   return { created, submissions: inserted.length, scored };
 }
@@ -331,7 +355,17 @@ export async function seedDemo(pool, eventId, opts = {}) {
  * samples again. Admin accounts other than the sample one are left alone.
  */
 export async function resetDemo(pool, eventId, opts = {}) {
-  for (const table of ["scores", "recusals", "tie_breaks", "results_locks", "registrations", "email_campaigns", "uploads", "submissions", "judges"]) {
+  for (const table of [
+    "scores",
+    "recusals",
+    "tie_breaks",
+    "results_locks",
+    "registrations",
+    "email_campaigns",
+    "uploads",
+    "submissions",
+    "judges",
+  ]) {
     await pool.query(`delete from ${table} where event_id = $1`, [eventId]);
   }
   await pool.query("delete from sign_in_failures");
@@ -340,7 +374,7 @@ export async function resetDemo(pool, eventId, opts = {}) {
         set settings = '{}'::jsonb, submissions_open = false, registration_open = false,
             closed_at = null, updated_at = now()
       where id = $1`,
-    [eventId],
+    [eventId]
   );
   return seedDemo(pool, eventId, { demoMode: true, adminRole: opts.adminRole });
 }
@@ -349,7 +383,7 @@ export async function resetDemo(pool, eventId, opts = {}) {
 export async function hasDemoData(pool, eventId) {
   const { rows } = await pool.query(
     "select 1 from submissions where event_id = $1 and review_note = $2 limit 1",
-    [eventId, DEMO_TAG],
+    [eventId, DEMO_TAG]
   );
   return rows.length > 0;
 }

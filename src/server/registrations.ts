@@ -22,14 +22,13 @@ type NewRegistration = Omit<
 >;
 
 export type RegisterOutcome =
-  | { ok: true; id: string }
-  | { ok: false; reason: "closed" | "duplicate" };
+  { ok: true; id: string } | { ok: false; reason: "closed" | "duplicate" };
 
 /** Add a sign-up. Refused while sign-ups are closed, or the event doesn't take them. */
 export async function createRegistration(
   event: EventRow,
   role: RegistrationRole,
-  data: NewRegistration,
+  data: NewRegistration
 ): Promise<RegisterOutcome> {
   const accepting = role === "mentor" ? mentorSignupAccepting(event) : registrationAccepting(event);
   if (!accepting) return { ok: false, reason: "closed" };

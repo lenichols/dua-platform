@@ -23,15 +23,15 @@ Before real submissions open, remove the samples with
 Sign in to `/admin` and open the **Event** tab. Everything about your event is
 edited there and takes effect when you press Save:
 
-| Section | What you can change |
-| --- | --- |
-| Basics | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size. |
-| Look | The accent colour used across the site (violet by default, lightened automatically in dark mode), and your own logo in place of the Dua mark. |
-| Features | Whole parts of the platform you may not need: the mentor programme, registration before submitting, email campaigns, and the "How it works" steps on the homepage. |
-| Judging | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. The judging rules below. |
-| Questions | Switch off built-in questions your event doesn't need, and add your own, on the registration, mentor and submission forms: short or long text, pick one, pick any, or a link. Choose which answers judges see. |
-| Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on. |
-| Homepage | The introduction, highlight cards, an example problem per track, and the questions and answers. |
+| Section      | What you can change                                                                                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basics       | Name, tagline, dates, deadlines, format, prizes, host, contact email, largest team size.                                                                                                                       |
+| Look         | The accent colour used across the site (violet by default, lightened automatically in dark mode), and your own logo in place of the Dua mark.                                                                  |
+| Features     | Whole parts of the platform you may not need: the mentor programme, registration before submitting, email campaigns, and the "How it works" steps on the homepage.                                             |
+| Judging      | The rubric: criteria, their weights, the guidance judges see, and which criteria settle ties. How many places the final ranking has. The judging rules below.                                                  |
+| Questions    | Switch off built-in questions your event doesn't need, and add your own, on the registration, mentor and submission forms: short or long text, pick one, pick any, or a link. Choose which answers judges see. |
+| Form options | The choices on the registration, mentor and submission forms: tracks, problem briefs, experience levels and so on.                                                                                             |
+| Homepage     | The introduction, highlight cards, an example problem per track, and the questions and answers.                                                                                                                |
 
 Once the first judge has scored a project, the rubric's criteria and weights
 are fixed, because changing them would change what existing scores mean.
@@ -41,12 +41,12 @@ Names and guidance can still be edited.
 
 Each of these is a switch under **Event → Judging**. The defaults are in bold.
 
-| Rule | What it does |
-| --- | --- |
-| Anonymous judging (**off**) | Judges and mentors don't see team names, member names or the mentor's name. Admins still do. |
-| Require evidence (**on**) | Each score needs a sentence saying what the team showed. Off makes it optional. |
-| Conflict declarations (**on**) | Judges can step back from a project they're connected to, which also removes any score they gave it. |
-| Publish the final ranking (**off**) | Once results are open, anyone can see the placed projects and their totals. Nothing else is published: not the other entries, not judges' notes. |
+| Rule                                                | What it does                                                                                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Anonymous judging (**off**)                         | Judges and mentors don't see team names, member names or the mentor's name. Admins still do.                                                                       |
+| Require evidence (**on**)                           | Each score needs a sentence saying what the team showed. Off makes it optional.                                                                                    |
+| Conflict declarations (**on**)                      | Judges can step back from a project they're connected to, which also removes any score they gave it.                                                               |
+| Publish the final ranking (**off**)                 | Once results are open, anyone can see the placed projects and their totals. Nothing else is published: not the other entries, not judges' notes.                   |
 | How the ranking is worked out (**even out judges**) | Either even out harsh and generous judges and test how stable the ranking is, or rank by the plain average of judges' totals. See [How judging works](judging.md). |
 
 ## Questions you can switch off
@@ -71,10 +71,10 @@ and [`src/app/globals.css`](../src/app/globals.css).
 
 ## Admin roles
 
-| Role | Can do |
-| --- | --- |
-| Owner | Everything, including creating and removing admin accounts. |
-| Admin | Run the event: phases, judges, submissions, results. Can't manage admin accounts. |
+| Role   | Can do                                                                                                |
+| ------ | ----------------------------------------------------------------------------------------------------- |
+| Owner  | Everything, including creating and removing admin accounts.                                           |
+| Admin  | Run the event: phases, judges, submissions, results. Can't manage admin accounts.                     |
 | Viewer | Read-only. Can watch progress and export CSVs. The server refuses writes even if a request is forged. |
 
 Roles are read from the database on every request, so removing someone takes

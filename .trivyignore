@@ -1,0 +1,10 @@
+# Trivy ignores. Keep every entry narrow, explained and time-limited.
+#
+# Format: one vulnerability ID or path per line.
+#
+# Examples:
+#   CVE-2026-00000  # package@version: not reachable; review by 2026-12-31
+#   docker.io/library/node:22-alpine  # base image exception; review by 2026-12-31
+#
+# Do not add a broad wildcard to make CI green. Fix, upgrade or document the
+# risk in an issue instead.

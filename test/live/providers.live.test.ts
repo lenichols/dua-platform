@@ -27,7 +27,7 @@ afterEach(() => {
 // A 1×1 transparent PNG.
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-  "base64",
+  "base64"
 );
 
 async function roundTrip(eventId: string) {
@@ -58,7 +58,7 @@ describe.skipIf(!env.LIVE_SMTP_URL)("SMTP", () => {
         text: "Hello from the live test.",
         unsubscribeUrl: "https://example.org/unsubscribe?id=1&t=abc",
       },
-      "Dua Test <noreply@example.org>",
+      "Dua Test <noreply@example.org>"
     );
     expect(sent.ok, JSON.stringify(sent)).toBe(true);
 
@@ -79,7 +79,7 @@ describe.skipIf(!env.LIVE_SMTP_URL)("SMTP", () => {
     process.env.SMTP_URL = "smtp://127.0.0.1:9";
     const sent = await emailTransport()!.sendOne(
       { to: "someone@example.org", subject: "x", html: "x", text: "x" },
-      "Dua Test <noreply@example.org>",
+      "Dua Test <noreply@example.org>"
     );
     expect(sent.ok).toBe(false);
   });
@@ -111,7 +111,7 @@ describe.skipIf(!env.LIVE_S3_ENDPOINT)("S3-compatible storage", () => {
         contentType: "image/png",
         ext: "png",
         createdBy: "live test",
-      }),
+      })
     ).rejects.toThrow(/refused the upload/);
   });
 });

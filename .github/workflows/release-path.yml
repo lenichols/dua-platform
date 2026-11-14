@@ -1,0 +1,65 @@
+name: Release Path
+
+# Feature work targets develop. Staging is fed from develop (or a hotfix /
+# release branch), and production is fed from staging (or a hotfix / release
+# branch). This keeps promotions reviewable and prevents a feature branch from
+# skipping QA.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches: [develop, staging, production, main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Promotion path
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate base and head branches
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          echo "PR: $HEAD -> $BASE"
+
+          case "$BASE" in
+            develop)
+              case "$HEAD" in
+                staging|production|release/*|hotfix/*)
+                  echo "::error::'$HEAD' cannot be merged into develop. Back-merge through a fix/chore PR instead."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            staging)
+              case "$HEAD" in
+                develop|hotfix/*|release/*) ;;
+                *)
+                  echo "::error::PRs into staging must come from develop, hotfix/* or release/*, not '$HEAD'."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            production)
+              case "$HEAD" in
+                staging|hotfix/*|release/*) ;;
+                *)
+                  echo "::error::PRs into production must come from staging, hotfix/* or release/*, not '$HEAD'."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            main)
+              echo "::notice::'main' is transitional; use develop/staging/production once the migration is complete."
+              ;;
+            *)
+              echo "::notice::No promotion rule for base '$BASE'."
+              ;;
+          esac
+
+          echo "✅ Release path is valid."

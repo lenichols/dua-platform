@@ -20,7 +20,7 @@ const next = () => ++counter;
 export async function makeEvent(
   over: Partial<Pick<EventRow, "phase" | "submissions_open" | "registration_open">> & {
     settings?: Partial<EventSettings>;
-  } = {},
+  } = {}
 ): Promise<EventRow> {
   const { settings, ...columns } = over;
   const [row] = await db()
@@ -37,7 +37,7 @@ export function inPhase(event: EventRow, phase: Phase): EventRow {
 
 export async function makeSubmission(
   event: EventRow,
-  over: Partial<typeof submissions.$inferInsert> = {},
+  over: Partial<typeof submissions.$inferInsert> = {}
 ): Promise<string> {
   const n = next();
   const [row] = await db()
@@ -65,12 +65,18 @@ export async function makeSubmission(
 export async function makeJudge(
   event: EventRow,
   role: "judge" | "mentor" = "judge",
-  over: Partial<typeof judges.$inferInsert> = {},
+  over: Partial<typeof judges.$inferInsert> = {}
 ): Promise<{ id: string; viewer: Viewer & { kind: "judge" } }> {
   const n = next();
   const [row] = await db()
     .insert(judges)
-    .values({ event_id: event.id, name: `Judge ${n}`, email: `judge${n}@example.org`, role, ...over })
+    .values({
+      event_id: event.id,
+      name: `Judge ${n}`,
+      email: `judge${n}@example.org`,
+      role,
+      ...over,
+    })
     .returning({ id: judges.id });
   return { id: row.id, viewer: { kind: "judge", judgeId: row.id, role } };
 }

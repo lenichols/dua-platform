@@ -1,40 +1,65 @@
 # Contributing to Dua
 
-Thanks for helping. This page covers how to get set up, what a good pull
-request looks like, and the agreement you'll be asked to sign.
+Thanks for helping. This page covers setup, the branch and commit conventions,
+the pull-request checklist and the agreement you'll be asked to sign.
 
 ## Getting set up
 
-Follow [Running Dua locally](../docs/running-locally.md). You need Node.js 22.9+ and
-Docker (or OrbStack) for the local database. Never point a development copy
-at a database that holds a real event's data.
-
-Run the tests with the database container up:
+Follow [Running Dua locally](../docs/running-locally.md). You need Node.js
+22.9+ and Docker (or OrbStack) for the local database. Never point a development
+copy at a database that holds a real event's data.
 
 ```bash
+npm ci
+cp .env.local.example .env.local
+# fill in ADMIN_PASSWORD and SUBMISSION_EDIT_SECRET
 npm run db:up
-npm test
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
 
-They create and use their own database, `dua_test`, so your development data
-is left alone.
+`npm ci` installs the Husky hooks. They check the branch name, format and lint
+staged files, validate the commit message, and run the type and format checks
+before a push.
+
+Run the checks with the database container up:
+
+```bash
+npm run verify       # Prettier, ESLint (zero warnings), TypeScript
+npm test             # Vitest, uses its own dua_test database
+npm run build        # production build
+```
+
+`npm run db:up` starts Postgres; the tests create and use `dua_test`, so your
+development data is left alone.
 
 ## Commands and folders
 
 ```bash
-npm run dev           # local server
-npm test              # tests; needs the database running (npm run db:up)
-npm run lint          # ESLint
-npm run typecheck     # TypeScript
-npm run build         # production build
-npm run db:generate   # after editing src/db/schema.ts: write a new migration
-npm run test:live     # optional: check providers against real services
+npm run dev             # local server
+npm run format          # write Prettier formatting
+npm run format:check    # verify formatting
+npm run lint            # ESLint, zero warnings
+npm run typecheck       # tsc --noEmit
+npm run test            # tests; needs npm run db:up
+npm run test:coverage   # tests with coverage
+npm run verify          # format + lint + typecheck
+npm run verify:full     # verify + tests
+npm run build           # production build
+npm run db:generate     # after editing src/db/schema.ts: write a migration
+npm run db:migrate      # apply migrations
+npm run db:seed         # sample data and logins
+npm run test:live       # optional: providers against real services
+
+npm run create-branch   # start a correctly named branch from develop
+npm run pr              # open a PR with the template and linked issue
+npm run changeset       # add a release note for a user-visible change
+npm run labels          # create/update GitHub labels (maintainers)
+npm run protect-branches # dry-run branch protection; --apply to apply
 ```
 
-Tests use their own database, `dua_test`, created automatically on the same
-Postgres server. They never touch your development data.
-
-```
+```text
 src/
 ├── app/         # pages and server actions, one folder per area
 ├── components/  # shared layout: header, footer, logo, theme toggle
@@ -45,7 +70,48 @@ src/
 drizzle/         # SQL migrations, generated from src/db/schema.ts
 scripts/         # command-line helpers: migrate, seed, admins, imports
 test/            # test database setup and fixtures
+docs/            # guides, including ENGINEERING_WORKFLOW.md
 ```
+
+## Branches and commits
+
+Dua uses three long-lived branches:
+
+- `develop` — integration; every feature/fix PR targets this.
+- `staging` — QA and release candidate.
+- `production` — what runs in production.
+
+Start a short-lived branch from `develop` with a ticket number when you have one:
+
+```bash
+npm run create-branch -- --type feat --issue 42 --slug team-invites
+# feat/42-team-invites
+
+npm run create-branch -- --type fix --slug unsubscribe-get
+# fix/unsubscribe-get
+```
+
+Allowed types: `feat`, `feature`, `fix`, `chore`, `docs`, `ci`, `perf`,
+`refactor`, `test`, `security`, `build`, `revert`, `deploy`, `release`. Also
+allowed: `hotfix/<ticket>-<slug>`, `release/vX.Y.Z`, `sync/...` and Dependabot
+branches. Direct work on `develop`, `staging` and `production` is blocked;
+open a PR instead.
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```text
+type(scope): short summary
+
+Why the change is needed.
+
+Closes #42
+```
+
+Examples: `feat(judge): show rubric anchors`, `fix(unsubscribe): require a
+POST`, `ci: add the Docker build check`. Commitlint runs locally and in CI.
+
+See [Engineering workflow](../docs/ENGINEERING_WORKFLOW.md) for the full model,
+promotion rules and deployment cycle.
 
 ## How the code is laid out
 
@@ -63,21 +129,26 @@ test/            # test database setup and fixtures
 
 ## Before you open a pull request
 
-1. For anything larger than a small fix, open an issue first so we can agree
-   on the approach before you spend time on it.
+1. Open an issue first for anything larger than a small fix, so we can agree on
+   the approach before you spend time on it. If you're not sure, use the
+   [contributors thread](https://github.com/lenichols/dua-platform/issues/1).
 2. Keep each pull request to one change. Smaller ones get reviewed faster.
 3. Add or update tests for behaviour you change. Changes to ranking, scoring
    or permissions need tests.
 4. Run the checks that CI runs:
 
    ```bash
-   npm run lint
-   npm run typecheck
+   npm run verify
    npm test
    npm run build
    ```
 
-5. Update the README or other docs if setup or behaviour changes.
+5. Use `npm run pr` (or the PR template) and target `develop`, not `staging` or
+   `production`. Promotions are separate PRs.
+
+The PR template asks for a summary, the linked issue, test evidence, deployment
+impact and a rollback plan. CI must be green before merge; the required check is
+**Quality Gate Conclusion**.
 
 ## What to be careful with
 
@@ -90,6 +161,8 @@ test/            # test database setup and fixtures
 - **Ranking.** Results must stay reproducible from a seed. Don't use
   `Math.random()` in anything that affects a ranking.
 - **Secrets.** Never commit `.env.local` or any key.
+- **Migrations.** Add a generated migration and make it backward compatible;
+  production rollbacks must not require editing an applied migration.
 
 ## Contributor license agreement
 
@@ -104,8 +177,9 @@ few seconds and you only do it once.
 
 ## Reporting bugs and asking for features
 
-Use the issue templates. For security problems, don't open a public issue;
-follow [SECURITY.md](SECURITY.md).
+Use the issue forms. For security problems, don't open a public issue; follow
+[SECURITY.md](SECURITY.md) or use the private advisory link in the issue
+chooser.
 
 ## Conduct
 

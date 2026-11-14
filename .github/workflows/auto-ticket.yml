@@ -1,0 +1,178 @@
+name: Auto-ticket
+
+# Link a pull request to an existing issue when it references one. Only create
+# a new tracking ticket when the PR has no linked issue at all.
+#
+# Status flow after merge:
+#   develop      → status:in-development
+#   staging      → status:in-qa
+#   production   → status:done (issue closed)
+#
+# This uses pull_request_target only to read PR metadata and the base branch's
+# scripts. It never checks out or executes code from the pull request.
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, closed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: auto-ticket-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ticket:
+    name: Ticket
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      ACTION: ${{ github.event.action }}
+      MERGED: ${{ github.event.pull_request.merged }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # pull_request_target checks out the base branch, never PR code.
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Validate the PR title
+        if: github.event.action != 'closed'
+        run: |
+          set -euo pipefail
+          if ! printf '%s\n' "$PR_TITLE" | grep -Eq '^(feat|fix|security|perf|docs|style|refactor|test|chore|ci|build|revert|deploy|release)(\([a-z0-9-]+\))?!?: .+'; then
+            echo "::error::PR title must follow Conventional Commits: type(scope): summary"
+            echo "Examples: feat(judge): add rubric preview, fix: require POST to unsubscribe"
+            exit 1
+          fi
+
+      - name: Ensure labels exist
+        run: node scripts/setup-labels.mjs
+
+      - name: Resolve linked issues
+        id: linked
+        run: |
+          set -euo pipefail
+          TICKETS="$(node scripts/linked-issues.mjs)"
+          echo "tickets=$TICKETS" >> "$GITHUB_OUTPUT"
+          if [ -n "$TICKETS" ]; then
+            echo "PR #$PR_NUMBER links to existing ticket(s): $TICKETS"
+          else
+            echo "PR #$PR_NUMBER has no linked ticket."
+          fi
+
+      - name: Link the existing ticket, or create one
+        if: github.event.action != 'closed'
+        env:
+          TICKETS: ${{ steps.linked.outputs.tickets }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$TICKETS" ]; then
+            IFS=',' read -ra NUMBERS <<< "$TICKETS"
+            for NUMBER in "${NUMBERS[@]}"; do
+              [ -z "$NUMBER" ] && continue
+              gh issue edit "$NUMBER" --repo "$REPO" \
+                --add-label "status:in-review" >/dev/null 2>&1 || true
+            done
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label linked-ticket >/dev/null 2>&1 || true
+            if [ "$ACTION" = "opened" ] || [ "$ACTION" = "reopened" ]; then
+              LIST=$(printf '%s' "$TICKETS" | sed 's/,/, #/g; s/^/#/')
+              gh pr comment "$PR_NUMBER" --repo "$REPO" \
+                --body "Linked to existing ticket(s): $LIST. No new auto-ticket was created."
+            fi
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          TYPE="$(printf '%s' "$PR_TITLE" | sed -E 's/^([a-z]+).*/\1/')"
+          SUMMARY="$(printf '%s' "$PR_TITLE" | sed -E 's/^[a-z]+(\([a-z0-9-]+\))?!?: //')"
+          BODY="$(printf '%s\n' \
+            "**Pull Request**: #$PR_NUMBER" \
+            "**Branch**: \`$HEAD_REF\` → \`$BASE_REF\`" \
+            "**Author**: @$PR_AUTHOR" \
+            "**Type**: \`$TYPE\`" \
+            "" \
+            "<!-- auto-ticket: created because the PR had no linked issue -->")"
+          URL=$(gh issue create --repo "$REPO" \
+            --title "[PR #$PR_NUMBER] $SUMMARY" \
+            --body "$BODY" \
+            --label auto-ticket \
+            --label "status:in-review" \
+            --label "type:$TYPE")
+          NUMBER="${URL##*/}"
+          gh pr comment "$PR_NUMBER" --repo "$REPO" \
+            --body "Tracking ticket: #$NUMBER. It will move to **in review → in development → in QA → done** as this PR is promoted."
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label auto-ticket >/dev/null 2>&1 || true
+          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "Created ticket #$NUMBER"
+
+      - name: Move and close on merge
+        if: github.event.action == 'closed'
+        env:
+          TICKETS: ${{ steps.linked.outputs.tickets }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TICKETS" ]; then
+            echo "No linked ticket found for PR #$PR_NUMBER."
+            exit 0
+          fi
+
+          if [ "$MERGED" != "true" ]; then
+            IFS=',' read -ra NUMBERS <<< "$TICKETS"
+            for NUMBER in "${NUMBERS[@]}"; do
+              [ -z "$NUMBER" ] && continue
+              gh issue comment "$NUMBER" --repo "$REPO" \
+                --body "PR #$PR_NUMBER was closed without merging; the ticket stays open."
+              LABELS=$(gh issue view "$NUMBER" --repo "$REPO" --json labels --jq '.labels[].name' 2>/dev/null || true)
+              if printf '%s\n' "$LABELS" | grep -qx 'auto-ticket'; then
+                gh issue edit "$NUMBER" --repo "$REPO" \
+                  --remove-label "status:in-review" --add-label "status:needs-triage" >/dev/null 2>&1 || true
+              fi
+            done
+            exit 0
+          fi
+
+          case "$BASE_REF" in
+            production|main)
+              TARGET="status:done"
+              MESSAGE="Merged to \`$BASE_REF\` — released to production."
+              ;;
+            staging)
+              TARGET="status:in-qa"
+              MESSAGE="Merged to \`staging\` — ready for QA and staging verification."
+              ;;
+            *)
+              TARGET="status:in-development"
+              MESSAGE="Merged to \`$BASE_REF\` — in development/integration."
+              ;;
+          esac
+
+          IFS=',' read -ra NUMBERS <<< "$TICKETS"
+          for NUMBER in "${NUMBERS[@]}"; do
+            [ -z "$NUMBER" ] && continue
+            gh issue comment "$NUMBER" --repo "$REPO" --body "$MESSAGE"
+            for label in status:in-review status:in-development status:in-qa status:needs-triage; do
+              gh issue edit "$NUMBER" --repo "$REPO" --remove-label "$label" >/dev/null 2>&1 || true
+            done
+            gh issue edit "$NUMBER" --repo "$REPO" --add-label "$TARGET" >/dev/null 2>&1 || true
+            if [ "$TARGET" = "status:done" ]; then
+              gh issue close "$NUMBER" --repo "$REPO" --reason completed
+            fi
+          done

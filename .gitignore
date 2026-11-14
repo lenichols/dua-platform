@@ -13,6 +13,7 @@ dist/
 npm-debug.log*
 
 .vercel
+.gitmulti/
 
 next-env.d.ts
 *.tsbuildinfo

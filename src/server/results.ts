@@ -3,7 +3,14 @@
 
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { events, results_locks, scores, submissions, tie_breaks, type LockedPlace } from "@/db/schema";
+import {
+  events,
+  results_locks,
+  scores,
+  submissions,
+  tie_breaks,
+  type LockedPlace,
+} from "@/db/schema";
 import { drawBubble, monteCarloTop, type ScoreRow } from "@/lib/monte-carlo";
 import { rankByAverage } from "@/lib/ranking";
 import type { EventRow } from "./event";
@@ -16,7 +23,7 @@ import type { EventRow } from "./event";
  */
 export async function computeAndLockResults(
   event: EventRow,
-  seed: number,
+  seed: number
 ): Promise<{ top6: LockedPlace[]; seed: number }> {
   const { rubric, topN } = event.settings;
   const [scoreRows, subs] = await Promise.all([
@@ -35,8 +42,8 @@ export async function computeAndLockResults(
         and(
           eq(submissions.event_id, event.id),
           eq(submissions.hidden_from_judges, false),
-          eq(submissions.is_submission_complete, true),
-        ),
+          eq(submissions.is_submission_complete, true)
+        )
       ),
   ]);
 
@@ -47,7 +54,11 @@ export async function computeAndLockResults(
   let top6: LockedPlace[];
   if (event.settings.judging.ranking === "average") {
     // Plain averages. There is no chance involved, so every place is certain.
-    top6 = rankByAverage(counted, subs.map((s) => s.id), rubric)
+    top6 = rankByAverage(
+      counted,
+      subs.map((s) => s.id),
+      rubric
+    )
       .slice(0, topN)
       .map((r, i) => ({ submission_id: r.submission_id, rank: i + 1, probability: 1 }));
   } else {
@@ -78,7 +89,7 @@ export async function computeAndLockResults(
 
 export async function recordTieBreak(
   eventId: string,
-  input: { winnerId: string; loserId: string; reason: string; decidedBy: string },
+  input: { winnerId: string; loserId: string; reason: string; decidedBy: string }
 ): Promise<void> {
   await db().insert(tie_breaks).values({
     event_id: eventId,

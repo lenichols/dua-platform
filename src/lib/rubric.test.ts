@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_RUBRIC, DEFAULT_SETTINGS, resolveSettings, rubricSchema, settingsSchema } from "./event-settings";
+import {
+  DEFAULT_RUBRIC,
+  DEFAULT_SETTINGS,
+  resolveSettings,
+  rubricSchema,
+  settingsSchema,
+} from "./event-settings";
 import { SCALE_MAX, marksComplete, totalScore } from "./rubric";
 
 const all = (n: number) => Object.fromEntries(DEFAULT_RUBRIC.criteria.map((c) => [c.key, n]));
@@ -20,29 +26,37 @@ describe("the default rubric and settings", () => {
 
 describe("rubric rules", () => {
   it("require weights that add up to 100", () => {
-    const r = rubricSchema.safeParse({ criteria: [criterion("a", 60), criterion("b", 30)], tieBreakers: [] });
+    const r = rubricSchema.safeParse({
+      criteria: [criterion("a", 60), criterion("b", 30)],
+      tieBreakers: [],
+    });
     expect(r.success).toBe(false);
     expect(JSON.stringify(r.error?.issues)).toContain("add up to 90");
   });
 
   it("require a different key for each criterion", () => {
     expect(
-      rubricSchema.safeParse({ criteria: [criterion("a", 50), criterion("a", 50)], tieBreakers: [] }).success,
+      rubricSchema.safeParse({
+        criteria: [criterion("a", 50), criterion("a", 50)],
+        tieBreakers: [],
+      }).success
     ).toBe(false);
   });
 
   it("require tie-breakers to be criteria on the rubric", () => {
     expect(
-      rubricSchema.safeParse({ criteria: [criterion("a", 100)], tieBreakers: ["b"] }).success,
+      rubricSchema.safeParse({ criteria: [criterion("a", 100)], tieBreakers: ["b"] }).success
     ).toBe(false);
     expect(
-      rubricSchema.safeParse({ criteria: [criterion("a", 100)], tieBreakers: ["a"] }).success,
+      rubricSchema.safeParse({ criteria: [criterion("a", 100)], tieBreakers: ["a"] }).success
     ).toBe(true);
   });
 
   it("refuse keys that aren't simple lowercase ids", () => {
     for (const key of ["Impact", "two words", "1st", ""]) {
-      expect(rubricSchema.safeParse({ criteria: [criterion(key, 100)], tieBreakers: [] }).success).toBe(false);
+      expect(
+        rubricSchema.safeParse({ criteria: [criterion(key, 100)], tieBreakers: [] }).success
+      ).toBe(false);
     }
   });
 });
@@ -115,7 +129,9 @@ describe("the GitHub link setting", () => {
     expect(DEFAULT_SETTINGS.theme.showSourceLink).toBe(true);
     const older = resolveSettings({ theme: { accent: "#0A7F5A", logoUrl: "" } });
     expect(older.theme).toEqual({ accent: "#0A7F5A", logoUrl: "", showSourceLink: true });
-    const off = resolveSettings({ theme: { accent: "#0A7F5A", logoUrl: "", showSourceLink: false } });
+    const off = resolveSettings({
+      theme: { accent: "#0A7F5A", logoUrl: "", showSourceLink: false },
+    });
     expect(off.theme.showSourceLink).toBe(false);
   });
 });
@@ -141,9 +157,15 @@ describe("theme", () => {
   it("accepts only hex colours and web addresses", () => {
     const theme = settingsSchema.shape.theme;
     expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "" }).success).toBe(true);
-    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "https://example.org/logo.png" }).success).toBe(true);
+    expect(
+      theme.safeParse({ accent: "#7B2DFF", logoUrl: "https://example.org/logo.png" }).success
+    ).toBe(true);
     expect(theme.safeParse({ accent: "purple", logoUrl: "" }).success).toBe(false);
-    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "javascript:alert(1)" }).success).toBe(false);
-    expect(theme.safeParse({ accent: "#7B2DFF;background:url(x)", logoUrl: "" }).success).toBe(false);
+    expect(theme.safeParse({ accent: "#7B2DFF", logoUrl: "javascript:alert(1)" }).success).toBe(
+      false
+    );
+    expect(theme.safeParse({ accent: "#7B2DFF;background:url(x)", logoUrl: "" }).success).toBe(
+      false
+    );
   });
 });

@@ -96,17 +96,43 @@ type Submission = {
 
 // Shown in the submission modal. Loaded with the list so it opens instantly.
 type SubmissionDetailField =
-  | "review_note" | "project_category" | "problem_brief"
-  | "project_description_summary" | "project_description"
-  | "problem_statement" | "core_problem" | "disclosure_statement"
-  | "technologies_used" | "focus_area" | "impact_focus" | "solution_stage"
-  | "customer_type" | "region" | "target_region" | "area_of_specification"
-  | "applies_ai" | "team_size" | "github_url" | "live_demo_url"
-  | "demo_video_url" | "demo_video_short_url" | "pitch_deck_url" | "summary_url"
-  | "linkedin_post_url" | "all_members_in_video" | "member1_name"
-  | "member1_email" | "phone" | "country" | "state_region" | "city"
-  | "affiliated_org" | "submitter_role" | "submitter_linkedin_url"
-  | "mentor_name" | "mentor_linkedin_url"
+  | "review_note"
+  | "project_category"
+  | "problem_brief"
+  | "project_description_summary"
+  | "project_description"
+  | "problem_statement"
+  | "core_problem"
+  | "disclosure_statement"
+  | "technologies_used"
+  | "focus_area"
+  | "impact_focus"
+  | "solution_stage"
+  | "customer_type"
+  | "region"
+  | "target_region"
+  | "area_of_specification"
+  | "applies_ai"
+  | "team_size"
+  | "github_url"
+  | "live_demo_url"
+  | "demo_video_url"
+  | "demo_video_short_url"
+  | "pitch_deck_url"
+  | "summary_url"
+  | "linkedin_post_url"
+  | "all_members_in_video"
+  | "member1_name"
+  | "member1_email"
+  | "phone"
+  | "country"
+  | "state_region"
+  | "city"
+  | "affiliated_org"
+  | "submitter_role"
+  | "submitter_linkedin_url"
+  | "mentor_name"
+  | "mentor_linkedin_url"
   | `member${2 | 3 | 4 | 5}_${"name" | "email" | "linkedin_url" | "occupation" | "country"}`;
 
 type Progress = {
@@ -241,7 +267,10 @@ export function AdminHome({
         items={
           tab === "home"
             ? [{ label: "Admin Home" }]
-            : [{ label: "Admin Home", href: "/admin" }, { label: tab.charAt(0).toUpperCase() + tab.slice(1) }]
+            : [
+                { label: "Admin Home", href: "/admin" },
+                { label: tab.charAt(0).toUpperCase() + tab.slice(1) },
+              ]
         }
       />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -260,18 +289,17 @@ export function AdminHome({
 
       {readOnly && (
         <div className="mb-6 rounded-md border border-blue-600/40 bg-blue-600/10 px-4 py-3 text-sm text-bone">
-          <span className="font-semibold">Read-only access.</span> You can see
-          everything here — registration counts, judging progress, results — but
-          controls that change data are hidden. Ask an owner if you need more.
+          <span className="font-semibold">Read-only access.</span> You can see everything here —
+          registration counts, judging progress, results — but controls that change data are hidden.
+          Ask an owner if you need more.
         </div>
       )}
 
       {session.viaSharedPassword && showTeam && team.length === 0 && !teamError && (
         <div className="mb-6 rounded-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-bone">
-          You&apos;re signed in with the shared admin password. Create named
-          accounts under <span className="font-semibold">Team</span> so
-          everyone gets their own login — and read-only teammates only get read
-          access.
+          You&apos;re signed in with the shared admin password. Create named accounts under{" "}
+          <span className="font-semibold">Team</span> so everyone gets their own login — and
+          read-only teammates only get read access.
         </div>
       )}
 
@@ -319,12 +347,7 @@ export function AdminHome({
         />
       )}
       {tab === "results" && (
-        <ResultsPanel
-          phase={phase}
-          submissions={submissions}
-          lock={lock}
-          readOnly={readOnly}
-        />
+        <ResultsPanel phase={phase} submissions={submissions} lock={lock} readOnly={readOnly} />
       )}
       {tab === "team" && showTeam && (
         <TeamPanel team={team} loadError={teamError} session={session} />
@@ -370,15 +393,14 @@ function AccountPanel({ session }: { session: Session }) {
         <div className="card border-l-4 border-l-blood">
           <div className="field-label mb-2">Change Password</div>
           <p className="text-sm text-dust">
-            You're signed in with the{" "}
-            <span className="text-bone">shared admin password</span>, which
-            isn't tied to an account — so there's nothing here to change. That
-            password lives in the <span className="font-mono">ADMIN_PASSWORD</span>{" "}
-            environment variable and is rotated in Vercel.
+            You're signed in with the <span className="text-bone">shared admin password</span>,
+            which isn't tied to an account — so there's nothing here to change. That password lives
+            in the <span className="font-mono">ADMIN_PASSWORD</span> environment variable and is
+            rotated in Vercel.
           </p>
           <p className="mt-2 text-sm text-dust">
-            To change a personal password, sign out and sign back in with your
-            own email and password.
+            To change a personal password, sign out and sign back in with your own email and
+            password.
           </p>
         </div>
       ) : (
@@ -386,8 +408,8 @@ function AccountPanel({ session }: { session: Session }) {
           <div>
             <div className="field-label">Change Password</div>
             <p className="mt-1 text-xs text-dust">
-              Changing this only affects your own sign-in. Everyone stays signed
-              in on their existing sessions.
+              Changing this only affects your own sign-in. Everyone stays signed in on their
+              existing sessions.
             </p>
           </div>
 
@@ -540,35 +562,18 @@ function HomePanel({
       window.location.reload();
     });
   }
-  const activeJudges = judges.filter(
-    (j) => j.is_active && (j.role ?? "judge") === "judge",
-  ).length;
-  const activeMentors = judges.filter(
-    (j) => j.is_active && j.role === "mentor",
-  ).length;
-  const visibleSubs = submissions.filter(
-    (s) => !s.hidden_from_judges && s.is_submission_complete,
-  );
+  const activeJudges = judges.filter((j) => j.is_active && (j.role ?? "judge") === "judge").length;
+  const activeMentors = judges.filter((j) => j.is_active && j.role === "mentor").length;
+  const visibleSubs = submissions.filter((s) => !s.hidden_from_judges && s.is_submission_complete);
 
   // Per-judge truth is the source for the progress bar — it only counts scores
   // on currently-visible submissions and clamps overages so the bar never goes >100%.
   const activeJudgeProgress = judgeProgress.filter((j) => j.is_active);
-  const cast = activeJudgeProgress.reduce(
-    (t, j) => t + Math.min(j.scored, j.total),
-    0,
-  );
-  const totalPossibleVotes = activeJudgeProgress.reduce(
-    (t, j) => t + j.total,
-    0,
-  );
-  const pct =
-    totalPossibleVotes > 0
-      ? Math.round((cast / totalPossibleVotes) * 100)
-      : 0;
+  const cast = activeJudgeProgress.reduce((t, j) => t + Math.min(j.scored, j.total), 0);
+  const totalPossibleVotes = activeJudgeProgress.reduce((t, j) => t + j.total, 0);
+  const pct = totalPossibleVotes > 0 ? Math.round((cast / totalPossibleVotes) * 100) : 0;
 
-  const stragglers = activeJudgeProgress.filter(
-    (j) => j.scored < j.total,
-  ).length;
+  const stragglers = activeJudgeProgress.filter((j) => j.scored < j.total).length;
   // Until judging starts, submissions are the news; after, judges are.
   const duringSubmissions = phase === "submissions";
   // /submit takes projects only when both gates are open.
@@ -587,7 +592,7 @@ function HomePanel({
         }
         if (r.persisted !== p) {
           setPhaseErr(
-            `The database shows phase "${r.persisted}" after writing "${p}" (rows changed: ${r.rowsAffected}). Reload and try again.`,
+            `The database shows phase "${r.persisted}" after writing "${p}" (rows changed: ${r.rowsAffected}). Reload and try again.`
           );
           return;
         }
@@ -613,43 +618,27 @@ function HomePanel({
           </div>
         </div>
         {activeJudgeProgress.length > 0 && (
-          <div className="text-[0.65rem] text-dust">
-            Active: {activeJudgeProgress.length}
-          </div>
+          <div className="text-[0.65rem] text-dust">Active: {activeJudgeProgress.length}</div>
         )}
       </div>
 
       {activeJudgeProgress.length === 0 ? (
-        <p className="text-sm text-dust">
-          No active judges yet. Add some in the Judges tab.
-        </p>
+        <p className="text-sm text-dust">No active judges yet. Add some in the Judges tab.</p>
       ) : (
         <ul className="divide-y divide-line">
           {activeJudgeProgress
             .slice()
             .sort((a, b) => a.scored / (a.total || 1) - b.scored / (b.total || 1))
             .map((j) => {
-              const pctJ =
-                j.total > 0 ? Math.round((j.scored / j.total) * 100) : 0;
+              const pctJ = j.total > 0 ? Math.round((j.scored / j.total) * 100) : 0;
               const status =
-                j.scored === 0
-                  ? "not_started"
-                  : j.scored >= j.total
-                    ? "done"
-                    : "in_progress";
+                j.scored === 0 ? "not_started" : j.scored >= j.total ? "done" : "in_progress";
               return (
-                <li
-                  key={j.id}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
+                <li key={j.id} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-semibold text-bone">
-                        {j.name}
-                      </span>
-                      {status === "done" && (
-                        <span className="pill-accent">✓ Done</span>
-                      )}
+                      <span className="truncate font-semibold text-bone">{j.name}</span>
+                      {status === "done" && <span className="pill-accent">✓ Done</span>}
                       {status === "in_progress" && (
                         <span className="rounded-full border border-accent/40 bg-accent/10 px-3 py-0.5 text-[0.65rem] font-semibold text-accent">
                           In Progress
@@ -663,22 +652,17 @@ function HomePanel({
                     </div>
                     <div className="truncate text-[0.7rem] text-dust">
                       {j.email}
-                      {j.recused > 0 && (
-                        <span className="ml-2">· {j.recused} recused</span>
-                      )}
+                      {j.recused > 0 && <span className="ml-2">· {j.recused} recused</span>}
                       {j.last_scored_at && (
                         <span className="ml-2">
-                          · last vote{" "}
-                          {new Date(j.last_scored_at).toLocaleString()}
+                          · last vote {new Date(j.last_scored_at).toLocaleString()}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="flex w-40 flex-col items-end gap-1">
                     <div className="text-xs">
-                      <span className="font-display text-lg text-bone">
-                        {j.scored}
-                      </span>
+                      <span className="font-display text-lg text-bone">{j.scored}</span>
                       <span className="text-dust"> / {j.total}</span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-5">
@@ -705,9 +689,8 @@ function HomePanel({
   return (
     <div className="space-y-4">
       <p className="text-sm text-dust">
-        Admin Home is the event at a glance: the current phase, the submission
-        form, submissions and judging progress. The other tabs manage each
-        piece in detail.
+        Admin Home is the event at a glance: the current phase, the submission form, submissions and
+        judging progress. The other tabs manage each piece in detail.
       </p>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card md:col-span-2">
@@ -737,17 +720,14 @@ function HomePanel({
           <p className="text-xs text-dust">
             {readOnly ? (
               <>
-                The event is currently in the{" "}
-                <span className="text-accent">{phase}</span> phase. Only owners
-                and admins can change it.
+                The event is currently in the <span className="text-accent">{phase}</span> phase.
+                Only owners and admins can change it.
               </>
             ) : (
               <>
-                Changing to <span className="text-accent">judging</span> locks
-                submissions. Changing to{" "}
-                <span className="text-accent">results</span> reveals aggregated
-                scores; if you haven&apos;t computed the final ranking yet, do that from
-                the Results tab first.
+                Changing to <span className="text-accent">judging</span> locks submissions. Changing
+                to <span className="text-accent">results</span> reveals aggregated scores; if you
+                haven&apos;t computed the final ranking yet, do that from the Results tab first.
               </>
             )}
           </p>
@@ -760,10 +740,7 @@ function HomePanel({
             {cast} / {totalPossibleVotes} votes cast
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full border border-line bg-ink-5">
-            <div
-              className="h-full bg-accent transition-all"
-              style={{ width: `${pct}%` }}
-            />
+            <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
             <Stat label="Judges" v={activeJudges} />
@@ -782,12 +759,7 @@ function HomePanel({
             ? "border-go/40 border-l-go bg-gradient-to-r from-go/[0.18] via-go/[0.09] to-go/[0.05] shadow-[0_12px_32px_-14px_rgb(var(--go)/0.55)]"
             : "border-line border-l-dust/40 bg-ink-4"
         }`}
-        style={
-          live
-            ? undefined
-            : {
-              }
-        }
+        style={live ? undefined : {}}
       >
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="flex items-start gap-4">
@@ -803,7 +775,15 @@ function HomePanel({
                   <span className="relative h-3 w-3 rounded-full bg-go" />
                 </>
               ) : (
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-dust" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5 text-dust"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="5" y="11" width="14" height="10" rx="2" />
                   <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                 </svg>
@@ -813,11 +793,7 @@ function HomePanel({
               <span className={`field-label !mb-0 ${live ? "text-go-ink/80" : ""}`}>
                 Submission Form
               </span>
-              <div
-                className={`mt-0.5 font-display text-3xl ${
-                  live ? "text-go" : "text-dust"
-                }`}
-              >
+              <div className={`mt-0.5 font-display text-3xl ${live ? "text-go" : "text-dust"}`}>
                 {live ? "Accepting submissions" : "Submissions closed"}
               </div>
               <p className={`mt-1 max-w-xl text-sm ${live ? "text-go-ink" : "text-dust"}`}>
@@ -838,8 +814,8 @@ function HomePanel({
                 )}
                 {phase !== "submissions" && (
                   <span className="mt-1 block text-[0.7rem]">
-                    Note: submissions also require the <b>submissions</b> phase
-                    (currently <b>{phase}</b>).
+                    Note: submissions also require the <b>submissions</b> phase (currently{" "}
+                    <b>{phase}</b>).
                   </span>
                 )}
               </p>
@@ -848,9 +824,7 @@ function HomePanel({
           <div className="flex items-center gap-5">
             <div className="text-right">
               <div
-                className={`font-display text-4xl leading-none ${
-                  live ? "text-go" : "text-dust"
-                }`}
+                className={`font-display text-4xl leading-none ${live ? "text-go" : "text-dust"}`}
               >
                 {submissions.length}
               </div>
@@ -898,12 +872,7 @@ function HomePanel({
             ? "border-go/40 border-l-go bg-gradient-to-r from-go/[0.18] via-go/[0.09] to-go/[0.05]"
             : "border-line border-l-dust/40 bg-ink-4"
         }`}
-        style={
-          regLive
-            ? undefined
-            : {
-              }
-        }
+        style={regLive ? undefined : {}}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -984,8 +953,8 @@ function HomePanel({
                     Submissions ({submissions.length})
                   </span>
                   <span className="mt-0.5 block text-xs text-dust">
-                    Submissions are locked. Open to browse them and see how
-                    many judges have scored each.
+                    Submissions are locked. Open to browse them and see how many judges have scored
+                    each.
                   </span>
                 </span>
               </span>
@@ -1005,8 +974,8 @@ function HomePanel({
       <div className="card">
         <div className="field-label">Declared Conflicts</div>
         <div className="mt-1 text-[0.7rem] text-dust">
-          Judges recuse themselves from a project on its page. It leaves their
-          queue and progress, and any score they gave it is removed.
+          Judges recuse themselves from a project on its page. It leaves their queue and progress,
+          and any score they gave it is removed.
         </div>
         {conflicts.length === 0 ? (
           <p className="mt-3 text-sm text-dust">None declared.</p>
@@ -1020,9 +989,7 @@ function HomePanel({
                 <span className="ml-2 text-[0.7rem] text-dust">
                   {new Date(c.created_at).toLocaleString()}
                 </span>
-                {c.reason && (
-                  <p className="mt-0.5 text-xs text-dust">“{c.reason}”</p>
-                )}
+                {c.reason && <p className="mt-0.5 text-xs text-dust">“{c.reason}”</p>}
               </li>
             ))}
           </ul>
@@ -1040,35 +1007,23 @@ function HomePanel({
 
 type RosterSortKey = "name" | "role" | "status" | "created_at";
 
-const roleOf = (j: Judge): "judge" | "mentor" =>
-  j.role === "mentor" ? "mentor" : "judge";
+const roleOf = (j: Judge): "judge" | "mentor" => (j.role === "mentor" ? "mentor" : "judge");
 
-function JudgesPanel({
-  judges,
-  readOnly,
-}: {
-  judges: Judge[];
-  readOnly: boolean;
-}) {
+function JudgesPanel({ judges, readOnly }: { judges: Judge[]; readOnly: boolean }) {
   const [q, setQ] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "judge" | "mentor">(
-    "all",
-  );
-  const [sort, setSort] = useState<{ key: RosterSortKey; dir: "asc" | "desc" }>(
-    { key: "name", dir: "asc" },
-  );
+  const [roleFilter, setRoleFilter] = useState<"all" | "judge" | "mentor">("all");
+  const [sort, setSort] = useState<{ key: RosterSortKey; dir: "asc" | "desc" }>({
+    key: "name",
+    dir: "asc",
+  });
   const [rosterErr, setRosterErr] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [, startRemove] = useTransition();
 
   const judgeTotal = judges.filter((j) => roleOf(j) === "judge").length;
   const mentorTotal = judges.length - judgeTotal;
-  const activeJudges = judges.filter(
-    (j) => roleOf(j) === "judge" && j.is_active,
-  ).length;
-  const activeMentors = judges.filter(
-    (j) => roleOf(j) === "mentor" && j.is_active,
-  ).length;
+  const activeJudges = judges.filter((j) => roleOf(j) === "judge" && j.is_active).length;
+  const activeMentors = judges.filter((j) => roleOf(j) === "mentor" && j.is_active).length;
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -1083,8 +1038,7 @@ function JudgesPanel({
     list.sort((a, b) => {
       let cmp: number;
       if (key === "created_at") {
-        cmp =
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       } else if (key === "status") {
         cmp = Number(a.is_active) - Number(b.is_active);
       } else {
@@ -1103,7 +1057,7 @@ function JudgesPanel({
     setSort((s) =>
       s.key === key
         ? { key, dir: s.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: key === "created_at" || key === "status" ? "desc" : "asc" },
+        : { key, dir: key === "created_at" || key === "status" ? "desc" : "asc" }
     );
   }
 
@@ -1123,9 +1077,7 @@ function JudgesPanel({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-bone">
-            Roster
-          </span>
+          <span className="text-sm font-bold text-bone">Roster</span>
           <span className="pill-accent">
             {filtering ? `${rows.length} / ${judges.length}` : judges.length}
           </span>
@@ -1142,9 +1094,7 @@ function JudgesPanel({
                 onClick={() => setRoleFilter(k)}
                 aria-pressed={roleFilter === k}
                 className={
-                  roleFilter === k
-                    ? "pill-accent"
-                    : "pill hover:border-accent hover:text-accent"
+                  roleFilter === k ? "pill-accent" : "pill hover:border-accent hover:text-accent"
                 }
               >
                 {label}
@@ -1169,8 +1119,8 @@ function JudgesPanel({
         <span className="font-semibold text-bone">
           {activeMentors} mentor{activeMentors === 1 ? "" : "s"}
         </span>{" "}
-        can sign in at <span className="text-accent">/judge</span> right now.
-        Inactive people keep their row but lose access.
+        can sign in at <span className="text-accent">/judge</span> right now. Inactive people keep
+        their row but lose access.
       </p>
 
       {rosterErr && (
@@ -1181,9 +1131,7 @@ function JudgesPanel({
 
       {rows.length === 0 ? (
         <div className="card text-center text-dust">
-          {filtering
-            ? "Nobody on the roster matches your filters."
-            : "No judges or mentors yet."}
+          {filtering ? "Nobody on the roster matches your filters." : "No judges or mentors yet."}
         </div>
       ) : (
         <div className="card overflow-hidden p-0">
@@ -1217,30 +1165,25 @@ function JudgesPanel({
                     sortKey="created_at"
                     sort={sort}
                     onSort={toggleSort}
-                    className={`hidden md:table-cell ${
-                      readOnly ? "pr-4 text-right" : "pr-3"
-                    }`}
+                    className={`hidden md:table-cell ${readOnly ? "pr-4 text-right" : "pr-3"}`}
                     align={readOnly ? "right" : "left"}
                   />
-                  {!readOnly && (
-                    <th className="py-3 pr-4 text-right">Actions</th>
-                  )}
+                  {!readOnly && <th className="py-3 pr-4 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((j, i) => {
                   const role = roleOf(j);
                   const zebra = i % 2 === 1;
-                  const added = new Date(j.created_at).toLocaleDateString(
-                    "en-US",
-                    { month: "short", day: "numeric", year: "numeric" },
-                  );
+                  const added = new Date(j.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  });
                   return (
                     <tr
                       key={j.id}
-                      className={`border-b border-line/70 ${
-                        zebra ? "bg-ink-4/40" : ""
-                      }`}
+                      className={`border-b border-line/70 ${zebra ? "bg-ink-4/40" : ""}`}
                     >
                       <td className="py-3 pl-4 pr-3">
                         <div className="font-semibold text-bone">{j.name}</div>
@@ -1276,9 +1219,7 @@ function JudgesPanel({
                               disabled={removingId === j.id}
                               className="pill hover:border-blood hover:text-blood disabled:opacity-40"
                             >
-                              {removingId === j.id
-                                ? "Removing…"
-                                : "Deactivate"}
+                              {removingId === j.id ? "Removing…" : "Deactivate"}
                             </button>
                           )}
                         </td>
@@ -1321,24 +1262,19 @@ function PersonRoleBadge({ role }: { role: "judge" | "mentor" }) {
 // addJudge reads ("judge" | "mentor").
 function AddPersonForm() {
   const [state, setState] = useState<
-    | { ok: true; role: "judge" | "mentor"; name: string }
-    | { ok: false; error: string }
-    | null
+    { ok: true; role: "judge" | "mentor"; name: string } | { ok: false; error: string } | null
   >(null);
   const [pending, start] = useTransition();
 
   function onAdd(fd: FormData) {
-    const role =
-      String(fd.get("role") ?? "judge") === "mentor" ? "mentor" : "judge";
+    const role = String(fd.get("role") ?? "judge") === "mentor" ? "mentor" : "judge";
     const name = String(fd.get("name") ?? "").trim();
     fd.set("role", role);
     start(async () => {
       const r = await addJudge(null, fd);
       setState(r.ok ? { ok: true, role, name } : { ok: false, error: r.error });
       if (r.ok) {
-        (
-          document.getElementById("add-person-form") as HTMLFormElement | null
-        )?.reset();
+        (document.getElementById("add-person-form") as HTMLFormElement | null)?.reset();
       }
     });
   }
@@ -1347,9 +1283,7 @@ function AddPersonForm() {
     <form id="add-person-form" action={onAdd} className="card space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="pill-accent">Add to roster</div>
-        <span className="text-[0.65rem] text-dust">
-          They sign in at /judge
-        </span>
+        <span className="text-[0.65rem] text-dust">They sign in at /judge</span>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_1.3fr_auto_auto]">
@@ -1357,12 +1291,7 @@ function AddPersonForm() {
           <label className="field-label" htmlFor="add-person-name">
             Name
           </label>
-          <input
-            id="add-person-name"
-            name="name"
-            required
-            className="field-input mt-1"
-          />
+          <input id="add-person-name" name="name" required className="field-input mt-1" />
         </div>
         <div>
           <label className="field-label" htmlFor="add-person-email">
@@ -1398,18 +1327,17 @@ function AddPersonForm() {
       </div>
 
       <p className="text-[0.7rem] text-dust">
-        <span className="font-semibold text-bone">Judges</span> score
-        submissions and decide the final ranking.{" "}
-        <span className="font-semibold text-bone">Mentors</span> can view every
-        submission but cannot vote — use them for advisors, partners and
-        observers. Nobody gets an email from this; give them a password with{" "}
-        <span className="text-bone">Sign-in tools</span> below.
+        <span className="font-semibold text-bone">Judges</span> score submissions and decide the
+        final ranking. <span className="font-semibold text-bone">Mentors</span> can view every
+        submission but cannot vote — use them for advisors, partners and observers. Nobody gets an
+        email from this; give them a password with <span className="text-bone">Sign-in tools</span>{" "}
+        below.
       </p>
 
       {state?.ok && (
         <div className="rounded-md border border-jade/60 bg-jade/10 px-3 py-2 text-xs text-jade">
-          ✓ Added {state.name || "them"} as a {state.role}. Set or re-apply the
-          shared password so they can sign in.
+          ✓ Added {state.name || "them"} as a {state.role}. Set or re-apply the shared password so
+          they can sign in.
         </div>
       )}
       {state && !state.ok && (
@@ -1431,12 +1359,9 @@ function SignInTools() {
             ▶
           </span>
           <span>
-            <span className="block text-sm font-bold text-bone">
-              Sign-in tools
-            </span>
+            <span className="block text-sm font-bold text-bone">Sign-in tools</span>
             <span className="mt-0.5 block text-xs text-dust">
-              Set the shared password, create a test account, or diagnose a
-              failed sign-in.
+              Set the shared password, create a test account, or diagnose a failed sign-in.
             </span>
           </span>
         </span>
@@ -1454,21 +1379,15 @@ function SignInTools() {
 function ToolHeading({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h3 className="text-sm font-bold text-bone">
-        {title}
-      </h3>
-      <span className="text-[0.65rem] text-dust">
-        {hint}
-      </span>
+      <h3 className="text-sm font-bold text-bone">{title}</h3>
+      <span className="text-[0.65rem] text-dust">{hint}</span>
     </div>
   );
 }
 
 function SharedPasswordTool() {
   const [pwdState, setPwdState] = useState<
-    | { ok: true; updated: number }
-    | { ok: false; error: string }
-    | null
+    { ok: true; updated: number } | { ok: false; error: string } | null
   >(null);
   const [pwdPending, pwdStart] = useTransition();
 
@@ -1484,16 +1403,11 @@ function SharedPasswordTool() {
 
   return (
     <form id="pwd-form" action={onSetPassword} className="space-y-3">
-      <ToolHeading
-        title="Shared sign-in password"
-        hint="One password for the whole panel"
-      />
+      <ToolHeading title="Shared sign-in password" hint="One password for the whole panel" />
       <p className="text-xs text-dust">
-        Sets one password on every <strong className="text-bone">active</strong>{" "}
-        judge and mentor. They sign in at{" "}
-        <span className="text-accent">/judge</span> with their email + this
-        password — no email is sent. Share it directly (Slack/text). Re-run any
-        time to rotate it.
+        Sets one password on every <strong className="text-bone">active</strong> judge and mentor.
+        They sign in at <span className="text-accent">/judge</span> with their email + this password
+        — no email is sent. Share it directly (Slack/text). Re-run any time to rotate it.
       </p>
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[220px] flex-1">
@@ -1518,8 +1432,8 @@ function SharedPasswordTool() {
       {pwdState && pwdState.ok && (
         <div className="space-y-2">
           <div className="rounded-md border border-jade/60 bg-jade/10 px-3 py-2 text-xs text-jade">
-            ✓ Updated {pwdState.updated} user{pwdState.updated === 1 ? "" : "s"}.
-            Share the password now — it&apos;s set.
+            ✓ Updated {pwdState.updated} user{pwdState.updated === 1 ? "" : "s"}. Share the password
+            now — it&apos;s set.
           </div>
         </div>
       )}
@@ -1538,28 +1452,18 @@ function TestAccountTool() {
       const r = await createTestJudge(null, fd);
       setTestState(r);
       if (r.ok) {
-        (
-          document.getElementById("test-form") as HTMLFormElement | null
-        )?.reset();
+        (document.getElementById("test-form") as HTMLFormElement | null)?.reset();
       }
     });
   }
 
   return (
-    <form
-      id="test-form"
-      action={onCreateTest}
-      className="space-y-3 border-t border-line pt-8"
-    >
-      <ToolHeading
-        title="Test account"
-        hint="For verifying the sign-in flow"
-      />
+    <form id="test-form" action={onCreateTest} className="space-y-3 border-t border-line pt-8">
+      <ToolHeading title="Test account" hint="For verifying the sign-in flow" />
       <p className="text-xs text-dust">
-        Creates a one-off judge or mentor with a known email + password —
-        independent of the shared password above. Use it to walk the{" "}
-        <span className="text-accent">/judge</span> sign-in flow yourself.
-        Deactivate it from the roster when you&apos;re done.
+        Creates a one-off judge or mentor with a known email + password — independent of the shared
+        password above. Use it to walk the <span className="text-accent">/judge</span> sign-in flow
+        yourself. Deactivate it from the roster when you&apos;re done.
       </p>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
         <div>
@@ -1594,12 +1498,7 @@ function TestAccountTool() {
           <label className="field-label" htmlFor="test-role">
             Role
           </label>
-          <select
-            id="test-role"
-            name="role"
-            defaultValue="judge"
-            className="field-input mt-1"
-          >
+          <select id="test-role" name="role" defaultValue="judge" className="field-input mt-1">
             <option value="judge">Judge</option>
             <option value="mentor">Mentor</option>
           </select>
@@ -1613,9 +1512,8 @@ function TestAccountTool() {
       <input name="name" type="hidden" value="Test Account" />
       {testState && testState.ok && (
         <div className="rounded-md border border-jade/60 bg-jade/10 px-3 py-2 text-xs text-jade">
-          ✓ Created <span className="font-mono">{testState.email}</span>. Sign
-          in at <span className="text-accent">/judge</span> with that email +
-          the password you just typed.
+          ✓ Created <span className="font-mono">{testState.email}</span>. Sign in at{" "}
+          <span className="text-accent">/judge</span> with that email + the password you just typed.
         </div>
       )}
       {testState && !testState.ok && (
@@ -1646,9 +1544,7 @@ function DiagLine({ label, good, value }: { label: string; good: boolean; value:
 }
 
 function DiagnoseTool() {
-  const [diagState, setDiagState] = useState<
-    DiagOk | { ok: false; error: string } | null
-  >(null);
+  const [diagState, setDiagState] = useState<DiagOk | { ok: false; error: string } | null>(null);
   const [diagPending, diagStart] = useTransition();
 
   function onDiagnose(fd: FormData) {
@@ -1659,19 +1555,12 @@ function DiagnoseTool() {
   }
 
   return (
-    <form
-      id="diag-form"
-      action={onDiagnose}
-      className="space-y-3 border-t border-line pt-8"
-    >
-      <ToolHeading
-        title="Diagnose sign-in"
-        hint={"For debugging “wrong email or password”"}
-      />
+    <form id="diag-form" action={onDiagnose} className="space-y-3 border-t border-line pt-8">
+      <ToolHeading title="Diagnose sign-in" hint={"For debugging “wrong email or password”"} />
       <p className="text-xs text-dust">
-        Enter a judge&apos;s email + the password you expect. Shows whether
-        they&apos;re on the roster, whether they&apos;re active, whether a
-        password has been set, and whether this one matches.
+        Enter a judge&apos;s email + the password you expect. Shows whether they&apos;re on the
+        roster, whether they&apos;re active, whether a password has been set, and whether this one
+        matches.
       </p>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
         <div>
@@ -1709,14 +1598,26 @@ function DiagnoseTool() {
       </div>
       {diagState && diagState.ok && (
         <div className="rounded-md border border-line bg-ink-4 px-3 py-2 font-mono text-[0.7rem] text-bone">
-          <DiagLine label="on the roster" good={diagState.onRoster} value={String(diagState.onRoster)} />
+          <DiagLine
+            label="on the roster"
+            good={diagState.onRoster}
+            value={String(diagState.onRoster)}
+          />
           <DiagLine
             label="active"
             good={diagState.isActive === true}
             value={diagState.isActive === null ? "—" : String(diagState.isActive)}
           />
-          <DiagLine label="password set" good={diagState.hasPassword} value={String(diagState.hasPassword)} />
-          <DiagLine label="password matches" good={diagState.passwordMatches} value={String(diagState.passwordMatches)} />
+          <DiagLine
+            label="password set"
+            good={diagState.hasPassword}
+            value={String(diagState.hasPassword)}
+          />
+          <DiagLine
+            label="password matches"
+            good={diagState.passwordMatches}
+            value={String(diagState.passwordMatches)}
+          />
           <DiagLine
             label="locked out after failed attempts"
             good={!diagState.lockedOut}
@@ -1740,12 +1641,7 @@ function DiagnoseTool() {
 
 const REG_PAGE_SIZE = 30;
 
-type SortKey =
-  | "full_name"
-  | "role"
-  | "country"
-  | "primary_interest"
-  | "created_at";
+type SortKey = "full_name" | "role" | "country" | "primary_interest" | "created_at";
 
 function RegistrationsPanel({
   registrations,
@@ -1755,9 +1651,7 @@ function RegistrationsPanel({
   readOnly: boolean;
 }) {
   const [q, setQ] = useState("");
-  const [roleFilter, setRoleFilter] = useState<
-    "all" | "participant" | "mentor"
-  >("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "participant" | "mentor">("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -1767,14 +1661,14 @@ function RegistrationsPanel({
 
   // Jump back to page 1 whenever the result set changes.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pagination follows the filters
     setPage(1);
   }, [q, roleFilter, sort]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return registrations.filter((r) => {
-      if (roleFilter !== "all" && (r.role ?? "participant") !== roleFilter)
-        return false;
+      if (roleFilter !== "all" && (r.role ?? "participant") !== roleFilter) return false;
       if (!needle) return true;
       return [
         r.full_name,
@@ -1802,11 +1696,10 @@ function RegistrationsPanel({
     arr.sort((a, b) => {
       let cmp: number;
       if (key === "created_at") {
-        cmp =
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       } else {
-        const av = (key === "role" ? a.role ?? "participant" : a[key]) ?? "";
-        const bv = (key === "role" ? b.role ?? "participant" : b[key]) ?? "";
+        const av = (key === "role" ? (a.role ?? "participant") : a[key]) ?? "";
+        const bv = (key === "role" ? (b.role ?? "participant") : b[key]) ?? "";
         cmp = String(av).localeCompare(String(bv), undefined, {
           sensitivity: "base",
         });
@@ -1820,7 +1713,7 @@ function RegistrationsPanel({
     setSort((s) =>
       s.key === key
         ? { key, dir: s.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: key === "created_at" ? "desc" : "asc" },
+        : { key, dir: key === "created_at" ? "desc" : "asc" }
     );
   }
 
@@ -1828,10 +1721,7 @@ function RegistrationsPanel({
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / REG_PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageRows = sorted.slice(
-    (safePage - 1) * REG_PAGE_SIZE,
-    safePage * REG_PAGE_SIZE,
-  );
+  const pageRows = sorted.slice((safePage - 1) * REG_PAGE_SIZE, safePage * REG_PAGE_SIZE);
 
   // Participants and mentors each have their own extra questions; a row
   // fills only the columns for its own form.
@@ -1874,9 +1764,9 @@ function RegistrationsPanel({
         [
           ...cols.map((c) => esc(r[c.k])),
           ...customQuestions.map((q) =>
-            esc((r.role ?? "participant") === q.role ? r.custom?.[q.key] : ""),
+            esc((r.role ?? "participant") === q.role ? r.custom?.[q.key] : "")
           ),
-        ].join(","),
+        ].join(",")
       ),
     ];
     const blob = new Blob([lines.join("\n")], {
@@ -1894,9 +1784,7 @@ function RegistrationsPanel({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-bone">
-            Registrations
-          </span>
+          <span className="text-sm font-bold text-bone">Registrations</span>
           <span className="pill-accent">
             {q || roleFilter !== "all"
               ? `${filtered.length} / ${registrations.length}`
@@ -1914,9 +1802,7 @@ function RegistrationsPanel({
                 key={k}
                 onClick={() => setRoleFilter(k)}
                 className={
-                  roleFilter === k
-                    ? "pill-accent"
-                    : "pill hover:border-accent hover:text-accent"
+                  roleFilter === k ? "pill-accent" : "pill hover:border-accent hover:text-accent"
                 }
               >
                 {label}
@@ -1949,167 +1835,163 @@ function RegistrationsPanel({
         </div>
       ) : (
         <>
-        <div className="card overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold text-dust">
-                  <th className="w-8 py-3 pl-4" aria-hidden />
-                  <SortableTh
-                    label="Name"
-                    sortKey="full_name"
-                    sort={sort}
-                    onSort={toggleSort}
-                    className="pr-3"
-                  />
-                  <SortableTh
-                    label="Type"
-                    sortKey="role"
-                    sort={sort}
-                    onSort={toggleSort}
-                    className="pr-3"
-                  />
-                  <SortableTh
-                    label="Country"
-                    sortKey="country"
-                    sort={sort}
-                    onSort={toggleSort}
-                    className="hidden pr-3 md:table-cell"
-                  />
-                  <SortableTh
-                    label="Interest / Track"
-                    sortKey="primary_interest"
-                    sort={sort}
-                    onSort={toggleSort}
-                    className="hidden pr-3 lg:table-cell"
-                  />
-                  <SortableTh
-                    label="Registered"
-                    sortKey="created_at"
-                    sort={sort}
-                    onSort={toggleSort}
-                    className="pr-4 text-right"
-                    align="right"
-                  />
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((r, i) => {
-                  const open = openId === r.id;
-                  const isMentor = r.role === "mentor";
-                  const zebra = i % 2 === 1;
-                  const registered = new Date(r.created_at).toLocaleDateString(
-                    "en-US",
-                    { month: "short", day: "numeric", year: "numeric" },
-                  );
-                  return (
-                    <Fragment key={r.id}>
-                      <tr
-                        onClick={() => setOpenId(open ? null : r.id)}
-                        aria-expanded={open}
-                        className={`cursor-pointer border-b border-line/70 transition ${
-                          open
-                            ? "bg-blue-600/15"
-                            : `${zebra ? "bg-ink-4/40" : ""} hover:bg-blue-600/[0.06]`
-                        }`}
-                      >
-                        <td
-                          className={`py-3 pl-4 ${
+          <div className="card overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b-2 border-line bg-ink-4/50 text-left text-[0.62rem] font-bold text-dust">
+                    <th className="w-8 py-3 pl-4" aria-hidden />
+                    <SortableTh
+                      label="Name"
+                      sortKey="full_name"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="pr-3"
+                    />
+                    <SortableTh
+                      label="Type"
+                      sortKey="role"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="pr-3"
+                    />
+                    <SortableTh
+                      label="Country"
+                      sortKey="country"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="hidden pr-3 md:table-cell"
+                    />
+                    <SortableTh
+                      label="Interest / Track"
+                      sortKey="primary_interest"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="hidden pr-3 lg:table-cell"
+                    />
+                    <SortableTh
+                      label="Registered"
+                      sortKey="created_at"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="pr-4 text-right"
+                      align="right"
+                    />
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((r, i) => {
+                    const open = openId === r.id;
+                    const isMentor = r.role === "mentor";
+                    const zebra = i % 2 === 1;
+                    const registered = new Date(r.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+                    return (
+                      <Fragment key={r.id}>
+                        <tr
+                          onClick={() => setOpenId(open ? null : r.id)}
+                          aria-expanded={open}
+                          className={`cursor-pointer border-b border-line/70 transition ${
                             open
-                              ? "border-l-4 border-l-blue-600"
-                              : "border-l-4 border-l-transparent"
+                              ? "bg-blue-600/15"
+                              : `${zebra ? "bg-ink-4/40" : ""} hover:bg-blue-600/[0.06]`
                           }`}
                         >
-                          <span
-                            className={`inline-block text-[0.7rem] transition-transform ${
-                              open ? "rotate-90 text-blue-600" : "text-dust"
+                          <td
+                            className={`py-3 pl-4 ${
+                              open
+                                ? "border-l-4 border-l-blue-600"
+                                : "border-l-4 border-l-transparent"
                             }`}
                           >
-                            ▶
-                          </span>
-                        </td>
-                        <td className="py-3 pr-3">
-                          <div className="font-semibold text-bone">
-                            {r.full_name}
-                          </div>
-                          <div className="max-w-[220px] truncate text-xs text-dust">
-                            {r.email}
-                          </div>
-                        </td>
-                        <td className="py-3 pr-3">
-                          <RoleBadge
-                            isMentor={isMentor}
-                            participatingAs={r.participating_as}
-                          />
-                        </td>
-                        <td className="hidden py-3 pr-3 text-bone/90 md:table-cell">
-                          {r.country || "—"}
-                        </td>
-                        <td className="hidden max-w-[240px] truncate py-3 pr-3 text-bone/90 lg:table-cell">
-                          {r.primary_interest || "—"}
-                        </td>
-                        <td className="whitespace-nowrap py-3 pr-4 text-right text-xs text-dust">
-                          {registered}
-                        </td>
-                      </tr>
-                      {open && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="border-b border-line border-l-4 border-l-blue-600 bg-blue-600/[0.06] p-0"
-                          >
-                            <RegistrationDetail
-                              r={r}
-                              readOnly={readOnly}
-                              onDeleted={() => setOpenId(null)}
-                            />
+                            <span
+                              className={`inline-block text-[0.7rem] transition-transform ${
+                                open ? "rotate-90 text-blue-600" : "text-dust"
+                              }`}
+                            >
+                              ▶
+                            </span>
+                          </td>
+                          <td className="py-3 pr-3">
+                            <div className="font-semibold text-bone">{r.full_name}</div>
+                            <div className="max-w-[220px] truncate text-xs text-dust">
+                              {r.email}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-3">
+                            <RoleBadge isMentor={isMentor} participatingAs={r.participating_as} />
+                          </td>
+                          <td className="hidden py-3 pr-3 text-bone/90 md:table-cell">
+                            {r.country || "—"}
+                          </td>
+                          <td className="hidden max-w-[240px] truncate py-3 pr-3 text-bone/90 lg:table-cell">
+                            {r.primary_interest || "—"}
+                          </td>
+                          <td className="whitespace-nowrap py-3 pr-4 text-right text-xs text-dust">
+                            {registered}
                           </td>
                         </tr>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm text-dust">
-              Showing{" "}
-              <span className="font-semibold text-bone">
-                {(safePage - 1) * REG_PAGE_SIZE + 1}–
-                {Math.min(safePage * REG_PAGE_SIZE, sorted.length)}
-              </span>{" "}
-              of {sorted.length}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setOpenId(null);
-                  setPage(safePage - 1);
-                }}
-                disabled={safePage <= 1}
-                className="btn h-9 px-4 disabled:opacity-40"
-              >
-                ← Prev
-              </button>
-              <span className="text-sm font-semibold text-dust">
-                Page {safePage} / {totalPages}
-              </span>
-              <button
-                onClick={() => {
-                  setOpenId(null);
-                  setPage(safePage + 1);
-                }}
-                disabled={safePage >= totalPages}
-                className="btn h-9 px-4 disabled:opacity-40"
-              >
-                Next
-              </button>
+                        {open && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="border-b border-line border-l-4 border-l-blue-600 bg-blue-600/[0.06] p-0"
+                            >
+                              <RegistrationDetail
+                                r={r}
+                                readOnly={readOnly}
+                                onDeleted={() => setOpenId(null)}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="text-sm text-dust">
+                Showing{" "}
+                <span className="font-semibold text-bone">
+                  {(safePage - 1) * REG_PAGE_SIZE + 1}–
+                  {Math.min(safePage * REG_PAGE_SIZE, sorted.length)}
+                </span>{" "}
+                of {sorted.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setOpenId(null);
+                    setPage(safePage - 1);
+                  }}
+                  disabled={safePage <= 1}
+                  className="btn h-9 px-4 disabled:opacity-40"
+                >
+                  ← Prev
+                </button>
+                <span className="text-sm font-semibold text-dust">
+                  Page {safePage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => {
+                    setOpenId(null);
+                    setPage(safePage + 1);
+                  }}
+                  disabled={safePage >= totalPages}
+                  className="btn h-9 px-4 disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -2135,9 +2017,7 @@ function SortableTh<K extends string>({
   const active = sort.key === sortKey;
   return (
     <th
-      aria-sort={
-        active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
-      }
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
       className={`py-3 ${className}`}
     >
       <button
@@ -2176,9 +2056,7 @@ function RoleBadge({
         Innovator
       </span>
       {participatingAs && (
-        <span className="text-[0.6rem] font-semibold text-dust">
-          {participatingAs}
-        </span>
+        <span className="text-[0.6rem] font-semibold text-dust">{participatingAs}</span>
       )}
     </span>
   );
@@ -2206,9 +2084,7 @@ function Detail({ label, value }: { label: string; value: ReactNode }) {
   if (value == null || value === "") return null;
   return (
     <div>
-      <div className="mb-0.5 text-[0.6rem] font-semibold text-dust">
-        {label}
-      </div>
+      <div className="mb-0.5 text-[0.6rem] font-semibold text-dust">{label}</div>
       <div className="break-words text-sm text-bone">{value}</div>
     </div>
   );
@@ -2257,10 +2133,7 @@ function RegistrationDetail({
         <Detail
           label="Email"
           value={
-            <a
-              href={`mailto:${r.email}`}
-              className="break-all text-accent hover:underline"
-            >
+            <a href={`mailto:${r.email}`} className="break-all text-accent hover:underline">
               {r.email}
             </a>
           }
@@ -2346,18 +2219,10 @@ function RegistrationDetail({
               Delete this registration permanently?
             </span>
             <div className="flex gap-2">
-              <button
-                onClick={() => setConfirming(false)}
-                disabled={deleting}
-                className="btn"
-              >
+              <button onClick={() => setConfirming(false)} disabled={deleting} className="btn">
                 Cancel
               </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="btn-danger"
-              >
+              <button onClick={handleDelete} disabled={deleting} className="btn-danger">
                 {deleting ? "Deleting…" : "Yes, delete"}
               </button>
             </div>
@@ -2465,9 +2330,7 @@ function SubmissionsTable({
                   >
                     {s.project_name}
                   </button>
-                  {s.member1_name && (
-                    <div className="text-xs text-dust">{s.member1_name}</div>
-                  )}
+                  {s.member1_name && <div className="text-xs text-dust">{s.member1_name}</div>}
                 </td>
                 <td className="p-2 text-dust">{s.team_name || s.solo_or_team || "–"}</td>
                 <td className="hidden p-2 text-dust md:table-cell">{s.challenge_track || "–"}</td>
@@ -2511,11 +2374,7 @@ function SubmissionsTable({
         </table>
       </div>
       {open && (
-        <SubmissionModal
-          s={open}
-          votes={votes.get(open.id) ?? 0}
-          onClose={() => setOpenId(null)}
-        />
+        <SubmissionModal s={open} votes={votes.get(open.id) ?? 0} onClose={() => setOpenId(null)} />
       )}
     </div>
   );
@@ -2581,17 +2440,11 @@ function SubmissionModal({
   const longText = (label: string, v: string | number | null | undefined) =>
     text(v) && (
       <div>
-        <div className="mb-1 text-[0.6rem] font-semibold text-dust">
-          {label}
-        </div>
+        <div className="mb-1 text-[0.6rem] font-semibold text-dust">{label}</div>
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-bone">{v}</p>
       </div>
     );
-  const heading = (t: string) => (
-    <div className="mb-3 text-xs font-bold text-accent">
-      {t}
-    </div>
-  );
+  const heading = (t: string) => <div className="mb-3 text-xs font-bold text-accent">{t}</div>;
 
   const links = [
     ["Demo video", s.demo_video_url],
@@ -2678,9 +2531,7 @@ function SubmissionModal({
               })}
             </div>
             {text(s.all_members_in_video) && (
-              <p className="mt-2 text-xs text-dust">
-                Confirmed all members appear in the video.
-              </p>
+              <p className="mt-2 text-xs text-dust">Confirmed all members appear in the video.</p>
             )}
           </section>
 
@@ -2795,37 +2646,37 @@ function ResultsPanel({
   return (
     <div className="space-y-4">
       {!readOnly && (
-      <form action={compute} className="card space-y-3">
-        <div className="pill-accent">Compute Top {topN}</div>
-        <p className="text-sm text-dust">
-          {plainAverage
-            ? "Ranks projects by the average of their judges' totals, with ties settled by the rubric's tie-breakers."
-            : "Evens out harsh and generous judges, then re-runs the ranking 1,000 times with small variations. Projects that place in at least 70% of runs are locked in; the rest are drawn from the close contenders."}{" "}
-          Saves the result and moves the event to the{" "}
-          <span className="text-accent">results</span> phase.
-        </p>
-        <div>
-          <label className="field-label">
-            Seed (optional — leave blank for random, or use a specific number to
-            reproduce a result)
-          </label>
-          <input
-            name="seed"
-            type="number"
-            placeholder="Random"
-            className="field-input mt-1 w-48"
-            defaultValue={lock?.seed ?? ""}
-          />
-        </div>
-        <button className="btn-accent" disabled={pending}>
-          {pending ? "Running 1000 trials…" : "Compute + Lock"}
-        </button>
-        {err && (
-          <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
-            {err}
+        <form action={compute} className="card space-y-3">
+          <div className="pill-accent">Compute Top {topN}</div>
+          <p className="text-sm text-dust">
+            {plainAverage
+              ? "Ranks projects by the average of their judges' totals, with ties settled by the rubric's tie-breakers."
+              : "Evens out harsh and generous judges, then re-runs the ranking 1,000 times with small variations. Projects that place in at least 70% of runs are locked in; the rest are drawn from the close contenders."}{" "}
+            Saves the result and moves the event to the <span className="text-accent">results</span>{" "}
+            phase.
+          </p>
+          <div>
+            <label className="field-label">
+              Seed (optional — leave blank for random, or use a specific number to reproduce a
+              result)
+            </label>
+            <input
+              name="seed"
+              type="number"
+              placeholder="Random"
+              className="field-input mt-1 w-48"
+              defaultValue={lock?.seed ?? ""}
+            />
           </div>
-        )}
-      </form>
+          <button className="btn-accent" disabled={pending}>
+            {pending ? "Running 1000 trials…" : "Compute + Lock"}
+          </button>
+          {err && (
+            <div className="rounded-md border border-blood/60 bg-blood/10 px-3 py-2 text-xs text-blood">
+              {err}
+            </div>
+          )}
+        </form>
       )}
 
       {readOnly && !lock && (
@@ -2840,12 +2691,14 @@ function ResultsPanel({
             <div>
               <div className="pill-accent">Locked Top {topN}</div>
               <div className="mt-1 text-[0.7rem] text-dust">
-                Seed: <span className="font-mono text-bone">{lock.seed}</span> ·
-                Locked: {new Date(lock.locked_at).toLocaleString()}
+                Seed: <span className="font-mono text-bone">{lock.seed}</span> · Locked:{" "}
+                {new Date(lock.locked_at).toLocaleString()}
               </div>
             </div>
             {phase === "results" && (
-              <Link href="/results" className="btn">Public Results</Link>
+              <Link href="/results" className="btn">
+                Public Results
+              </Link>
             )}
           </div>
           <ol className="mt-4 space-y-2">
@@ -2860,9 +2713,7 @@ function ResultsPanel({
                     <span className="font-display text-3xl text-accent">{t.rank}</span>
                     <span className="font-semibold">{s?.project_name ?? t.submission_id}</span>
                   </div>
-                  <span className="pill">
-                    P(top6) = {(t.probability * 100).toFixed(0)}%
-                  </span>
+                  <span className="pill">P(top6) = {(t.probability * 100).toFixed(0)}%</span>
                 </li>
               );
             })}
@@ -2890,9 +2741,7 @@ function TeamPanel({
   >(null);
   const [addPending, addStart] = useTransition();
   const [rowErr, setRowErr] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState<
-    { email: string; password: string } | null
-  >(null);
+  const [newPassword, setNewPassword] = useState<{ email: string; password: string } | null>(null);
   const [pending, start] = useTransition();
 
   function onAdd(fd: FormData) {
@@ -2938,16 +2787,10 @@ function TeamPanel({
 
   return (
     <div className="space-y-6">
-      <form
-        id="team-form"
-        action={onAdd}
-        className="card space-y-4 border-l-4 border-l-accent"
-      >
+      <form id="team-form" action={onAdd} className="card space-y-4 border-l-4 border-l-accent">
         <div className="flex items-baseline justify-between">
           <div className="pill-accent">Add Admin Account</div>
-          <span className="text-[0.65rem] text-dust">
-            They sign in at /admin with their email
-          </span>
+          <span className="text-[0.65rem] text-dust">They sign in at /admin with their email</span>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
@@ -2957,12 +2800,7 @@ function TeamPanel({
           </div>
           <div>
             <label className="field-label">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="field-input mt-1"
-            />
+            <input name="email" type="email" required className="field-input mt-1" />
           </div>
           <div>
             <label className="field-label">Role</label>
@@ -2975,9 +2813,7 @@ function TeamPanel({
             </select>
           </div>
           <div>
-            <label className="field-label">
-              Password (optional — blank generates one)
-            </label>
+            <label className="field-label">Password (optional — blank generates one)</label>
             <input
               name="password"
               type="text"
@@ -2992,10 +2828,8 @@ function TeamPanel({
         <ul className="space-y-1 text-[0.7rem] text-dust">
           {ADMIN_ROLES.map((r) => (
             <li key={r}>
-              <span className="font-semibold text-bone">
-                {ROLE_LABELS[r]}
-              </span>{" "}
-              — {ROLE_DESCRIPTIONS[r]}
+              <span className="font-semibold text-bone">{ROLE_LABELS[r]}</span> —{" "}
+              {ROLE_DESCRIPTIONS[r]}
             </li>
           ))}
         </ul>
@@ -3016,8 +2850,8 @@ function TeamPanel({
               </div>
             )}
             <div>
-              Send it to them now — it isn&apos;t shown again. They can&apos;t
-              change it themselves; use Reset password below to issue a new one.
+              Send it to them now — it isn&apos;t shown again. They can&apos;t change it themselves;
+              use Reset password below to issue a new one.
             </div>
           </div>
         )}
@@ -3037,8 +2871,7 @@ function TeamPanel({
             {newPassword.password}
           </div>
           <p className="text-[0.7rem] text-dust">
-            Shown once. Their old password stopped working the moment you
-            clicked reset.
+            Shown once. Their old password stopped working the moment you clicked reset.
           </p>
         </div>
       )}
@@ -3082,11 +2915,7 @@ function TeamPanel({
                             ★ Super
                           </span>
                         )}
-                        {isSelf && (
-                          <span className="text-[0.6rem] text-dust">
-                            you
-                          </span>
-                        )}
+                        {isSelf && <span className="text-[0.6rem] text-dust">you</span>}
                       </div>
                       <div className="text-xs text-dust">{m.email}</div>
                     </td>
@@ -3094,9 +2923,7 @@ function TeamPanel({
                       <select
                         value={m.role}
                         disabled={isSelf || locked || pending}
-                        onChange={(e) =>
-                          run(() => setAdminUserRole(m.id, e.target.value))
-                        }
+                        onChange={(e) => run(() => setAdminUserRole(m.id, e.target.value))}
                         className="field-input h-9 py-0 text-xs disabled:opacity-50"
                       >
                         {ADMIN_ROLES.map((r) => (
@@ -3114,16 +2941,12 @@ function TeamPanel({
                       )}
                     </td>
                     <td className="hidden py-3 pr-3 text-xs text-dust lg:table-cell">
-                      {m.last_login_at
-                        ? new Date(m.last_login_at).toLocaleString()
-                        : "Never"}
+                      {m.last_login_at ? new Date(m.last_login_at).toLocaleString() : "Never"}
                     </td>
                     <td className="py-3 pr-4">
                       <div className="flex flex-wrap justify-end gap-2">
                         {locked ? (
-                          <span className="text-[0.7rem] text-dust">
-                            Super admins only
-                          </span>
+                          <span className="text-[0.7rem] text-dust">Super admins only</span>
                         ) : (
                           <>
                             <button
@@ -3135,9 +2958,7 @@ function TeamPanel({
                             </button>
                             <button
                               onClick={() =>
-                                run(() =>
-                                  setAdminUserProtected(m.id, !m.is_protected),
-                                )
+                                run(() => setAdminUserProtected(m.id, !m.is_protected))
                               }
                               disabled={pending || (m.role !== "owner" && !m.is_protected)}
                               title={
@@ -3150,9 +2971,7 @@ function TeamPanel({
                               {m.is_protected ? "Revoke super" : "Make super"}
                             </button>
                             <button
-                              onClick={() =>
-                                run(() => setAdminUserActive(m.id, !m.is_active))
-                              }
+                              onClick={() => run(() => setAdminUserActive(m.id, !m.is_active))}
                               disabled={isSelf || pending}
                               className="pill hover:border-accent hover:text-accent disabled:opacity-40"
                             >
@@ -3172,8 +2991,8 @@ function TeamPanel({
               {team.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-6 text-center text-dust">
-                    No admin accounts yet. Add one above — until then, /admin is
-                    reachable only with the shared password.
+                    No admin accounts yet. Add one above — until then, /admin is reachable only with
+                    the shared password.
                   </td>
                 </tr>
               )}
@@ -3183,9 +3002,9 @@ function TeamPanel({
       </div>
 
       <p className="text-[0.7rem] text-dust">
-        The shared <span className="font-mono">ADMIN_PASSWORD</span> still works
-        as an owner-level break-glass login. Once everyone has their own
-        account, rotate it and keep it somewhere safe.
+        The shared <span className="font-mono">ADMIN_PASSWORD</span> still works as an owner-level
+        break-glass login. Once everyone has their own account, rotate it and keep it somewhere
+        safe.
       </p>
     </div>
   );

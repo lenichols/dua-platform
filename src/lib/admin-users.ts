@@ -42,9 +42,7 @@ const withHash = (r: Row): AdminUserWithHash => ({
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-export type AdminUsersResult =
-  | { ok: true; users: AdminUser[] }
-  | { ok: false; error: string };
+export type AdminUsersResult = { ok: true; users: AdminUser[] } | { ok: false; error: string };
 
 export async function listAdminUsers(): Promise<AdminUsersResult> {
   try {
@@ -59,7 +57,7 @@ export async function listAdminUsers(): Promise<AdminUsersResult> {
 }
 
 export async function findAdminUserByEmail(
-  email: string,
+  email: string
 ): Promise<{ ok: true; user: AdminUserWithHash | null } | { ok: false; error: string }> {
   try {
     const [row] = await db()
@@ -126,7 +124,7 @@ export async function setAdminUserPassword(id: string, password: string): Promis
 
 export async function updateAdminUser(
   id: string,
-  patch: { role?: AdminRole; is_active?: boolean; is_protected?: boolean },
+  patch: { role?: AdminRole; is_active?: boolean; is_protected?: boolean }
 ): Promise<Outcome> {
   try {
     await db().update(admin_users).set(patch).where(eq(admin_users.id, id));

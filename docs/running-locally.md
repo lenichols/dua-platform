@@ -43,12 +43,12 @@ Open <http://localhost:3000>.
 accounts with fixed passwords, and each sign-in page lists them: click one to
 fill in the form.
 
-| To see | Go to | Sign in as |
-| --- | --- | --- |
-| The public site | <http://localhost:3000> | Nobody |
-| A judge's view | <http://localhost:3000/judge> | `demo.judge@example.org` / `dua-demo-judge` |
+| To see          | Go to                         | Sign in as                                    |
+| --------------- | ----------------------------- | --------------------------------------------- |
+| The public site | <http://localhost:3000>       | Nobody                                        |
+| A judge's view  | <http://localhost:3000/judge> | `demo.judge@example.org` / `dua-demo-judge`   |
 | A mentor's view | <http://localhost:3000/judge> | `demo.mentor@example.org` / `dua-demo-mentor` |
-| The admin panel | <http://localhost:3000/admin> | `demo.admin@example.org` / `dua-demo-admin` |
+| The admin panel | <http://localhost:3000/admin> | `demo.admin@example.org` / `dua-demo-admin`   |
 
 The sample admin can run the event but can't manage admin accounts. For full
 access, leave the email blank and enter your `ADMIN_PASSWORD`.
@@ -71,16 +71,16 @@ then press **Open registration** and **Open submissions**.
 
 ## If something goes wrong
 
-| What you see | What to do |
-| --- | --- |
-| `Cannot connect to the Docker daemon` | Open Docker Desktop or OrbStack, wait until it's running, and try again. |
-| `DATABASE_URL is not set` | You haven't created `.env.local`. Run `cp .env.local.example .env.local`. |
-| `No event "default" in the database` | Run `npm run db:migrate`. |
-| `connect ECONNREFUSED` on port 54329 | The database isn't running. Run `npm run db:up`. |
-| `Port 3000 is in use` | Something else is using it. Run `npm run dev -- -p 3001` and open port 3001 instead. |
-| The sample logins don't work | Run `npm run db:seed` again. It resets the samples and their passwords. |
-| `Too many failed attempts` at sign-in | Wait 15 minutes, or restart from a clean database (below). |
-| You want to start over | `docker compose down --volumes`, then the four commands under [First time](../README.md#quick-start) from `npm run db:up`. This deletes all local data. |
+| What you see                          | What to do                                                                                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Cannot connect to the Docker daemon` | Open Docker Desktop or OrbStack, wait until it's running, and try again.                                                                                |
+| `DATABASE_URL is not set`             | You haven't created `.env.local`. Run `cp .env.local.example .env.local`.                                                                               |
+| `No event "default" in the database`  | Run `npm run db:migrate`.                                                                                                                               |
+| `connect ECONNREFUSED` on port 54329  | The database isn't running. Run `npm run db:up`.                                                                                                        |
+| `Port 3000 is in use`                 | Something else is using it. Run `npm run dev -- -p 3001` and open port 3001 instead.                                                                    |
+| The sample logins don't work          | Run `npm run db:seed` again. It resets the samples and their passwords.                                                                                 |
+| `Too many failed attempts` at sign-in | Wait 15 minutes, or restart from a clean database (below).                                                                                              |
+| You want to start over                | `docker compose down --volumes`, then the four commands under [First time](../README.md#quick-start) from `npm run db:up`. This deletes all local data. |
 
 ---
 

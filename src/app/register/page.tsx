@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Breadcrumbs,
-  HeaderBar,
-  PageShell,
-  SectionTitle,
-} from "@/components/shell";
+import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { getPhase, getRegistrationOpen } from "@/lib/phase";
 import { RegisterForm } from "./register-form";
 import { getSettings } from "@/lib/current-settings";
@@ -29,9 +24,7 @@ export default async function RegisterPage() {
         }
       />
       <PageShell>
-        <Breadcrumbs
-          items={[{ label: "Home", href: "/" }, { label: "Register" }]}
-        />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Register" }]} />
 
         {!open ? (
           <div className="mx-auto max-w-xl text-center">
@@ -56,9 +49,7 @@ export default async function RegisterPage() {
           <>
             <div className="mb-8">
               <div className="pill-accent mb-3">Free · 100% Virtual</div>
-              <h1 className="hex-title text-4xl md:text-5xl">
-                Register for {EVENT.name}
-              </h1>
+              <h1 className="hex-title text-4xl md:text-5xl">Register for {EVENT.name}</h1>
             </div>
 
             <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
@@ -69,12 +60,10 @@ export default async function RegisterPage() {
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-bone/90">
-                Reserve your spot now — it&apos;s free. Registration takes a
-                minute, and we&apos;ll send you everything you need before the
-                event, including your{" "}
-                <strong className="text-accent">project submission link</strong>
-                . Compete solo or as a team for{" "}
-                <strong className="text-accent">{EVENT.prizes}</strong>.
+                Reserve your spot now — it&apos;s free. Registration takes a minute, and we&apos;ll
+                send you everything you need before the event, including your{" "}
+                <strong className="text-accent">project submission link</strong>. Compete solo or as
+                a team for <strong className="text-accent">{EVENT.prizes}</strong>.
               </p>
             </div>
 

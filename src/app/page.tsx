@@ -5,14 +5,7 @@ import { getSettings } from "@/lib/current-settings";
 
 export const dynamic = "force-dynamic";
 
-function SectionHead({
-  title,
-  sub,
-}: {
-  eyebrow?: string;
-  title: string;
-  sub?: string;
-}) {
+function SectionHead({ title, sub }: { eyebrow?: string; title: string; sub?: string }) {
   return (
     <div className="mb-6 max-w-2xl">
       <h2 className="hex-title text-2xl md:text-3xl">{title}</h2>
@@ -27,12 +20,7 @@ function SectionHead({
  */
 function Rings() {
   return (
-    <svg
-      viewBox="0 0 420 300"
-      aria-hidden
-      className="h-auto w-full max-w-md"
-      fill="none"
-    >
+    <svg viewBox="0 0 420 300" aria-hidden className="h-auto w-full max-w-md" fill="none">
       <defs>
         <linearGradient
           id="ring-a"
@@ -50,15 +38,7 @@ function Rings() {
           <stop offset="1" stopColor="#00D9AA" />
         </linearGradient>
       </defs>
-      <rect
-        x="24"
-        y="52"
-        width="232"
-        height="196"
-        rx="98"
-        stroke="url(#ring-a)"
-        strokeWidth="44"
-      />
+      <rect x="24" y="52" width="232" height="196" rx="98" stroke="url(#ring-a)" strokeWidth="44" />
       <rect
         x="164"
         y="52"
@@ -69,11 +49,7 @@ function Rings() {
         strokeWidth="44"
       />
       {/* The first ring passes back over the second, so the two read as linked. */}
-      <path
-        d="M 238.3 93.8 A 98 98 0 0 0 166.5 52.4"
-        stroke="url(#ring-a)"
-        strokeWidth="44"
-      />
+      <path d="M 238.3 93.8 A 98 98 0 0 0 166.5 52.4" stroke="url(#ring-a)" strokeWidth="44" />
     </svg>
   );
 }
@@ -87,7 +63,7 @@ export default async function Home() {
   const TRACKS = EVENT.tracks;
   const PILLARS = EVENT.home.pillars;
   const TRACK_EXAMPLES: Record<string, string> = Object.fromEntries(
-    EVENT.home.trackExamples.map((t) => [t.track, t.example]),
+    EVENT.home.trackExamples.map((t) => [t.track, t.example])
   );
   const FAQ = EVENT.home.faq;
   const INTRO = EVENT.home.intro
@@ -119,9 +95,7 @@ export default async function Home() {
     },
     {
       t: "Results",
-      d: EVENT.prizes
-        ? `Top teams share ${EVENT.prizes}.`
-        : "The top teams are announced.",
+      d: EVENT.prizes ? `Top teams share ${EVENT.prizes}.` : "The top teams are announced.",
     },
   ];
 
@@ -152,9 +126,7 @@ export default async function Home() {
     {
       label: "Teams",
       value:
-        EVENT.maxTeamSize === 1
-          ? "Solo entries"
-          : `Solo, or up to ${EVENT.maxTeamSize} people`,
+        EVENT.maxTeamSize === 1 ? "Solo entries" : `Solo, or up to ${EVENT.maxTeamSize} people`,
     },
   ].filter((f) => f.value);
 
@@ -185,21 +157,14 @@ export default async function Home() {
         <div className="mx-auto grid max-w-5xl items-center gap-10 px-5 py-14 md:grid-cols-[1.25fr_1fr] md:py-20">
           <div>
             <h1 className="hex-title text-5xl md:text-6xl">{EVENT.name}</h1>
-            {EVENT.tagline && (
-              <p className="mt-4 max-w-xl text-xl text-dust">{EVENT.tagline}</p>
-            )}
+            {EVENT.tagline && <p className="mt-4 max-w-xl text-xl text-dust">{EVENT.tagline}</p>}
             <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3">
-              <Link
-                href={hero.primary.href}
-                className="btn-accent h-12 px-7 text-base"
-              >
+              <Link href={hero.primary.href} className="btn-accent h-12 px-7 text-base">
                 {hero.primary.label}
               </Link>
               <span className="text-sm text-dust">{hero.note}</span>
             </div>
-            <p className="mt-8 text-sm text-dust">
-              Hosted by {EVENT.host.name}
-            </p>
+            <p className="mt-8 text-sm text-dust">Hosted by {EVENT.host.name}</p>
           </div>
           <div className="hidden justify-self-end md:block">
             <Rings />
@@ -211,9 +176,7 @@ export default async function Home() {
             {facts.map((f) => (
               <div key={f.label} className="py-5 pr-4">
                 <dt className="text-sm text-dust">{f.label}</dt>
-                <dd className="mt-0.5 font-display text-lg font-semibold text-bone">
-                  {f.value}
-                </dd>
+                <dd className="mt-0.5 font-display text-lg font-semibold text-bone">{f.value}</dd>
               </div>
             ))}
           </dl>
@@ -230,9 +193,7 @@ export default async function Home() {
                 <p
                   key={i}
                   className={
-                    i === 0
-                      ? "text-lg leading-relaxed text-bone"
-                      : "leading-relaxed text-dust"
+                    i === 0 ? "text-lg leading-relaxed text-bone" : "leading-relaxed text-dust"
                   }
                 >
                   {para}
@@ -256,25 +217,17 @@ export default async function Home() {
                   className="group border-t-2 border-bone pt-4 [&_summary::-webkit-details-marker]:hidden"
                 >
                   <summary className="cursor-pointer list-none">
-                    <h3 className="font-display text-xl font-semibold text-bone">
-                      {p.title}
-                    </h3>
+                    <h3 className="font-display text-xl font-semibold text-bone">{p.title}</h3>
                     <p className="mt-1.5 text-dust">{p.text}</p>
                     {p.example && (
                       <span className="mt-3 inline-block text-sm font-bold text-accent">
-                        <span className="group-open:hidden">
-                          Show an example
-                        </span>
-                        <span className="hidden group-open:inline">
-                          Hide the example
-                        </span>
+                        <span className="group-open:hidden">Show an example</span>
+                        <span className="hidden group-open:inline">Hide the example</span>
                       </span>
                     )}
                   </summary>
                   {p.example && (
-                    <p className="mt-3 text-sm leading-relaxed text-bone">
-                      {p.example}
-                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-bone">{p.example}</p>
                   )}
                 </details>
               ))}
@@ -288,10 +241,7 @@ export default async function Home() {
             <SectionHead title="Challenge tracks" />
             <div className="card divide-y divide-line p-0">
               {TRACKS.map((t) => (
-                <details
-                  key={t}
-                  className="group [&_summary::-webkit-details-marker]:hidden"
-                >
+                <details key={t} className="group [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
                     <span className="font-bold text-bone">{t}</span>
                     {TRACK_EXAMPLES[t] && (
@@ -319,12 +269,8 @@ export default async function Home() {
             <ol className="grid gap-x-8 gap-y-6 sm:grid-cols-2 md:grid-flow-col md:auto-cols-fr md:grid-cols-none">
               {STEPS.map((s, i) => (
                 <li key={s.t}>
-                  <div className="font-display text-sm font-semibold text-accent">
-                    Step {i + 1}
-                  </div>
-                  <h3 className="mt-1 font-display text-lg font-semibold text-bone">
-                    {s.t}
-                  </h3>
+                  <div className="font-display text-sm font-semibold text-accent">Step {i + 1}</div>
+                  <h3 className="mt-1 font-display text-lg font-semibold text-bone">{s.t}</h3>
                   <p className="mt-1 text-sm text-dust">{s.d}</p>
                 </li>
               ))}
@@ -338,10 +284,7 @@ export default async function Home() {
             <SectionHead title="Questions" />
             <div className="card max-w-3xl divide-y divide-line p-0">
               {FAQ.map((f) => (
-                <details
-                  key={f.q}
-                  className="group [&_summary::-webkit-details-marker]:hidden"
-                >
+                <details key={f.q} className="group [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-bold text-bone">
                     {f.q}
                     <span

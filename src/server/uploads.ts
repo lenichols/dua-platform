@@ -32,7 +32,7 @@ export async function saveUpload(input: {
 }
 
 export async function getUpload(
-  id: string,
+  id: string
 ): Promise<{ contentType: string; bytes: Buffer } | null> {
   const [row] = await db()
     .select({ contentType: uploads.content_type, bytes: uploads.bytes })

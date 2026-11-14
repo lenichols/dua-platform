@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const THEME_EVENT = "dua-theme-change";
+
+function subscribe(onChange: () => void) {
+  window.addEventListener(THEME_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(THEME_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+/** The server has no DOM; light is the default and matches the inline script. */
+function isLight() {
+  return document.documentElement.classList.contains("light");
+}
 
 export function ThemeToggle() {
-  const [light, setLight] = useState(true);
-
-  useEffect(() => {
-    setLight(document.documentElement.classList.contains("light"));
-  }, []);
+  const light = useSyncExternalStore(subscribe, isLight, () => true);
 
   function toggle() {
     const next = !document.documentElement.classList.contains("light");
@@ -17,7 +29,7 @@ export function ThemeToggle() {
     } catch {
       /* ignore */
     }
-    setLight(next);
+    window.dispatchEvent(new Event(THEME_EVENT));
   }
 
   return (

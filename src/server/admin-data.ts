@@ -54,7 +54,5 @@ export async function getResultsLockForAdmin(eventId: string) {
     .from(results_locks)
     .where(eq(results_locks.event_id, eventId))
     .limit(1);
-  return row
-    ? { seed: row.seed, top6: row.top6, locked_at: row.locked_at.toISOString() }
-    : null;
+  return row ? { seed: row.seed, top6: row.top6, locked_at: row.locked_at.toISOString() } : null;
 }

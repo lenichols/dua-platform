@@ -30,8 +30,7 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<AdminRole, string> = {
-  owner:
-    "Full access, including adding/removing admin accounts and changing roles.",
+  owner: "Full access, including adding/removing admin accounts and changing roles.",
   admin:
     "Every operational control — phases, judges, submissions, results — but can't manage admin accounts.",
   viewer:

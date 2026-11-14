@@ -1,20 +1,33 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+  push:
+    branches: [develop, staging, production, main]
 
 permissions:
   contents: read
+  security-events: write
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: "22"
+  HUSKY: "0"
+  DATABASE_URL: postgres://dua:dua@localhost:5432/dua
+  TEST_DATABASE_URL: postgres://dua:dua@localhost:5432/dua_test
+  ADMIN_PASSWORD: ci-placeholder-password
+  SUBMISSION_EDIT_SECRET: ci-placeholder-secret-not-used-in-production
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
 jobs:
-  check:
+  quality:
+    name: Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     services:
       postgres:
         image: postgres:17-alpine
@@ -29,28 +42,166 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 30
-    env:
-      TEST_DATABASE_URL: postgres://dua:dua@localhost:5432/dua_test
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Lint (zero warnings)
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
       - name: Migrations match the schema
         # Fails if src/db/schema.ts changed without a new migration.
         run: |
           npm run db:generate
           git diff --exit-code -- drizzle
           test -z "$(git status --porcelain -- drizzle)"
-      - run: npm test
+
+      - name: Test
+        run: npm run test:coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Build
         run: npm run build
+
+  commitlint:
+    name: Commit Messages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate commits
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~10"
+          fi
+          git rev-parse --verify "$BASE" >/dev/null 2>&1 || BASE="$(git rev-list --max-parents=0 HEAD | head -n1)"
+          status=0
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            subject="$(git log -1 --format=%s "$sha")"
+            if ! printf '%s\n' "$subject" | npx --no-install commitlint; then
+              status=1
+            fi
+          done < <(git rev-list --first-parent --no-merges "$BASE"..HEAD)
+          exit "$status"
+
+  docker:
+    name: Docker Image
+    needs: [quality]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Scan dependencies and secrets (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          scanners: vuln,secret
+
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: false
+          load: true
+          tags: dua-platform:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan the image (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: dua-platform:ci
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+
+      - name: Write image SARIF
+        if: always()
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: dua-platform:ci
+          format: sarif
+          output: trivy-image.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: os,library
+
+      - name: Upload image SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  quality-gate:
+    name: Quality Gate Conclusion
+    if: always()
+    needs: [quality, commitlint, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every quality job to pass
         env:
-          # Placeholders: the build needs the variables to exist, not to work.
-          DATABASE_URL: postgres://dua:dua@localhost:5432/dua
-          ADMIN_PASSWORD: placeholder
-          SUBMISSION_EDIT_SECRET: placeholder-placeholder-placeholder
+          QUALITY: ${{ needs.quality.result }}
+          COMMITS: ${{ needs.commitlint.result }}
+          DOCKER: ${{ needs.docker.result }}
+        run: |
+          echo "quality=$QUALITY commitlint=$COMMITS docker=$DOCKER"
+          if [ "$QUALITY" != "success" ] || [ "$COMMITS" != "success" ] || [ "$DOCKER" != "success" ]; then
+            echo "::error::One or more required checks did not pass."
+            exit 1
+          fi
+          echo "✅ All required checks passed."

@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import {
-  previewAudience,
-  sendCampaign,
-  sendCampaignTest,
-  uploadCampaignImage,
-} from "./actions";
+import { previewAudience, sendCampaign, sendCampaignTest, uploadCampaignImage } from "./actions";
 import {
   AUDIENCE_LABELS,
   AUDIENCES,
@@ -38,13 +33,30 @@ export type CampaignRow = {
 const COMMANDS: { label: string; title: string; run: () => void; className?: string }[] = [
   { label: "B", title: "Bold", run: () => document.execCommand("bold"), className: "font-bold" },
   { label: "I", title: "Italic", run: () => document.execCommand("italic"), className: "italic" },
-  { label: "U", title: "Underline", run: () => document.execCommand("underline"), className: "underline" },
+  {
+    label: "U",
+    title: "Underline",
+    run: () => document.execCommand("underline"),
+    className: "underline",
+  },
   { label: "H2", title: "Heading", run: () => document.execCommand("formatBlock", false, "h2") },
   { label: "H3", title: "Subheading", run: () => document.execCommand("formatBlock", false, "h3") },
   { label: "¶", title: "Normal text", run: () => document.execCommand("formatBlock", false, "p") },
-  { label: "• List", title: "Bulleted list", run: () => document.execCommand("insertUnorderedList") },
-  { label: "1. List", title: "Numbered list", run: () => document.execCommand("insertOrderedList") },
-  { label: "❝", title: "Quote", run: () => document.execCommand("formatBlock", false, "blockquote") },
+  {
+    label: "• List",
+    title: "Bulleted list",
+    run: () => document.execCommand("insertUnorderedList"),
+  },
+  {
+    label: "1. List",
+    title: "Numbered list",
+    run: () => document.execCommand("insertOrderedList"),
+  },
+  {
+    label: "❝",
+    title: "Quote",
+    run: () => document.execCommand("formatBlock", false, "blockquote"),
+  },
   { label: "⎯", title: "Divider", run: () => document.execCommand("insertHorizontalRule") },
 ];
 
@@ -113,7 +125,7 @@ export function EmailPanel({
       setTestState(
         r.ok
           ? { ok: true, msg: `Test sent to ${r.to}. Check how it renders before sending for real.` }
-          : { ok: false, msg: r.error },
+          : { ok: false, msg: r.error }
       );
     });
   }
@@ -182,9 +194,7 @@ export function EmailPanel({
       return;
     }
     const alt = file.name.replace(/\.[^.]+$/, "");
-    insertAtCaret(
-      `<img src="${r.url}" alt="${alt.replace(/"/g, "")}" /><p><br /></p>`,
-    );
+    insertAtCaret(`<img src="${r.url}" alt="${alt.replace(/"/g, "")}" /><p><br /></p>`);
   }
 
   function addLink() {
@@ -199,8 +209,8 @@ export function EmailPanel({
         <div className="card">
           <div className="field-label mb-2">Email Blasts</div>
           <p className="text-sm text-dust">
-            Sending email is a write action, so it's hidden for read-only
-            accounts. The history below shows what's already gone out.
+            Sending email is a write action, so it's hidden for read-only accounts. The history
+            below shows what's already gone out.
           </p>
         </div>
         <CampaignHistory campaigns={campaigns} loadError={loadError} />
@@ -213,9 +223,7 @@ export function EmailPanel({
       <div className="card space-y-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div className="pill-accent">Compose</div>
-          <span className="text-[0.65rem] text-dust">
-            Sent via Resend
-          </span>
+          <span className="text-[0.65rem] text-dust">Sent via Resend</span>
         </div>
 
         <div>
@@ -315,9 +323,9 @@ export function EmailPanel({
             </div>
           )}
           <p className="mt-1.5 text-[0.7rem] text-dust">
-            Formatting is limited to what renders reliably in email clients.
-            Pasted text comes in unstyled on purpose. Images: PNG, JPEG, or GIF
-            up to 5 MB — they&apos;re hosted publicly so inboxes can load them.
+            Formatting is limited to what renders reliably in email clients. Pasted text comes in
+            unstyled on purpose. Images: PNG, JPEG, or GIF up to 5 MB — they&apos;re hosted publicly
+            so inboxes can load them.
           </p>
         </div>
 
@@ -338,7 +346,7 @@ export function EmailPanel({
                 </option>
               ))}
             </select>
-<p className="mt-1.5 text-[0.7rem] text-dust">
+            <p className="mt-1.5 text-[0.7rem] text-dust">
               {!counts
                 ? "Counting…"
                 : isAdminAudience(audience)
@@ -403,8 +411,7 @@ export function EmailPanel({
           <p className="mt-1 text-xs text-dust">
             This goes to{" "}
             <strong className="text-bone">
-              {counts ? counts.subscribed : "…"}{" "}
-              {isAdminAudience(audience) ? "admins" : "people"}
+              {counts ? counts.subscribed : "…"} {isAdminAudience(audience) ? "admins" : "people"}
             </strong>{" "}
             and cannot be recalled.
             {isAdminAudience(audience)
@@ -483,9 +490,7 @@ function CampaignHistory({
         <span className="field-label !mb-0">Sent ({campaigns.length})</span>
       </div>
       {campaigns.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-dust">
-          Nothing sent yet.
-        </p>
+        <p className="px-4 py-8 text-center text-sm text-dust">Nothing sent yet.</p>
       ) : (
         <ul className="divide-y divide-line">
           {campaigns.map((c) => (
@@ -506,9 +511,7 @@ function CampaignHistory({
                 </span>
                 {c.created_by && <span>by {c.created_by}</span>}
               </div>
-              {c.error_detail && (
-                <p className="mt-1 text-[0.7rem] text-blood">{c.error_detail}</p>
-              )}
+              {c.error_detail && <p className="mt-1 text-[0.7rem] text-blood">{c.error_detail}</p>}
             </li>
           ))}
         </ul>

@@ -34,9 +34,22 @@ export function CustomFields({
               {f.required && " *"}
             </label>
             {f.type === "textarea" ? (
-              <textarea id={name} name={name} rows={4} required={f.required} defaultValue={saved} className="field-input mt-1" />
+              <textarea
+                id={name}
+                name={name}
+                rows={4}
+                required={f.required}
+                defaultValue={saved}
+                className="field-input mt-1"
+              />
             ) : f.type === "select" ? (
-              <select id={name} name={name} required={f.required} defaultValue={saved} className="field-input mt-1">
+              <select
+                id={name}
+                name={name}
+                required={f.required}
+                defaultValue={saved}
+                className="field-input mt-1"
+              >
                 <option value="">— Select —</option>
                 {f.options.map((o) => (
                   <option key={o} value={o}>

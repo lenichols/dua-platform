@@ -1,0 +1,89 @@
+name: No-Verify Guard
+
+# Server-side enforcement for pushes that skip local hooks
+# (`git push --no-verify`). CI on a PR is authoritative, but this also checks
+# direct pushes to any branch.
+
+on:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: no-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  HUSKY: "0"
+  DATABASE_URL: postgres://dua:dua@localhost:5432/dua
+  TEST_DATABASE_URL: postgres://dua:dua@localhost:5432/dua_test
+  ADMIN_PASSWORD: ci-placeholder-password
+  SUBMISSION_EDIT_SECRET: ci-placeholder-secret-not-used-in-production
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+jobs:
+  guard:
+    name: Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dua
+          POSTGRES_PASSWORD: dua
+          POSTGRES_DB: dua
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dua -d dua"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Re-check commit messages
+        run: |
+          set -euo pipefail
+          BASE="HEAD~10"
+          git rev-parse --verify "$BASE" >/dev/null 2>&1 || BASE="$(git rev-list --max-parents=0 HEAD | head -n1)"
+          status=0
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            subject="$(git log -1 --format=%s "$sha")"
+            if ! printf '%s\n' "$subject" | npx --no-install commitlint; then
+              status=1
+            fi
+          done < <(git rev-list --first-parent --no-merges "$BASE"..HEAD)
+          exit "$status"
+
+      - name: Branch name
+        run: node scripts/check-branch-name.mjs "${{ github.ref_name }}" --ci
+
+      - name: Formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test

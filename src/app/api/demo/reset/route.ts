@@ -25,5 +25,9 @@ export async function GET(req: Request) {
 
   const event = await getCurrentEvent();
   const result = await resetDemo(getPool(), event.id, { adminRole: demoAdminRole() });
-  return Response.json({ ok: true, submissions: result.submissions, resetAt: new Date().toISOString() });
+  return Response.json({
+    ok: true,
+    submissions: result.submissions,
+    resetAt: new Date().toISOString(),
+  });
 }

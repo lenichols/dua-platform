@@ -34,10 +34,17 @@ export async function insertRow(pool, table, row, returning = "id") {
   const cols = Object.keys(row);
   const params = cols.map((_, i) => "$" + (i + 1));
   const text =
-    "insert into " + table + " (" + cols.join(", ") + ") values (" + params.join(", ") + ") returning " + returning;
+    "insert into " +
+    table +
+    " (" +
+    cols.join(", ") +
+    ") values (" +
+    params.join(", ") +
+    ") returning " +
+    returning;
   const { rows } = await pool.query(
     text,
-    cols.map((c) => row[c]),
+    cols.map((c) => row[c])
   );
   return rows[0];
 }

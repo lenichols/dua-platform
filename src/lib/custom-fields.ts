@@ -11,8 +11,7 @@ const MAX_ANSWER_LENGTH = 4000;
 export type CustomAnswers = Record<string, string>;
 
 export type ParsedCustom =
-  | { ok: true; values: CustomAnswers }
-  | { ok: false; fieldErrors: Record<string, string[]> };
+  { ok: true; values: CustomAnswers } | { ok: false; fieldErrors: Record<string, string[]> };
 
 /**
  * Pick the answers to an event's own questions out of a posted form and
@@ -22,7 +21,8 @@ export type ParsedCustom =
 export function parseCustomAnswers(fields: readonly CustomField[], form: FormData): ParsedCustom {
   const values: CustomAnswers = {};
   const fieldErrors: Record<string, string[]> = {};
-  const fail = (f: CustomField, message: string) => (fieldErrors[customFieldName(f.key)] = [message]);
+  const fail = (f: CustomField, message: string) =>
+    (fieldErrors[customFieldName(f.key)] = [message]);
 
   for (const f of fields) {
     const posted = form
@@ -65,10 +65,15 @@ export function parseCustomAnswers(fields: readonly CustomField[], form: FormDat
 export function customAnswerRows(
   fields: readonly CustomField[],
   answers: CustomAnswers | null | undefined,
-  opts: { judgesOnly?: boolean } = {},
+  opts: { judgesOnly?: boolean } = {}
 ): { key: string; label: string; value: string; type: CustomField["type"] }[] {
   return fields
     .filter((f) => !opts.judgesOnly || f.showToJudges)
-    .map((f) => ({ key: f.key, label: f.label, value: (answers?.[f.key] ?? "").trim(), type: f.type }))
+    .map((f) => ({
+      key: f.key,
+      label: f.label,
+      value: (answers?.[f.key] ?? "").trim(),
+      type: f.type,
+    }))
     .filter((r) => r.value !== "");
 }

@@ -25,9 +25,9 @@ export function MentorForm() {
         <div className="pill-accent mb-4">✓ You&apos;re In</div>
         <h2 className="hex-title text-4xl">Thank You for Stepping Up.</h2>
         <p className="mt-3 text-dust">
-          Thanks for signing up to mentor at {EVENT.name}. We&apos;ll review
-          your profile and reach out with next steps — mentor profiles are
-          shared with participants once registration opens.
+          Thanks for signing up to mentor at {EVENT.name}. We&apos;ll review your profile and reach
+          out with next steps — mentor profiles are shared with participants once registration
+          opens.
         </p>
       </div>
     );
@@ -45,12 +45,7 @@ export function MentorForm() {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="field-label">Full Name *</label>
-            <input
-              name="full_name"
-              required
-              autoComplete="name"
-              className="field-input mt-1"
-            />
+            <input name="full_name" required autoComplete="name" className="field-input mt-1" />
             {err("full_name")}
           </div>
           <div>
@@ -77,9 +72,7 @@ export function MentorForm() {
                 className="field-input mt-1"
               />
               {err("phone")}
-              <p className="mt-1 text-xs text-dust">
-                Include your country code if outside the US.
-              </p>
+              <p className="mt-1 text-xs text-dust">Include your country code if outside the US.</p>
             </div>
           )}
           <div>
@@ -157,22 +150,13 @@ export function MentorForm() {
       </fieldset>
 
       <fieldset className="card space-y-4">
-        <legend className="pill-accent -mt-2 mb-2">
-          How You&apos;ll Mentor
-        </legend>
+        <legend className="pill-accent -mt-2 mb-2">How You&apos;ll Mentor</legend>
 
         <div className="grid gap-4 md:grid-cols-2">
           {shown("primary_interest") && (
             <div>
-              <label className="field-label">
-                Which track can you mentor? *
-              </label>
-              <select
-                name="primary_interest"
-                required
-                defaultValue=""
-                className="field-input mt-1"
-              >
+              <label className="field-label">Which track can you mentor? *</label>
+              <select name="primary_interest" required defaultValue="" className="field-input mt-1">
                 <option value="">— Select a track —</option>
                 {TRACKS.map((t) => (
                   <option key={t} value={t}>
@@ -186,12 +170,7 @@ export function MentorForm() {
           {shown("experience_level") && (
             <div>
               <label className="field-label">Experience Level *</label>
-              <select
-                name="experience_level"
-                required
-                defaultValue=""
-                className="field-input mt-1"
-              >
+              <select name="experience_level" required defaultValue="" className="field-input mt-1">
                 <option value="">— Select —</option>
                 {MENTOR_EXPERIENCE_LEVELS.map((e) => (
                   <option key={e} value={e}>
@@ -207,12 +186,7 @@ export function MentorForm() {
         {shown("heard_about") && (
           <div>
             <label className="field-label">How did you hear about us? *</label>
-            <select
-              name="heard_about"
-              required
-              defaultValue=""
-              className="field-input mt-1"
-            >
+            <select name="heard_about" required defaultValue="" className="field-input mt-1">
               <option value="">— Select —</option>
               {HEARD_ABOUT.map((h) => (
                 <option key={h} value={h}>
@@ -238,11 +212,7 @@ export function MentorForm() {
         )}
       </fieldset>
 
-      <CustomFields
-        fields={EVENT.customFields.mentor}
-        errors={fe}
-        legend="A Few More Questions"
-      />
+      <CustomFields fields={EVENT.customFields.mentor} errors={fe} legend="A Few More Questions" />
 
       {state?.ok === false && (
         <div className="rounded-md border border-blood/60 bg-blood/10 px-4 py-3 text-sm text-blood">
@@ -251,11 +221,7 @@ export function MentorForm() {
       )}
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          className="btn-accent h-12 px-8"
-          disabled={pending}
-        >
+        <button type="submit" className="btn-accent h-12 px-8" disabled={pending}>
           {pending ? "Signing up…" : "Sign Up to Mentor"}
         </button>
       </div>

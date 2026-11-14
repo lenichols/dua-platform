@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Breadcrumbs,
-  HeaderBar,
-  PageShell,
-  SectionTitle,
-} from "@/components/shell";
+import { Breadcrumbs, HeaderBar, PageShell, SectionTitle } from "@/components/shell";
 import { getPhase, getRegistrationOpen } from "@/lib/phase";
 import { MentorForm } from "./mentor-form";
 import { getSettings } from "@/lib/current-settings";
@@ -29,9 +24,7 @@ export default async function MentorPage() {
         }
       />
       <PageShell>
-        <Breadcrumbs
-          items={[{ label: "Home", href: "/" }, { label: "Mentor" }]}
-        />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Mentor" }]} />
 
         {!open ? (
           <div className="mx-auto max-w-xl text-center">
@@ -51,27 +44,21 @@ export default async function MentorPage() {
           <>
             <div className="mb-8">
               <div className="pill-accent mb-3">Volunteer · 100% Virtual</div>
-              <h1 className="hex-title text-4xl md:text-5xl">
-                Mentor at {EVENT.name}
-              </h1>
+              <h1 className="hex-title text-4xl md:text-5xl">Mentor at {EVENT.name}</h1>
             </div>
 
             <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="pill-accent">
-                  {EVENT.dates}
-                </span>
+                <span className="pill-accent">{EVENT.dates}</span>
                 <span className="text-base font-semibold text-bone">
                   Help a team ship something real
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-bone/90">
-                Every team selects a mentor during the event. Share your
-                expertise in engineering, business, or policy — help a team
-                sharpen their problem statement, pressure-test their
-                solution, and ship something real before the deadline. Your
-                profile will be shared with participants once registration
-                opens.
+                Every team selects a mentor during the event. Share your expertise in engineering,
+                business, or policy — help a team sharpen their problem statement, pressure-test
+                their solution, and ship something real before the deadline. Your profile will be
+                shared with participants once registration opens.
               </p>
             </div>
 

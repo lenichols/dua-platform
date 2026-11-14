@@ -35,9 +35,8 @@ export function ConflictCard({
       <div className="card h-fit border-l-4 border-l-blood">
         <div className="pill mb-2 border-blood/50 text-blood">Conflict declared</div>
         <p className="text-sm text-dust">
-          You&apos;ve recused yourself from this project. It&apos;s out of your
-          queue and progress count, and the organizers can see the
-          declaration. The rest of the panel scores it.
+          You&apos;ve recused yourself from this project. It&apos;s out of your queue and progress
+          count, and the organizers can see the declaration. The rest of the panel scores it.
         </p>
         {recusal.reason && (
           <p className="mt-2 text-xs text-bone/80">
@@ -62,9 +61,9 @@ export function ConflictCard({
     <div className="card h-fit">
       <div className="field-label">Conflict of interest?</div>
       <p className="mt-1 text-xs text-dust">
-        If you advise, employ, fund, or are related to anyone on this team —
-        or have a financial interest in the solution — recuse yourself. Any
-        score you&apos;ve given it is removed. Tell the organizers too.
+        If you advise, employ, fund, or are related to anyone on this team — or have a financial
+        interest in the solution — recuse yourself. Any score you&apos;ve given it is removed. Tell
+        the organizers too.
       </p>
       {!open ? (
         <button

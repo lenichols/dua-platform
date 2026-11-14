@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node scripts/migrate.mjs && next build",
+  "buildCommand": "if [ \"$RUN_MIGRATIONS\" != \"false\" ]; then node scripts/migrate.mjs; fi && next build",
   "crons": [{ "path": "/api/demo/reset", "schedule": "0 * * * *" }]
 }

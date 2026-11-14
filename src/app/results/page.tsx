@@ -39,8 +39,12 @@ export default async function ResultsPage() {
             subtitle="Results are only visible to judges, mentors, and event organizers."
           />
           <div className="flex gap-3">
-            <Link href="/judge" className="btn-accent">Judge Sign In</Link>
-            <Link href="/admin" className="btn">Admin</Link>
+            <Link href="/judge" className="btn-accent">
+              Judge Sign In
+            </Link>
+            <Link href="/admin" className="btn">
+              Admin
+            </Link>
           </div>
         </PageShell>
       </>
@@ -122,7 +126,9 @@ export default async function ResultsPage() {
                 const r = byId.get(t.submission_id);
                 return (
                   <li key={t.submission_id} className="flex items-center gap-4 px-5 py-4">
-                    <span className="w-8 font-display text-2xl font-semibold text-accent">{t.rank}</span>
+                    <span className="w-8 font-display text-2xl font-semibold text-accent">
+                      {t.rank}
+                    </span>
                     <span className="flex-1 font-bold text-bone">{r?.project_name ?? "—"}</span>
                     {r?.avg_total != null && (
                       <span className="tabular-nums text-dust">{num(r.avg_total)} / 100</span>
@@ -137,17 +143,14 @@ export default async function ResultsPage() {
     );
   }
 
-  const crumbs = adminSignedIn && !isJudge
-    ? [
-        { label: "Home", href: "/" },
-        { label: "Admin", href: "/admin" },
-        { label: "Results" },
-      ]
-    : [
-        { label: "Home", href: "/" },
-        { label: "Judge", href: "/judge/dashboard" },
-        { label: "Results" },
-      ];
+  const crumbs =
+    adminSignedIn && !isJudge
+      ? [{ label: "Home", href: "/" }, { label: "Admin", href: "/admin" }, { label: "Results" }]
+      : [
+          { label: "Home", href: "/" },
+          { label: "Judge", href: "/judge/dashboard" },
+          { label: "Results" },
+        ];
 
   return (
     <>
@@ -202,7 +205,12 @@ export default async function ResultsPage() {
                       <Stat label="Total" value={r.avg_total} max={100} />
                       <Stat label="Judges" value={r.n_judges} plain />
                       {criteria.map((c) => (
-                        <Stat key={c.key} label={c.label} value={r.averages[c.key]} max={SCALE_MAX} />
+                        <Stat
+                          key={c.key}
+                          label={c.label}
+                          value={r.averages[c.key]}
+                          max={SCALE_MAX}
+                        />
                       ))}
                     </div>
                     <div className="mt-3 text-[0.68rem] text-dust">

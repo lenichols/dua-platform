@@ -6,7 +6,7 @@ import { promisify } from "util";
 const scryptAsync = promisify(scrypt) as (
   password: string | Buffer,
   salt: string | Buffer,
-  keylen: number,
+  keylen: number
 ) => Promise<Buffer>;
 
 const KEYLEN = 64;
@@ -23,7 +23,7 @@ export async function hashAdminPassword(password: string): Promise<string> {
 
 export async function verifyAdminPassword(
   password: string,
-  stored: string | null | undefined,
+  stored: string | null | undefined
 ): Promise<boolean> {
   if (!stored) return false;
   const [scheme, saltHex, keyHex] = stored.split("$");
@@ -37,11 +37,7 @@ export async function verifyAdminPassword(
   }
   if (expected.length !== KEYLEN) return false;
 
-  const actual = await scryptAsync(
-    password.normalize("NFKC"),
-    Buffer.from(saltHex, "hex"),
-    KEYLEN,
-  );
+  const actual = await scryptAsync(password.normalize("NFKC"), Buffer.from(saltHex, "hex"), KEYLEN);
   return timingSafeEqual(actual, expected);
 }
 

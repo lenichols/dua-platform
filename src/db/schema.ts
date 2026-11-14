@@ -35,8 +35,7 @@ import {
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
 const id = () => uuid("id").primaryKey().defaultRandom();
-const createdAt = () =>
-  timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
+const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
   timestamp("updated_at", { withTimezone: true })
     .notNull()
@@ -71,7 +70,7 @@ export const events = pgTable(
   (t) => [
     uniqueIndex("events_slug_uniq").on(t.slug),
     check("events_phase_check", sql`${t.phase} in ('submissions', 'judging', 'results')`),
-  ],
+  ]
 ).enableRLS();
 
 const eventId = () =>
@@ -114,15 +113,15 @@ export const registrations = pgTable(
     uniqueIndex("registrations_event_email_role_uniq").on(
       t.event_id,
       sql`lower(${t.email})`,
-      t.role,
+      t.role
     ),
     index("registrations_event_created_idx").on(t.event_id, t.created_at),
     check("registrations_role_check", sql`${t.role} in ('participant', 'mentor')`),
     check(
       "registrations_participating_as_check",
-      sql`${t.participating_as} is null or ${t.participating_as} in ('Solo', 'Team')`,
+      sql`${t.participating_as} is null or ${t.participating_as} in ('Solo', 'Team')`
     ),
-  ],
+  ]
 ).enableRLS();
 
 // ── submissions ──────────────────────────────────────────────────
@@ -219,14 +218,14 @@ export const submissions = pgTable(
     // One submission per project name within an event.
     uniqueIndex("submissions_event_project_name_uniq").on(
       t.event_id,
-      sql`lower(${t.project_name})`,
+      sql`lower(${t.project_name})`
     ),
     index("submissions_event_created_idx").on(t.event_id, t.created_at),
     check(
       "submissions_solo_or_team_check",
-      sql`${t.solo_or_team} is null or ${t.solo_or_team} in ('Solo', 'Team')`,
+      sql`${t.solo_or_team} is null or ${t.solo_or_team} in ('Solo', 'Team')`
     ),
-  ],
+  ]
 ).enableRLS();
 
 // ── judges ───────────────────────────────────────────────────────
@@ -248,7 +247,7 @@ export const judges = pgTable(
   (t) => [
     uniqueIndex("judges_event_email_uniq").on(t.event_id, sql`lower(${t.email})`),
     check("judges_role_check", sql`${t.role} in ('judge', 'mentor')`),
-  ],
+  ]
 ).enableRLS();
 
 // ── scores ───────────────────────────────────────────────────────
@@ -278,7 +277,7 @@ export const scores = pgTable(
     unique("scores_judge_submission_uniq").on(t.judge_id, t.submission_id),
     index("scores_submission_idx").on(t.submission_id),
     index("scores_event_idx").on(t.event_id),
-  ],
+  ]
 ).enableRLS();
 
 // ── recusals ─────────────────────────────────────────────────────
@@ -301,7 +300,7 @@ export const recusals = pgTable(
   (t) => [
     unique("recusals_judge_submission_uniq").on(t.judge_id, t.submission_id),
     index("recusals_submission_idx").on(t.submission_id),
-  ],
+  ]
 ).enableRLS();
 
 // ── results ──────────────────────────────────────────────────────
@@ -354,7 +353,7 @@ export const admin_users = pgTable(
   (t) => [
     uniqueIndex("admin_users_email_uniq").on(sql`lower(${t.email})`),
     check("admin_users_role_check", sql`${t.role} in ('owner', 'admin', 'viewer')`),
-  ],
+  ]
 ).enableRLS();
 
 // ── email campaigns ──────────────────────────────────────────────
@@ -381,13 +380,13 @@ export const email_campaigns = pgTable(
     index("email_campaigns_event_created_idx").on(t.event_id, t.created_at),
     check(
       "email_campaigns_audience_check",
-      sql`${t.audience} in ('all', 'participant', 'mentor', 'admins', 'super_admins')`,
+      sql`${t.audience} in ('all', 'participant', 'mentor', 'admins', 'super_admins')`
     ),
     check(
       "email_campaigns_status_check",
-      sql`${t.status} in ('draft', 'sending', 'sent', 'failed')`,
+      sql`${t.status} in ('draft', 'sending', 'sent', 'failed')`
     ),
-  ],
+  ]
 ).enableRLS();
 
 // ── uploads ──────────────────────────────────────────────────────
@@ -418,5 +417,5 @@ export const sign_in_failures = pgTable(
   (t) => [
     primaryKey({ columns: [t.seq] }),
     index("sign_in_failures_key_idx").on(t.key, t.failed_at),
-  ],
+  ]
 ).enableRLS();

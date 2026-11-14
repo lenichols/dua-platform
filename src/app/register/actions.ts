@@ -8,16 +8,14 @@ import { registrationAccepting } from "@/server/policy";
 import { createRegistration } from "@/server/registrations";
 
 const CLOSED = "Registration is closed — the hackathon is already underway.";
-const DUPLICATE =
-  "You're already registered with that email — see you at the hackathon!";
+const DUPLICATE = "You're already registered with that email — see you at the hackathon!";
 
 export type RegisterResult =
-  | { ok: true; id: string }
-  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+  { ok: true; id: string } | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
 
 export async function registerParticipant(
   _prev: RegisterResult | null,
-  form: FormData,
+  form: FormData
 ): Promise<RegisterResult> {
   // Registration needs the admin switch on, and closes outright once the
   // event moves into judging/results.
@@ -26,7 +24,9 @@ export async function registerParticipant(
 
   const raw = Object.fromEntries(form.entries());
   // Questions the organizer switched off aren't required; ones they added are checked too.
-  const parsed = registrationSchemaFor(hiddenColumns(event.settings, "registration")).safeParse(raw);
+  const parsed = registrationSchemaFor(hiddenColumns(event.settings, "registration")).safeParse(
+    raw
+  );
   const custom = parseCustomAnswers(event.settings.customFields.registration, form);
   if (!parsed.success || !custom.ok) {
     return {
@@ -40,7 +40,10 @@ export async function registerParticipant(
   }
 
   // Personal details: only admins can read these back.
-  const result = await createRegistration(event, "participant", { ...parsed.data, custom: custom.values });
+  const result = await createRegistration(event, "participant", {
+    ...parsed.data,
+    custom: custom.values,
+  });
   if (result.ok) return { ok: true, id: result.id };
   return { ok: false, error: result.reason === "duplicate" ? DUPLICATE : CLOSED };
 }

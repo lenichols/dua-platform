@@ -18,11 +18,7 @@ function fnv1a32(s: string): number {
   return h >>> 0;
 }
 
-export function shuffleForUser<T>(
-  items: T[],
-  userKey: string,
-  itemKey: (item: T) => string,
-): T[] {
+export function shuffleForUser<T>(items: T[], userKey: string, itemKey: (item: T) => string): T[] {
   return items
     .map((item) => ({ item, h: fnv1a32(`${userKey}::${itemKey(item)}`) }))
     .sort((a, b) => a.h - b.h)

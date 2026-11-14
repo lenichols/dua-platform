@@ -1,0 +1,25 @@
+name: Sync Labels
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - "scripts/setup-labels.mjs"
+      - ".github/workflows/labels.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  labels:
+    name: Create or update labels
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/setup-labels.mjs

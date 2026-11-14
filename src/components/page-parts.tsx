@@ -11,18 +11,10 @@ export function PageShell({
   children: ReactNode;
   maxWidth?: string;
 }) {
-  return (
-    <div className={`mx-auto w-full ${maxWidth} px-5 py-8 md:py-12`}>
-      {children}
-    </div>
-  );
+  return <div className={`mx-auto w-full ${maxWidth} px-5 py-8 md:py-12`}>{children}</div>;
 }
 
-export function Breadcrumbs({
-  items,
-}: {
-  items: { label: string; href?: string }[];
-}) {
+export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
     <nav
       aria-label="Breadcrumb"
@@ -34,10 +26,7 @@ export function Breadcrumbs({
           <div key={i} className="flex items-center gap-1.5">
             {i > 0 && <span className="text-line">›</span>}
             {it.href && !isLast ? (
-              <Link
-                href={it.href}
-                className="transition hover:text-accent"
-              >
+              <Link href={it.href} className="transition hover:text-accent">
                 {it.label}
               </Link>
             ) : (

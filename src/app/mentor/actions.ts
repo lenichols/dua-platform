@@ -12,12 +12,11 @@ const DUPLICATE =
   "You've already signed up as a mentor with that email — thank you! We'll be in touch.";
 
 export type MentorRegisterResult =
-  | { ok: true; id: string }
-  | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
+  { ok: true; id: string } | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
 
 export async function registerMentor(
   _prev: MentorRegisterResult | null,
-  form: FormData,
+  form: FormData
 ): Promise<MentorRegisterResult> {
   // Registration needs the admin switch on, and closes outright once the
   // event moves into judging/results.
@@ -25,7 +24,9 @@ export async function registerMentor(
   if (!mentorSignupAccepting(event)) return { ok: false, error: CLOSED };
 
   const raw = Object.fromEntries(form.entries());
-  const parsed = mentorRegistrationSchemaFor(hiddenColumns(event.settings, "mentor")).safeParse(raw);
+  const parsed = mentorRegistrationSchemaFor(hiddenColumns(event.settings, "mentor")).safeParse(
+    raw
+  );
   const custom = parseCustomAnswers(event.settings.customFields.mentor, form);
   if (!parsed.success || !custom.ok) {
     return {
@@ -39,7 +40,10 @@ export async function registerMentor(
   }
 
   // Personal details: only admins can read these back.
-  const result = await createRegistration(event, "mentor", { ...parsed.data, custom: custom.values });
+  const result = await createRegistration(event, "mentor", {
+    ...parsed.data,
+    custom: custom.values,
+  });
   if (result.ok) return { ok: true, id: result.id };
   return { ok: false, error: result.reason === "duplicate" ? DUPLICATE : CLOSED };
 }

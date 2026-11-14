@@ -19,7 +19,7 @@ export * from "./campaign-audiences";
  */
 export async function loadRecipients(
   eventId: string,
-  audience: Audience,
+  audience: Audience
 ): Promise<{ ok: true; recipients: Recipient[] } | { ok: false; error: string }> {
   try {
     const rows: Recipient[] = isAdminAudience(audience)
@@ -30,8 +30,8 @@ export async function loadRecipients(
             .where(
               and(
                 eq(admin_users.is_active, true),
-                audience === "super_admins" ? eq(admin_users.is_protected, true) : undefined,
-              ),
+                audience === "super_admins" ? eq(admin_users.is_protected, true) : undefined
+              )
             )
             .orderBy(asc(admin_users.name))
         ).map((a) => ({ id: null, full_name: a.name, email: a.email }))
@@ -46,15 +46,17 @@ export async function loadRecipients(
             and(
               eq(registrations.event_id, eventId),
               isNull(registrations.unsubscribed_at),
-              audience === "all" ? undefined : eq(registrations.role, audience),
-            ),
+              audience === "all" ? undefined : eq(registrations.role, audience)
+            )
           )
           .orderBy(asc(registrations.created_at));
 
     const seen = new Set<string>();
     const recipients: Recipient[] = [];
     for (const r of rows) {
-      const email = String(r.email ?? "").trim().toLowerCase();
+      const email = String(r.email ?? "")
+        .trim()
+        .toLowerCase();
       if (!email || seen.has(email)) continue;
       seen.add(email);
       recipients.push({ ...r, email });
@@ -67,7 +69,7 @@ export async function loadRecipients(
 
 export async function countAudience(
   eventId: string,
-  audience: Audience,
+  audience: Audience
 ): Promise<{ subscribed: number; unsubscribed: number }> {
   const count = sql<number>`count(*)::int`;
 
@@ -78,8 +80,8 @@ export async function countAudience(
       .where(
         and(
           eq(admin_users.is_active, true),
-          audience === "super_admins" ? eq(admin_users.is_protected, true) : undefined,
-        ),
+          audience === "super_admins" ? eq(admin_users.is_protected, true) : undefined
+        )
       );
     // Staff can't opt out of internal mail, so there's nothing to skip.
     return { subscribed: Number(row?.n ?? 0), unsubscribed: 0 };
@@ -87,7 +89,7 @@ export async function countAudience(
 
   const inAudience = and(
     eq(registrations.event_id, eventId),
-    audience === "all" ? undefined : eq(registrations.role, audience),
+    audience === "all" ? undefined : eq(registrations.role, audience)
   );
   const [[subscribed], [unsubscribed]] = await Promise.all([
     db()
@@ -107,7 +109,7 @@ export async function countAudience(
 
 export async function listCampaigns(
   eventId: string,
-  limit = 25,
+  limit = 25
 ): Promise<{ ok: true; campaigns: Campaign[] } | { ok: false; error: string }> {
   try {
     const rows = await db()
@@ -172,7 +174,7 @@ export async function finalizeCampaign(
     sent_count: number;
     failed_count: number;
     error_detail?: string | null;
-  },
+  }
 ): Promise<void> {
   await db()
     .update(email_campaigns)

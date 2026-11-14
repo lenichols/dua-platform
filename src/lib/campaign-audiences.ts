@@ -1,12 +1,7 @@
 // Audience names and campaign types. No database imports, so client
 // components can use this file.
 
-export type Audience =
-  | "all"
-  | "participant"
-  | "mentor"
-  | "admins"
-  | "super_admins";
+export type Audience = "all" | "participant" | "mentor" | "admins" | "super_admins";
 
 /**
  * Admin audiences read from admin_users, not registrations. They're internal
@@ -17,13 +12,7 @@ export function isAdminAudience(a: Audience): boolean {
   return a === "admins" || a === "super_admins";
 }
 
-export const AUDIENCES: Audience[] = [
-  "all",
-  "participant",
-  "mentor",
-  "admins",
-  "super_admins",
-];
+export const AUDIENCES: Audience[] = ["all", "participant", "mentor", "admins", "super_admins"];
 
 export const AUDIENCE_LABELS: Record<Audience, string> = {
   all: "Everyone (all registrants)",
@@ -58,6 +47,8 @@ export type Recipient = {
 };
 
 export function parseAudience(raw: unknown): Audience | null {
-  const v = String(raw ?? "").trim().toLowerCase();
+  const v = String(raw ?? "")
+    .trim()
+    .toLowerCase();
   return (AUDIENCES as string[]).includes(v) ? (v as Audience) : null;
 }

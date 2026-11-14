@@ -10,14 +10,13 @@ import { plainAll } from "./plain";
 import { submissionsAccepting } from "./policy";
 
 export type SubmitOutcome =
-  | { ok: true; id: string }
-  | { ok: false; reason: "closed" | "duplicate" | "missing" };
+  { ok: true; id: string } | { ok: false; reason: "closed" | "duplicate" | "missing" };
 
 /** A new submission. Refused while submissions are closed. */
 export async function createSubmission(
   event: EventRow,
   input: SubmissionInput,
-  custom: Record<string, string> = {},
+  custom: Record<string, string> = {}
 ): Promise<SubmitOutcome> {
   if (!submissionsAccepting(event)) return { ok: false, reason: "closed" };
   try {
@@ -41,7 +40,7 @@ export async function updateSubmission(
   event: EventRow,
   id: string,
   input: SubmissionInput,
-  custom: Record<string, string> = {},
+  custom: Record<string, string> = {}
 ): Promise<SubmitOutcome> {
   if (!submissionsAccepting(event)) return { ok: false, reason: "closed" };
   try {
@@ -61,7 +60,7 @@ export async function updateSubmission(
 export async function getSubmissionForEdit(
   event: EventRow,
   id: string,
-  fields: readonly string[],
+  fields: readonly string[]
 ): Promise<{ values: Record<string, string>; custom: Record<string, string> } | null> {
   const [row] = await db()
     .select()
@@ -90,7 +89,7 @@ export async function listSubmissionsForAdmin(eventId: string) {
 export async function setSubmissionHidden(
   eventId: string,
   id: string,
-  hidden: boolean,
+  hidden: boolean
 ): Promise<void> {
   await db()
     .update(submissions)

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/lenichols/dua-platform/security/advisories/new
+    about: Please report security problems privately, never in a public issue.
+  - name: Live demo
+    url: https://dua-platform.vercel.app
+    about: Try the sample event before opening an issue.
+  - name: Contributor guide
+    url: https://github.com/lenichols/dua-platform/blob/develop/.github/CONTRIBUTING.md
+    about: Setup, branch naming, commit conventions and the pull-request checklist.

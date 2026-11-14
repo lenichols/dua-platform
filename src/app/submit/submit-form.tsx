@@ -68,26 +68,22 @@ export function SubmitForm({
   const [pending, startTransition] = useTransition();
 
   const [mode, setMode] = useState<"Solo" | "Team">(
-    initial?.solo_or_team === "Team" ? "Team" : "Solo",
+    initial?.solo_or_team === "Team" ? "Team" : "Solo"
   );
-  const [orgChoice, setOrgChoice] = useState<string>(
-    choiceFor(ORGS, initial?.affiliated_org),
-  );
-  const [roleChoice, setRoleChoice] = useState<string>(
-    choiceFor(ROLES, initial?.submitter_role),
-  );
+  const [orgChoice, setOrgChoice] = useState<string>(choiceFor(ORGS, initial?.affiliated_org));
+  const [roleChoice, setRoleChoice] = useState<string>(choiceFor(ROLES, initial?.submitter_role));
   const [sectorChoice, setSectorChoice] = useState<string>(
-    choiceFor(FOCUS_AREAS, initial?.focus_area),
+    choiceFor(FOCUS_AREAS, initial?.focus_area)
   );
   const [areaChoice, setAreaChoice] = useState<string>(
-    choiceFor(AREAS_OF_SPECIFICATION, initial?.area_of_specification),
+    choiceFor(AREAS_OF_SPECIFICATION, initial?.area_of_specification)
   );
   const [phone, setPhone] = useState<string>(initial?.phone ?? "");
   const [impactSel, setImpactSel] = useState<string[]>(
     (initial?.impact_focus ?? "")
       .split(",")
       .map((f) => f.trim())
-      .filter((f) => IMPACT_FOCUS.includes(f)),
+      .filter((f) => IMPACT_FOCUS.includes(f))
   );
 
   const [words, setWords] = useState<Record<WordField, number>>(() => ({
@@ -140,9 +136,7 @@ export function SubmitForm({
   }, []);
 
   const toggleImpact = (f: string) =>
-    setImpactSel((prev) =>
-      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f],
-    );
+    setImpactSel((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
 
   // Captured FormData → modal preview (null means no modal)
   const [pending_fd, setPendingFd] = useState<FormData | null>(null);
@@ -157,24 +151,18 @@ export function SubmitForm({
   if (state?.ok) {
     return (
       <div className="card">
-        <div className="pill-accent mb-4">
-          {state.updated ? "✓ Changes saved" : "✓ Submitted"}
-        </div>
-        <h2 className="hex-title text-4xl">
-          {state.updated ? "All Set." : "You're In."}
-        </h2>
+        <div className="pill-accent mb-4">{state.updated ? "✓ Changes saved" : "✓ Submitted"}</div>
+        <h2 className="hex-title text-4xl">{state.updated ? "All Set." : "You're In."}</h2>
         <p className="mt-3 text-dust">
           {state.updated
             ? "Your submission has been updated. Judges will see the new version."
             : "Your project has been locked in for judging. We've also emailed you this edit link."}{" "}
-          Use it to make changes until submissions close (
-          {EVENT.submissionDeadline}). Anyone with the link can edit your
-          submission, so share it only with your team.
+          Use it to make changes until submissions close ({EVENT.submissionDeadline}). Anyone with
+          the link can edit your submission, so share it only with your team.
         </p>
         <EditLinkBox url={state.editUrl} />
         <p className="mt-3 text-xs text-dust">
-          Submission ID:{" "}
-          <span className="font-mono text-accent">{state.id}</span>
+          Submission ID: <span className="font-mono text-accent">{state.id}</span>
         </p>
       </div>
     );
@@ -196,8 +184,7 @@ export function SubmitForm({
       errors.impact_focus = ["Select at least one impact focus"];
     for (const f of Object.keys(WORD_LIMITS) as WordField[]) {
       const n = countWords(String(fd.get(f) ?? ""));
-      if (n > WORD_LIMITS[f])
-        errors[f] = [`${n} words — trim it to ${WORD_LIMITS[f]} or fewer`];
+      if (n > WORD_LIMITS[f]) errors[f] = [`${n} words — trim it to ${WORD_LIMITS[f]} or fewer`];
     }
     if (Object.keys(errors).length > 0) {
       setState({
@@ -250,11 +237,7 @@ export function SubmitForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="field-label">Full Legal Name *</label>
-              <input
-                name="member1_name"
-                required
-                className="field-input mt-1"
-              />
+              <input name="member1_name" required className="field-input mt-1" />
               {err("member1_name")}
             </div>
             <div>
@@ -319,11 +302,7 @@ export function SubmitForm({
             {shown("location") && (
               <div>
                 <label className="field-label">City</label>
-                <input
-                  name="city"
-                  autoComplete="address-level2"
-                  className="field-input mt-1"
-                />
+                <input name="city" autoComplete="address-level2" className="field-input mt-1" />
               </div>
             )}
             {shown("submitter_profile") && (
@@ -430,28 +409,18 @@ export function SubmitForm({
               </div>
 
               {[2, 3, 4, 5].map((n) => (
-                <div
-                  key={n}
-                  className="rounded-md border border-line bg-ink-4/40 p-3"
-                >
+                <div key={n} className="rounded-md border border-line bg-ink-4/40 p-3">
                   <div className="field-label mb-2">
                     Member {n} <span className="text-dust">(optional)</span>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <label className="field-label">Full Name</label>
-                      <input
-                        name={`member${n}_name`}
-                        className="field-input mt-1"
-                      />
+                      <input name={`member${n}_name`} className="field-input mt-1" />
                     </div>
                     <div>
                       <label className="field-label">Email</label>
-                      <input
-                        name={`member${n}_email`}
-                        type="email"
-                        className="field-input mt-1"
-                      />
+                      <input name={`member${n}_email`} type="email" className="field-input mt-1" />
                       {err(`member${n}_email`)}
                     </div>
                     {shown("teammate_details") && (
@@ -477,9 +446,7 @@ export function SubmitForm({
                     )}
                     {shown("teammate_details") && (
                       <div>
-                        <label className="field-label">
-                          Country of Residence
-                        </label>
+                        <label className="field-label">Country of Residence</label>
                         <select
                           name={`member${n}_country`}
                           defaultValue=""
@@ -518,22 +485,19 @@ export function SubmitForm({
           <fieldset className="card space-y-4">
             <legend className="pill-accent -mt-2 mb-2">Mentor</legend>
             <p className="text-xs text-dust">
-              If a mentor helped you during the build weekend, tell us who. List
-              more than one by separating names with commas.
+              If a mentor helped you during the build weekend, tell us who. List more than one by
+              separating names with commas.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="field-label">
-                  Mentor&apos;s Full Name{" "}
-                  <span className="text-dust">(optional)</span>
+                  Mentor&apos;s Full Name <span className="text-dust">(optional)</span>
                 </label>
                 <input name="mentor_name" className="field-input mt-1" />
                 {err("mentor_name")}
               </div>
               <div>
-                <label className="field-label">
-                  Mentor&apos;s LinkedIn Profile
-                </label>
+                <label className="field-label">Mentor&apos;s LinkedIn Profile</label>
                 <input
                   name="mentor_linkedin_url"
                   type="url"
@@ -553,11 +517,7 @@ export function SubmitForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="field-label">Project Name *</label>
-              <input
-                name="project_name"
-                required
-                className="field-input mt-1"
-              />
+              <input name="project_name" required className="field-input mt-1" />
               {err("project_name")}
             </div>
             {shown("challenge_track") && (
@@ -581,12 +541,7 @@ export function SubmitForm({
             {shown("problem_brief") && (
               <div className="md:col-span-2">
                 <label className="field-label">Problem Brief *</label>
-                <select
-                  name="problem_brief"
-                  required
-                  className="field-input mt-1"
-                  defaultValue=""
-                >
+                <select name="problem_brief" required className="field-input mt-1" defaultValue="">
                   <option value="">— Which brief did you work on? —</option>
                   {PROBLEM_BRIEFS.map((b) => (
                     <option key={b} value={b}>
@@ -603,16 +558,9 @@ export function SubmitForm({
             {shown("customer_type") && (
               <div>
                 <label className="field-label">Who Is It For? *</label>
-                <select
-                  name="customer_type"
-                  required
-                  defaultValue=""
-                  className="field-input mt-1"
-                >
+                <select name="customer_type" required defaultValue="" className="field-input mt-1">
                   <option value="">— Select —</option>
-                  <option value="Individuals">
-                    Individuals &amp; households
-                  </option>
+                  <option value="Individuals">Individuals &amp; households</option>
                   <option value="Organizations">
                     Organizations — businesses, nonprofits &amp; public bodies
                   </option>
@@ -623,12 +571,7 @@ export function SubmitForm({
             {shown("region") && (
               <div>
                 <label className="field-label">Your Region *</label>
-                <select
-                  name="region"
-                  required
-                  defaultValue=""
-                  className="field-input mt-1"
-                >
+                <select name="region" required defaultValue="" className="field-input mt-1">
                   <option value="">— Select —</option>
                   {REGIONS.map((r) => (
                     <option key={r} value={r}>
@@ -699,12 +642,7 @@ export function SubmitForm({
             {shown("solution_stage") && (
               <div>
                 <label className="field-label">Solution Stage *</label>
-                <select
-                  name="solution_stage"
-                  required
-                  defaultValue=""
-                  className="field-input mt-1"
-                >
+                <select name="solution_stage" required defaultValue="" className="field-input mt-1">
                   <option value="">— Select —</option>
                   {SOLUTION_STAGES.map((s) => (
                     <option key={s} value={s}>
@@ -721,9 +659,7 @@ export function SubmitForm({
                 <select
                   value={areaChoice}
                   onChange={(e) => setAreaChoice(e.target.value)}
-                  name={
-                    areaChoice === OTHER ? undefined : "area_of_specification"
-                  }
+                  name={areaChoice === OTHER ? undefined : "area_of_specification"}
                   required
                   className="field-input mt-1"
                 >
@@ -749,15 +685,8 @@ export function SubmitForm({
             )}
             {shown("applies_ai") && (
               <div>
-                <label className="field-label">
-                  Will your solution apply AI? *
-                </label>
-                <select
-                  name="applies_ai"
-                  required
-                  defaultValue=""
-                  className="field-input mt-1"
-                >
+                <label className="field-label">Will your solution apply AI? *</label>
+                <select name="applies_ai" required defaultValue="" className="field-input mt-1">
                   <option value="">— Select —</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
@@ -770,8 +699,7 @@ export function SubmitForm({
           {shown("impact_focus") && (
             <div>
               <label className="field-label">
-                Impact Focus *{" "}
-                <span className="text-dust">(select all that apply)</span>
+                Impact Focus * <span className="text-dust">(select all that apply)</span>
               </label>
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
                 {IMPACT_FOCUS.map((f) => {
@@ -796,11 +724,7 @@ export function SubmitForm({
                   );
                 })}
               </div>
-              <input
-                type="hidden"
-                name="impact_focus"
-                value={impactSel.join(", ")}
-              />
+              <input type="hidden" name="impact_focus" value={impactSel.join(", ")} />
               {err("impact_focus")}
             </div>
           )}
@@ -834,8 +758,7 @@ export function SubmitForm({
           {shown("problem_statement") && (
             <div>
               <label className="field-label">
-                Problem Statement *{" "}
-                <span className="text-dust">(max 250 words)</span>
+                Problem Statement * <span className="text-dust">(max 250 words)</span>
               </label>
               <textarea
                 name="problem_statement"
@@ -869,9 +792,7 @@ export function SubmitForm({
           </div>
 
           <div>
-            <label className="field-label">
-              One-Line Summary * (280 chars)
-            </label>
+            <label className="field-label">One-Line Summary * (280 chars)</label>
             <input
               name="project_description_summary"
               required
@@ -905,15 +826,12 @@ export function SubmitForm({
             </legend>
 
             <div className="rounded-md border border-blood/40 bg-ink-4/60 p-3 text-sm leading-relaxed">
-              <div className="mb-1 text-xs font-bold text-blood">
-                ⚠ Disqualification Notice
-              </div>
+              <div className="mb-1 text-xs font-bold text-blood">⚠ Disqualification Notice</div>
               <p className="text-bone/90">
-                A demonstration video <strong>must</strong> accompany this
-                submission. <span className="text-accent">3 to 5 minutes.</span>{" "}
-                Show <strong>all team members at least once</strong> in the
-                video. Submissions with no demo video will be{" "}
-                <strong className="text-blood">disqualified</strong>.
+                A demonstration video <strong>must</strong> accompany this submission.{" "}
+                <span className="text-accent">3 to 5 minutes.</span> Show{" "}
+                <strong>all team members at least once</strong> in the video. Submissions with no
+                demo video will be <strong className="text-blood">disqualified</strong>.
               </p>
             </div>
 
@@ -936,8 +854,7 @@ export function SubmitForm({
             {shown("pitch_video") && (
               <div>
                 <label className="field-label">
-                  Pitch Video — 3 to 5 minutes{" "}
-                  <span className="text-dust">(optional)</span>
+                  Pitch Video — 3 to 5 minutes <span className="text-dust">(optional)</span>
                 </label>
                 <input
                   name="demo_video_short_url"
@@ -963,8 +880,8 @@ export function SubmitForm({
                     I confirm all team members appear in the demo video. *
                   </span>
                   <span className="block text-xs text-dust">
-                    Required. If a member is unavailable, please re-record or
-                    contact the organizers before submitting.
+                    Required. If a member is unavailable, please re-record or contact the organizers
+                    before submitting.
                   </span>
                 </span>
               </label>
@@ -975,13 +892,11 @@ export function SubmitForm({
         {/* Pitch materials + disclosure */}
         {shown("materials") && (
           <fieldset className="card space-y-4">
-            <legend className="pill-accent -mt-2 mb-2">
-              Pitch Deck, Summary &amp; Disclosure
-            </legend>
+            <legend className="pill-accent -mt-2 mb-2">Pitch Deck, Summary &amp; Disclosure</legend>
 
             <p className="text-sm text-dust">
-              Share each file as a link anyone can open (Google Drive, Dropbox,
-              OneDrive…). Judges review these alongside your demo video.
+              Share each file as a link anyone can open (Google Drive, Dropbox, OneDrive…). Judges
+              review these alongside your demo video.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -997,9 +912,7 @@ export function SubmitForm({
                 {err("pitch_deck_url")}
               </div>
               <div>
-                <label className="field-label">
-                  One-Page Summary (PDF link) *
-                </label>
+                <label className="field-label">One-Page Summary (PDF link) *</label>
                 <input
                   name="summary_url"
                   type="url"
@@ -1014,9 +927,9 @@ export function SubmitForm({
             <div>
               <label className="field-label">Disclosure Statement *</label>
               <p className="mt-1 text-xs text-dust">
-                What existed before the event, and what you built during the
-                sprint. List any AI tools, open-source code, and datasets you
-                used. Prior work is allowed — it just has to be disclosed.
+                What existed before the event, and what you built during the sprint. List any AI
+                tools, open-source code, and datasets you used. Prior work is allowed — it just has
+                to be disclosed.
               </p>
               <textarea
                 name="disclosure_statement"
@@ -1035,14 +948,11 @@ export function SubmitForm({
         {/* LinkedIn Announcement */}
         {shown("announcement") && (
           <fieldset className="card space-y-4">
-            <legend className="pill-accent -mt-2 mb-2">
-              LinkedIn Announcement
-            </legend>
+            <legend className="pill-accent -mt-2 mb-2">LinkedIn Announcement</legend>
 
             <div className="rounded-md border border-accent/40 bg-accent/5 p-3 text-sm">
-              <span className="font-semibold text-accent">Required.</span> You,
-              the submitter, must post on LinkedIn announcing your participation
-              in
+              <span className="font-semibold text-accent">Required.</span> You, the submitter, must
+              post on LinkedIn announcing your participation in
               {EVENT.name}, tagging the host:{" "}
               <a
                 href={EVENT.announceUrl}
@@ -1069,11 +979,7 @@ export function SubmitForm({
           </fieldset>
         )}
 
-        <CustomFields
-          fields={EVENT.customFields.submission}
-          initial={initialCustom}
-          errors={fe}
-        />
+        <CustomFields fields={EVENT.customFields.submission} initial={initialCustom} errors={fe} />
 
         {state?.ok === false && (
           <div className="rounded-md border border-blood/60 bg-blood/10 px-4 py-3 text-sm text-blood">
@@ -1083,8 +989,7 @@ export function SubmitForm({
                 <ul className="mt-1 list-disc space-y-0.5 pl-5">
                   {Object.entries(fe).map(([k, msgs]) => (
                     <li key={k}>
-                      <span className="font-semibold">{fieldLabel(k)}</span>:{" "}
-                      {msgs?.[0]}
+                      <span className="font-semibold">{fieldLabel(k)}</span>: {msgs?.[0]}
                     </li>
                   ))}
                 </ul>
@@ -1134,18 +1039,13 @@ function EditLinkBox({ url }: { url: string }) {
     <div className="mt-4 rounded-md border border-line bg-ink-4 p-3">
       <div className="field-label mb-1">Your private edit link</div>
       <div className="flex flex-wrap items-center gap-2">
-        <a
-          href={url}
-          className="min-w-0 flex-1 break-all font-mono text-xs text-accent underline"
-        >
+        <a href={url} className="min-w-0 flex-1 break-all font-mono text-xs text-accent underline">
           {url}
         </a>
         <button
           type="button"
           className="pill shrink-0 hover:border-accent hover:text-accent"
-          onClick={() =>
-            navigator.clipboard?.writeText(url).then(() => setCopied(true))
-          }
+          onClick={() => navigator.clipboard?.writeText(url).then(() => setCopied(true))}
         >
           {copied ? "✓ Copied" : "Copy"}
         </button>
@@ -1223,9 +1123,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 text-xs font-bold text-accent">
-              Team · {mode}
-            </div>
+            <div className="mb-2 text-xs font-bold text-accent">Team · {mode}</div>
             <dl className="divide-y divide-line/60">
               {mode === "Team" && row("team_name", "Team Name")}
               {row("team_size", "Size")}
@@ -1272,9 +1170,7 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 text-xs font-bold text-blood">
-              ▣ Demo Video
-            </div>
+            <div className="mb-2 text-xs font-bold text-blood">▣ Demo Video</div>
             <dl className="divide-y divide-line/60">
               {row("demo_video_url", "Video URL")}
               {row("demo_video_short_url", "Pitch Video")}
@@ -1284,9 +1180,7 @@ function ConfirmModal({
                   {values["all_members_in_video"] === "checked" ? (
                     <span className="text-jade">✓ Confirmed in video</span>
                   ) : (
-                    <span className="text-blood">
-                      ✗ Not confirmed (may be flagged for review)
-                    </span>
+                    <span className="text-blood">✗ Not confirmed (may be flagged for review)</span>
                   )}
                 </dd>
               </div>
@@ -1305,19 +1199,13 @@ function ConfirmModal({
           </section>
 
           <section>
-            <div className="mb-2 text-xs font-bold text-accent">
-              LinkedIn Announcement
-            </div>
-            <dl className="divide-y divide-line/60">
-              {row("linkedin_post_url", "Post URL")}
-            </dl>
+            <div className="mb-2 text-xs font-bold text-accent">LinkedIn Announcement</div>
+            <dl className="divide-y divide-line/60">{row("linkedin_post_url", "Post URL")}</dl>
           </section>
 
           {custom.length > 0 && (
             <section>
-              <div className="mb-2 text-xs font-bold text-accent">
-                More About Your Entry
-              </div>
+              <div className="mb-2 text-xs font-bold text-accent">More About Your Entry</div>
               <dl className="divide-y divide-line/60">
                 {custom.map((f) => (
                   <div key={f.key}>{row(customFieldName(f.key), f.label)}</div>
@@ -1328,20 +1216,10 @@ function ConfirmModal({
         </div>
 
         <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={pending}
-            className="btn"
-          >
+          <button type="button" onClick={onCancel} disabled={pending} className="btn">
             ← Keep Editing
           </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={pending}
-            className="btn-accent"
-          >
+          <button type="button" onClick={onConfirm} disabled={pending} className="btn-accent">
             {pending
               ? editing
                 ? "Saving…"

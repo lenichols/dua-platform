@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Breadcrumbs, HeaderBar, PageShell } from "@/components/shell";
-import {
-  RubricBar,
-  SignInLayout,
-  SignInStage,
-} from "@/components/sign-in-layout";
+import { RubricBar, SignInLayout, SignInStage } from "@/components/sign-in-layout";
 import { sampleJudgeLogins } from "@/server/demo";
 import { getCurrentEvent } from "@/server/event";
 import { getJudgeSession } from "./auth";
@@ -32,25 +28,18 @@ export default async function JudgePage() {
       />
       <PageShell maxWidth="max-w-5xl">
         <SignInStage>
-          <Breadcrumbs
-            items={[{ label: "Home", href: "/" }, { label: "Judge Sign In" }]}
-          />
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Judge Sign In" }]} />
           {notOpen ? (
             <div className="mx-auto max-w-md">
               <JudgingNotOpen />
             </div>
           ) : (
             <SignInLayout
-              status={
-                phase === "judging" ? "Judging is open" : "Results are in"
-              }
+              status={phase === "judging" ? "Judging is open" : "Results are in"}
               title="Judge Sign In"
               intro="For judges and mentors. Sign in with the email the organizers have on the roster."
               aside={
-                <RubricBar
-                  criteria={event.settings.rubric.criteria}
-                  topN={event.settings.topN}
-                />
+                <RubricBar criteria={event.settings.rubric.criteria} topN={event.settings.topN} />
               }
             >
               <JudgeSignIn samples={await sampleJudgeLogins(event.id)} />

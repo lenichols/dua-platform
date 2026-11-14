@@ -54,12 +54,7 @@ export default async function UnsubscribePage({
       />
       <PageShell maxWidth="max-w-2xl">
         <div className="mx-auto max-w-xl">
-          <SectionTitle
-            center
-            eyebrow="Email preferences"
-            title={title}
-            subtitle={body}
-          />
+          <SectionTitle center eyebrow="Email preferences" title={title} subtitle={body} />
           <div className="mt-6 text-center">
             <Link href="/" className="btn">
               Back to the hackathon

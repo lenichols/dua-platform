@@ -23,8 +23,7 @@ export default async function EditSubmissionPage({
   const valid = /^[0-9a-f-]{36}$/i.test(id) && verifyEditToken(id, t);
 
   // Same gate as /submit: closing submissions cuts off every edit link.
-  const open =
-    valid && (await getPhase()) === "submissions" && (await getSubmissionsOpen());
+  const open = valid && (await getPhase()) === "submissions" && (await getSubmissionsOpen());
 
   let initial: Record<string, string> | null = null;
   let initialCustom: Record<string, string> = {};
@@ -40,8 +39,7 @@ export default async function EditSubmissionPage({
     ? {
         eyebrow: "Link Not Valid",
         title: "Check Your Link",
-        subtitle:
-          `This edit link is incomplete or incorrect. Open it straight from your confirmation email, or email ${EVENT.contactEmail} and we'll send it again.`,
+        subtitle: `This edit link is incomplete or incorrect. Open it straight from your confirmation email, or email ${EVENT.contactEmail} and we'll send it again.`,
       }
     : !open
       ? {
@@ -54,8 +52,7 @@ export default async function EditSubmissionPage({
         ? {
             eyebrow: "Not Found",
             title: "Submission Not Found",
-            subtitle:
-              `We couldn't find this submission. Email ${EVENT.contactEmail} if you think this is a mistake.`,
+            subtitle: `We couldn't find this submission. Email ${EVENT.contactEmail} if you think this is a mistake.`,
           }
         : null;
 
@@ -70,11 +67,7 @@ export default async function EditSubmissionPage({
       />
       <PageShell>
         <Breadcrumbs
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Submit" },
-            { label: "Edit" },
-          ]}
+          items={[{ label: "Home", href: "/" }, { label: "Submit" }, { label: "Edit" }]}
         />
         {problem || !initial ? (
           <div className="mx-auto max-w-xl text-center">
@@ -89,9 +82,7 @@ export default async function EditSubmissionPage({
           <>
             <div className="mb-8">
               <div className="pill-accent mb-3">Editing Your Submission</div>
-              <h1 className="hex-title text-4xl md:text-5xl">
-                {initial.project_name}
-              </h1>
+              <h1 className="hex-title text-4xl md:text-5xl">{initial.project_name}</h1>
             </div>
 
             <div className="card mb-6 space-y-3 border-l-4 border-l-accent">
@@ -102,16 +93,12 @@ export default async function EditSubmissionPage({
                 </span>
               </div>
               <p className="text-sm leading-relaxed text-bone/90">
-                Your saved answers are filled in below. Change what you need,
-                then review and save. Saving replaces your whole submission
-                with what&apos;s on this page.
+                Your saved answers are filled in below. Change what you need, then review and save.
+                Saving replaces your whole submission with what&apos;s on this page.
               </p>
               <p className="text-xs text-dust">
                 Need help? Email{" "}
-                <a
-                  href={`mailto:${EVENT.contactEmail}`}
-                  className="text-accent underline"
-                >
+                <a href={`mailto:${EVENT.contactEmail}`} className="text-accent underline">
                   {EVENT.contactEmail}
                 </a>
                 .

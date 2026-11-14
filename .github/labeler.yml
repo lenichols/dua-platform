@@ -1,0 +1,63 @@
+area:frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/**"
+          - "src/components/**"
+          - "src/app/globals.css"
+          - "tailwind.config.ts"
+
+area:backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/server/**"
+          - "src/lib/**"
+
+area:database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/db/**"
+          - "drizzle/**"
+
+area:deployment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Dockerfile"
+          - ".dockerignore"
+          - "docker-compose*.yml"
+          - "vercel.json"
+          - ".github/workflows/**"
+
+area:security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/admin/auth.ts"
+          - "src/app/judge/auth.ts"
+          - "src/server/policy.ts"
+          - "src/server/rate-limit.ts"
+          - ".github/SECURITY.md"
+
+area:docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "README.md"
+          - "CHANGELOG.md"
+          - ".github/CONTRIBUTING.md"
+
+type:ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - "scripts/**"
+
+type:test:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.test.ts"
+          - "test/**"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "package.json"
+          - "package-lock.json"

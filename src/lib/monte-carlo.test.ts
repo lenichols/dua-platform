@@ -55,8 +55,12 @@ describe("monteCarloTop", () => {
   });
 
   it("shrinks submissions with few judges toward neutral", () => {
-    const none = byId(monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, { seed: 1, trials: 10, shrinkageK: 0 }));
-    const some = byId(monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, { seed: 1, trials: 10, shrinkageK: 3 }));
+    const none = byId(
+      monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, { seed: 1, trials: 10, shrinkageK: 0 })
+    );
+    const some = byId(
+      monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, { seed: 1, trials: 10, shrinkageK: 3 })
+    );
     // One judge, k = 3: credibility 1 / (1 + 3).
     expect(some.get("s5")!.normalized_score).toBeCloseTo(none.get("s5")!.normalized_score / 4);
     // Two judges, k = 3: credibility 2 / (2 + 3).
@@ -93,7 +97,7 @@ describe("monteCarloTop", () => {
         seed: 1,
         trials: 50,
         topN: 2,
-      }),
+      })
     );
     expect(r.get("unscored")).toMatchObject({ n_judges: 0, p_top_n: 0, raw_total: 0 });
   });
@@ -120,7 +124,7 @@ describe("monteCarloTop", () => {
       [flat("J", "a", 4), flat("J", "b", 4), flat("J", "c", 1)],
       subs("a", "b", "c"),
       RUBRIC,
-      { seed: 1, trials: 10 },
+      { seed: 1, trials: 10 }
     );
     expect(r.ties).toHaveLength(1);
     expect([...r.ties[0]].sort()).toEqual(["a", "b"]);
@@ -143,7 +147,11 @@ describe("monteCarloTop", () => {
 });
 
 describe("drawBubble", () => {
-  const rankings = monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, { seed: 3, trials: 100, topN: 2 }).rankings;
+  const rankings = monteCarloTop(PANEL, PANEL_SUBS, RUBRIC, {
+    seed: 3,
+    trials: 100,
+    topN: 2,
+  }).rankings;
   const pool = ["s1", "s2", "s3", "s4", "s5"];
 
   it("is reproducible for a given seed", () => {
@@ -170,8 +178,20 @@ describe("drawBubble", () => {
 describe("a different rubric", () => {
   const custom = {
     criteria: [
-      { key: "craft", label: "Craft", weight: 70, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
-      { key: "story", label: "Story", weight: 30, anchors: { limited: "", solid: "", exceptional: "" }, example: "" },
+      {
+        key: "craft",
+        label: "Craft",
+        weight: 70,
+        anchors: { limited: "", solid: "", exceptional: "" },
+        example: "",
+      },
+      {
+        key: "story",
+        label: "Story",
+        weight: 30,
+        anchors: { limited: "", solid: "", exceptional: "" },
+        example: "",
+      },
     ],
     tieBreakers: ["story"],
   };
@@ -183,10 +203,15 @@ describe("a different rubric", () => {
 
   it("uses that rubric's criteria and weights", () => {
     // a is strong on the heavy criterion, b on the light one.
-    const r = monteCarloTop([row("a", 5, 1), row("b", 1, 5), row("c", 3, 3)], subs("a", "b", "c"), custom, {
-      seed: 1,
-      trials: 20,
-    });
+    const r = monteCarloTop(
+      [row("a", 5, 1), row("b", 1, 5), row("c", 3, 3)],
+      subs("a", "b", "c"),
+      custom,
+      {
+        seed: 1,
+        trials: 20,
+      }
+    );
     expect(r.rankings[0].submission_id).toBe("a");
     expect(r.rankings[0].raw_total).toBeCloseTo(70 + 6); // 5/5 × 70 + 1/5 × 30
     expect(r.rankings[0].tiebreak_means).toEqual([1]);

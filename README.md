@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://dua-platform.vercel.app"><img src="https://img.shields.io/badge/Live%20demo-dua--platform.vercel.app-662EFF?style=for-the-badge" alt="Live demo: dua-platform.vercel.app"></a>
+  <a href="https://github.com/lenichols/dua-platform/actions/workflows/ci.yml"><img src="https://github.com/lenichols/dua-platform/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="#contributors-wanted"><img src="https://img.shields.io/badge/Contributors-wanted-00B8A9?style=for-the-badge" alt="Contributors wanted"></a>
 </p>
 
@@ -41,12 +42,12 @@ A sample event, the Open Build Hackathon, with five projects waiting to be
 judged. No sign-up needed: the logins are on the sign-in pages, and clicking
 one fills in the form.
 
-| Try this | Where | Sign in as |
-| --- | --- | --- |
-| Score a project against the rubric | [/judge](https://dua-platform.vercel.app/judge) | Judge |
-| See what a mentor can and can't do | [/judge](https://dua-platform.vercel.app/judge) | Mentor |
+| Try this                                                        | Where                                           | Sign in as        |
+| --------------------------------------------------------------- | ----------------------------------------------- | ----------------- |
+| Score a project against the rubric                              | [/judge](https://dua-platform.vercel.app/judge) | Judge             |
+| See what a mentor can and can't do                              | [/judge](https://dua-platform.vercel.app/judge) | Mentor            |
 | Look around the organizer's panel, including the event settings | [/admin](https://dua-platform.vercel.app/admin) | Admin (read-only) |
-| See what participants see | [the homepage](https://dua-platform.vercel.app) | Nobody |
+| See what participants see                                       | [the homepage](https://dua-platform.vercel.app) | Nobody            |
 
 Go ahead and change things: the demo puts itself back every hour.
 
@@ -58,15 +59,15 @@ Go ahead and change things: the demo puts itself back every hour.
 
 ## What you get
 
-| Area | Route | Who | What it does |
-| --- | --- | --- | --- |
-| Home page | `/` | Public | Landing page whose main button follows the event phase: Register, then Judge Sign In, then View the Winners. |
-| Registration | `/register` | Public | Participant sign-up. Opened and closed by an admin switch. |
-| Mentor sign-up | `/mentor` | Public | Volunteer mentor sign-up, on the same switch as registration. |
-| Submission | `/submit` | Public | Project submission form with a private edit link emailed to the team. Opened and closed by its own admin switch. |
-| Judging | `/judge` | Judges, mentors | Sign in, then score each project 1–5 on the rubric you set, with one sentence of evidence per score. Judges can declare a conflict to recuse themselves. Mentors can read but not score. |
-| Results | `/results` | Judges, mentors, admins; the public if you choose | Averages only, never one judge's scores, plus the final ranking. Visible once the phase is `results`. |
-| Admin | `/admin` | Organizers | Phase control, registrations with CSV export, judges, submissions, results, email campaigns, and admin accounts with roles. |
+| Area           | Route       | Who                                               | What it does                                                                                                                                                                             |
+| -------------- | ----------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home page      | `/`         | Public                                            | Landing page whose main button follows the event phase: Register, then Judge Sign In, then View the Winners.                                                                             |
+| Registration   | `/register` | Public                                            | Participant sign-up. Opened and closed by an admin switch.                                                                                                                               |
+| Mentor sign-up | `/mentor`   | Public                                            | Volunteer mentor sign-up, on the same switch as registration.                                                                                                                            |
+| Submission     | `/submit`   | Public                                            | Project submission form with a private edit link emailed to the team. Opened and closed by its own admin switch.                                                                         |
+| Judging        | `/judge`    | Judges, mentors                                   | Sign in, then score each project 1–5 on the rubric you set, with one sentence of evidence per score. Judges can declare a conflict to recuse themselves. Mentors can read but not score. |
+| Results        | `/results`  | Judges, mentors, admins; the public if you choose | Averages only, never one judge's scores, plus the final ranking. Visible once the phase is `results`.                                                                                    |
+| Admin          | `/admin`    | Organizers                                        | Phase control, registrations with CSV export, judges, submissions, results, email campaigns, and admin accounts with roles.                                                              |
 
 The event moves through three phases, switched by an admin:
 **submissions → judging → results**.
@@ -96,7 +97,7 @@ OrbStack running.
 ```bash
 git clone https://github.com/lenichols/dua-platform.git
 cd dua-platform
-npm install
+npm ci
 cp .env.local.example .env.local
 ```
 
@@ -123,14 +124,15 @@ No Docker, or something not working? See
 
 ## Guides
 
-| Guide | What's in it |
-| --- | --- |
-| [Running Dua locally](docs/running-locally.md) | The full walk-through, sample logins, stopping and restarting, troubleshooting. |
-| [Database options](docs/database.md) | Docker Desktop, OrbStack, Supabase, your own Postgres, and browsing data with pgAdmin. |
-| [Setting up your event](docs/your-event.md) | What organizers can change in the admin panel. |
-| [How judging works](docs/judging.md) | The ranking method, and who can see what. |
-| [Providers](docs/providers.md) | Email over Resend or SMTP, files in S3 or Supabase, judge sign-in through Supabase. |
-| [Deploying and settings](docs/deploying.md) | Putting Dua on a server, every environment variable, and the command-line helpers. |
+| Guide                                                | What's in it                                                                             |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [Running Dua locally](docs/running-locally.md)       | The full walk-through, sample logins, stopping and restarting, troubleshooting.          |
+| [Database options](docs/database.md)                 | Docker Desktop, OrbStack, Supabase, your own Postgres, and browsing data with pgAdmin.   |
+| [Setting up your event](docs/your-event.md)          | What organizers can change in the admin panel.                                           |
+| [How judging works](docs/judging.md)                 | The ranking method, and who can see what.                                                |
+| [Providers](docs/providers.md)                       | Email over Resend or SMTP, files in S3 or Supabase, judge sign-in through Supabase.      |
+| [Deploying and settings](docs/deploying.md)          | Putting Dua on a server, every environment variable, and the command-line helpers.       |
+| [Engineering workflow](docs/ENGINEERING_WORKFLOW.md) | Branches, commits, pull requests, auto-ticketing, CI gates, Trivy and the release cycle. |
 
 ## Contributors wanted
 
@@ -158,8 +160,10 @@ Everything that needs doing is listed just below, under [To do](#to-do).
 2. Pick something from the [to-do list](#to-do) below, or bring your own idea, and
    [open an issue](https://github.com/lenichols/dua-platform/issues/new/choose) or comment on the [contributors thread](https://github.com/lenichols/dua-platform/issues/1)
    so we can agree on the approach before you spend time on it.
-3. Read [CONTRIBUTING.md](.github/CONTRIBUTING.md), then send a pull request.
-   Small ones are welcome.
+3. Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) and the
+   [engineering workflow](docs/ENGINEERING_WORKFLOW.md), then send a pull
+   request. Branch from `develop`, use a Conventional Commit title and target
+   `develop`; small pull requests are welcome.
 
 On your first pull request you'll be asked to sign the
 [contributor license agreement](.github/CLA.md). Please report security
@@ -175,8 +179,9 @@ open an issue for it, as described [above](#contributors-wanted).
 
 **Setup and testing**
 
-- [ ] A container image for the app, so `docker compose up` starts everything
-      and not only the database.
+- [ ] Add the app to `docker compose` so `docker compose up` starts everything
+      and not only the database. A production `Dockerfile` and `/api/health`
+      are already in place.
 - [ ] An end-to-end test suite that drives a real browser through signing in,
       scoring, the Event tab and the public forms, and runs in CI.
 - [ ] Check the optional providers against the real services: Resend, S3 on

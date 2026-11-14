@@ -58,11 +58,11 @@ export type SubmissionRanking = {
   submission_id: string;
   project_name: string;
   n_judges: number;
-  raw_total: number;       // mean weighted total (out of 100)
+  raw_total: number; // mean weighted total (out of 100)
   normalized_score: number; // shrunk, z-normalized weighted composite
   tiebreak_means: number[]; // mean of each tie-breaker criterion, in order
-  p_top_n: number;         // probability of landing in top N across trials
-  mean_rank: number;       // average rank across trials
+  p_top_n: number; // probability of landing in top N across trials
+  mean_rank: number; // average rank across trials
 };
 
 /** The parts of the rubric the maths needs, worked out once per run. */
@@ -154,7 +154,7 @@ function aggregate(
   scores: ScoreRow[],
   judgeStats: Map<string, JudgeStats>,
   shrinkageK: number,
-  ctx: Ctx,
+  ctx: Ctx
 ): Map<
   string,
   {
@@ -211,7 +211,7 @@ export function monteCarloTop(
   scores: ScoreRow[],
   subs: SubmissionMeta[],
   rubric: Rubric,
-  opts: MonteCarloOptions = {},
+  opts: MonteCarloOptions = {}
 ): MonteCarloResult {
   const trials = opts.trials ?? 1000;
   const seed = opts.seed ?? 1738271101;
@@ -253,8 +253,7 @@ export function monteCarloTop(
 
     const sorted = [...agg.entries()].sort(
       (a, b) =>
-        b[1].normScore - a[1].normScore ||
-        byTiebreakers(a[1].tiebreakMeans, b[1].tiebreakMeans),
+        b[1].normScore - a[1].normScore || byTiebreakers(a[1].tiebreakMeans, b[1].tiebreakMeans)
     );
     sorted.forEach(([sid], idx) => {
       rankSum.set(sid, (rankSum.get(sid) ?? 0) + idx + 1);
@@ -278,8 +277,7 @@ export function monteCarloTop(
     })
     .sort(
       (a, b) =>
-        b.normalized_score - a.normalized_score ||
-        byTiebreakers(a.tiebreak_means, b.tiebreak_means),
+        b.normalized_score - a.normalized_score || byTiebreakers(a.tiebreak_means, b.tiebreak_means)
     );
 
   // ── Selection logic ─────────────────────────────────────────────────
@@ -334,13 +332,12 @@ export function drawBubble(
   bubble: string[],
   rankings: SubmissionRanking[],
   slots: number,
-  seed: number,
+  seed: number
 ): string[] {
   if (slots <= 0 || bubble.length === 0) return [];
   const rng = mulberry32(seed);
   const byId = new Map(rankings.map((r) => [r.submission_id, r]));
-  const pool = bubble
-    .map((id) => ({ id, w: Math.max(byId.get(id)?.p_top_n ?? 0.01, 0.01) }));
+  const pool = bubble.map((id) => ({ id, w: Math.max(byId.get(id)?.p_top_n ?? 0.01, 0.01) }));
 
   const chosen: string[] = [];
   for (let k = 0; k < slots && pool.length > 0; k++) {
